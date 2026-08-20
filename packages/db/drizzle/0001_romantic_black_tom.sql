@@ -1,0 +1,1 @@
+ALTER TABLE "requirement_applicability" ADD COLUMN "evidence" text[] DEFAULT ARRAY[]::text[] NOT NULL;

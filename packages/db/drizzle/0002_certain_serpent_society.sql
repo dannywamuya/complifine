@@ -1,0 +1,2 @@
+DROP INDEX "standard_documents_current_key";--> statement-breakpoint
+CREATE UNIQUE INDEX "standard_documents_singular_key" ON "standard_documents" USING btree ("standard_version_id","document_type","language") WHERE status <> 'superseded' AND document_type IN ('principles_and_criteria', 'checklist');

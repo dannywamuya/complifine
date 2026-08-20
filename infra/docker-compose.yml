@@ -1,0 +1,45 @@
+name: complifine
+
+services:
+  postgres:
+    # pgvector/pgvector bundles the `vector` extension on top of the official
+    # Postgres image. Pinned to a digest-stable tag so the retrieval layer is
+    # reproducible: HNSW index behaviour differs across pgvector releases.
+    image: pgvector/pgvector:pg17
+    container_name: complifine-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: complifine
+      POSTGRES_PASSWORD: complifine
+      POSTGRES_DB: complifine
+      # Deterministic collation. Postgres text ordering feeds `ts_rank_cd`
+      # tie-breaking, so pinning this keeps search results stable across hosts.
+      POSTGRES_INITDB_ARGS: "--locale=C --encoding=UTF8"
+    ports:
+      # 5434 deliberately: 5432 and 5433 are commonly already taken by other
+      # local Postgres instances. Nothing here should collide with your machine.
+      - "5434:5432"
+    volumes:
+      - complifine-pgdata:/var/lib/postgresql/data
+      - ./initdb:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U complifine -d complifine"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+    command:
+      # The knowledge base is small (hundreds of rows, thousands of chunks) but
+      # HNSW index builds and vector scans are memory hungry. These values keep
+      # index construction in RAM rather than spilling to disk.
+      - postgres
+      - -c
+      - shared_buffers=256MB
+      - -c
+      - maintenance_work_mem=256MB
+      - -c
+      - work_mem=32MB
+
+volumes:
+  complifine-pgdata:
+    name: complifine-pgdata

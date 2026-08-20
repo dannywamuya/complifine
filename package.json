@@ -1,0 +1,38 @@
+{
+  "name": "complifine",
+  "version": "0.1.0",
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/node": "^22.10.0",
+    "typescript": "^5.9.3"
+  },
+  "engines": {
+    "bun": ">=1.2.0"
+  },
+  "private": true,
+  "scripts": {
+    "db:up": "docker compose -f infra/docker-compose.yml up -d",
+    "db:down": "docker compose -f infra/docker-compose.yml down",
+    "db:nuke": "docker compose -f infra/docker-compose.yml down -v",
+    "db:logs": "docker compose -f infra/docker-compose.yml logs -f postgres",
+    "db:psql": "docker compose -f infra/docker-compose.yml exec postgres psql -U complifine -d complifine",
+    "db:generate": "cd packages/db && bunx drizzle-kit generate",
+    "db:migrate": "bun packages/db/src/migrate.ts",
+    "db:studio": "cd packages/db && bunx drizzle-kit studio",
+    "kb": "bun packages/ingestion/src/cli.ts",
+    "ai": "bun packages/ai/src/cli.ts",
+    "api": "bun --watch --env-file .env apps/api/src/index.ts",
+    "web": "cd apps/web && bun run dev",
+    "console": "cd apps/console && bun run dev",
+    "bootstrap": "bun run scripts/bootstrap.ts",
+    "test": "bun test",
+    "test:watch": "bun test --watch",
+    "typecheck": "bun run --filter '*' typecheck",
+    "lint": "bun run typecheck"
+  },
+  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ]
+}

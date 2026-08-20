@@ -1,0 +1,16 @@
+node_modules/
+.env
+.env.local
+*.log
+
+# Downloaded official source documents. These are third-party copyrighted
+# material (see docs/SOURCES.md); the manifest is checked in, the bytes are not.
+storage/
+
+.next/
+out/
+dist/
+build/
+.turbo/
+*.tsbuildinfo
+.DS_Store

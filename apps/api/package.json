@@ -1,0 +1,20 @@
+{
+  "name": "@complifine/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "bun --watch src/index.ts",
+    "start": "bun src/index.ts",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "@complifine/ai": "workspace:*",
+    "@complifine/core": "workspace:*",
+    "@complifine/db": "workspace:*",
+    "@complifine/ingestion": "workspace:*",
+    "@elysiajs/cors": "^1.4.0",
+    "@elysiajs/openapi": "^1.4.0",
+    "elysia": "^1.4.0"
+  }
+}
