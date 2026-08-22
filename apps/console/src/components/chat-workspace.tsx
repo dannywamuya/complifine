@@ -11,7 +11,7 @@ import {
   type SearchHit,
   type SearchResponse,
 } from "@/lib/chat";
-import { EDITIONS } from "@/lib/editions";
+import { useCertScope } from "@/components/cert-scope";
 import { AnswerArticle } from "@/components/answer-article";
 import { SourcesPanel } from "@/components/sources-panel";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -34,7 +34,6 @@ const SUGGESTIONS = [
 ];
 
 type Mode = "answer" | "passages";
-type EditionFilter = "both" | "ifa-v6-smart-fv" | "ifa-v6-gfs-fv";
 type KindFilter = "requirements" | "regulations";
 
 interface ToolChip {
@@ -62,10 +61,11 @@ interface Message {
 }
 
 export function ChatWorkspace() {
+  const { versions } = useCertScope();
   const [messages, setMessages] = useState<Message[]>([]);
   const [draft, setDraft] = useState("");
   const [mode, setMode] = useState<Mode>("answer");
-  const [edition, setEdition] = useState<EditionFilter>("ifa-v6-smart-fv");
+  const [edition, setEdition] = useState("all");
   const [kind, setKind] = useState<KindFilter>("requirements");
   const [conversationId, setConversationId] = useState<string | undefined>();
   const [pending, setPending] = useState(false);
@@ -128,7 +128,7 @@ export function ChatWorkspace() {
     ]);
     setPending(true);
 
-    const version = edition === "both" ? undefined : edition;
+    const version = edition === "all" ? undefined : edition;
     const searchQuery = new URLSearchParams({
       q: question,
       kind,
@@ -165,10 +165,11 @@ export function ChatWorkspace() {
     const controller = new AbortController();
     abortRef.current = controller;
 
+    const selected = versions.find((item) => item.code === edition);
     const asked =
-      edition === "both"
+      edition === "all" || !selected
         ? question
-        : `${question}\n\nUse the ${edition === "ifa-v6-gfs-fv" ? "IFA v6 GFS" : "IFA v6 Smart"} edition unless I named the other.`;
+        : `${question}\n\nUse the ${selected.name} version unless I named another.`;
 
     try {
       await streamAsk(
@@ -256,6 +257,7 @@ export function ChatWorkspace() {
               pending={pending}
               edition={edition}
               onEdition={setEdition}
+              versions={versions}
               kind={kind}
               onKind={setKind}
             />
@@ -486,6 +488,7 @@ function Composer({
   pending,
   edition,
   onEdition,
+  versions,
   kind,
   onKind,
 }: {
@@ -495,8 +498,9 @@ function Composer({
   onStop: () => void;
   onKeyDown: (event: KeyboardEvent<HTMLTextAreaElement>) => void;
   pending: boolean;
-  edition: EditionFilter;
-  onEdition: (value: EditionFilter) => void;
+  edition: string;
+  onEdition: (value: string) => void;
+  versions: Array<{ code: string; name: string }>;
   kind: KindFilter;
   onKind: (value: KindFilter) => void;
 }) {
@@ -507,20 +511,20 @@ function Composer({
         onChange={(event) => onChange(event.target.value)}
         onKeyDown={onKeyDown}
         rows={2}
-        placeholder="Ask, or paste FV 32.10.06…"
+        placeholder="Ask a requirement, or paste an identifier…"
         className="min-h-14 resize-none border-0 bg-transparent shadow-none focus-visible:ring-0"
       />
       <div className="flex flex-wrap items-center justify-between gap-2 px-1">
         <div className="flex flex-wrap items-center gap-1">
-          <Select value={edition} onValueChange={(value) => onEdition(value as EditionFilter)}>
+          <Select value={edition} onValueChange={onEdition}>
             <SelectTrigger className="h-7 w-auto gap-1 border-0 bg-transparent px-2 font-mono text-[11px] shadow-none">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="both">Both editions</SelectItem>
-              {EDITIONS.map((item) => (
-                <SelectItem key={item.value} value={item.value}>
-                  {item.label}
+              <SelectItem value="all">All in view</SelectItem>
+              {versions.map((item) => (
+                <SelectItem key={item.code} value={item.code}>
+                  {item.name}
                 </SelectItem>
               ))}
             </SelectContent>

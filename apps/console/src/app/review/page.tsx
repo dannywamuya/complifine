@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useState, type FormEvent } from "react";
 import { useSearchParams } from "next/navigation";
 import { api } from "@/lib/api";
-import { EDITIONS } from "@/lib/editions";
+import { VersionSelect, useScopedVersionState } from "@/components/version-select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -39,7 +39,7 @@ interface VersionDetail {
 
 function ReviewForm() {
   const searchParams = useSearchParams();
-  const [version, setVersion] = useState(searchParams.get("version") ?? "ifa-v6-smart-fv");
+  const [version, setVersion] = useScopedVersionState(searchParams.get("version") ?? undefined);
   const [detail, setDetail] = useState<VersionDetail | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [reviewer, setReviewer] = useState("");
@@ -60,6 +60,7 @@ function ReviewForm() {
   }
 
   useEffect(() => {
+    if (!version) return;
     load(version).catch((err: Error) => setError(err.message));
   }, [version]);
 
@@ -109,18 +110,7 @@ function ReviewForm() {
       </div>
       {error ? <Alert variant="destructive"><AlertDescription>{error}</AlertDescription></Alert> : null}
       <form className="flex min-w-0 flex-wrap gap-2" onSubmit={submitReview}>
-        <Select value={version} onValueChange={setVersion}>
-          <SelectTrigger className="w-full min-w-0 max-w-48">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {EDITIONS.map((edition) => (
-              <SelectItem key={edition.value} value={edition.value}>
-                {edition.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <VersionSelect value={version} onValueChange={setVersion} />
         <Input
           value={reviewer}
           onChange={(event) => setReviewer(event.target.value)}

@@ -7,7 +7,7 @@
 
 import { Elysia, t } from "elysia";
 import { alias } from "drizzle-orm/pg-core";
-import { asc, desc, eq, type Database } from "@complifine/db";
+import { and, asc, desc, eq, type Database } from "@complifine/db";
 import {
   auditLogs,
   ingestionEvents,
@@ -56,9 +56,6 @@ const stepSchema = t.Union([
 ]);
 
 export function adminRoutes(db: Database) {
-  const smartReq = alias(requirementVersions, "smart_requirement");
-  const gfsReq = alias(requirementVersions, "gfs_requirement");
-
   return (
     new Elysia({ name: "complifine-admin" })
       .onBeforeHandle((ctx) => {
@@ -191,32 +188,54 @@ export function adminRoutes(db: Database) {
 
       .get(
         "/diff",
-        async () =>
-          linkEditions(db, silentJob(), {
-            smartVersionCode: "ifa-v6-smart-fv",
-            gfsVersionCode: "ifa-v6-gfs-fv",
+        async ({ query }) => {
+          const from = query.from ?? "ifa-v6-smart-fv";
+          const to = query.to ?? "ifa-v6-gfs-fv";
+          return linkEditions(db, silentJob(), {
+            smartVersionCode: from,
+            gfsVersionCode: to,
             write: false,
+          });
+        },
+        {
+          query: t.Object({
+            from: t.Optional(t.String()),
+            to: t.Optional(t.String()),
           }),
-        { detail: { summary: "Smart vs GFS correspondence, without writing" } },
+          detail: { summary: "Compare two versions by shared criterion numbers" },
+        },
       )
 
       .get(
         "/relationships",
-        async () => {
+        async ({ query }) => {
+          const fromReq = alias(requirementVersions, "from_requirement");
+          const toReq = alias(requirementVersions, "to_requirement");
+          const fromVer = alias(standardVersions, "from_version");
+          const toVer = alias(standardVersions, "to_version");
+          const conditions = [];
+          if (query.from) conditions.push(eq(fromVer.code, query.from));
+          if (query.to) conditions.push(eq(toVer.code, query.to));
+
           const rows = await db
             .select({
               type: requirementRelationships.relationshipType,
               origin: requirementRelationships.origin,
               confidence: requirementRelationships.confidence,
-              from: smartReq.sourceRequirementId,
-              fromLevel: smartReq.level,
-              to: gfsReq.sourceRequirementId,
-              toLevel: gfsReq.level,
+              from: fromReq.sourceRequirementId,
+              fromLevel: fromReq.level,
+              fromVersion: fromVer.code,
+              to: toReq.sourceRequirementId,
+              toLevel: toReq.level,
+              toVersion: toVer.code,
             })
             .from(requirementRelationships)
-            .innerJoin(smartReq, eq(smartReq.id, requirementRelationships.fromRequirementVersionId))
-            .innerJoin(gfsReq, eq(gfsReq.id, requirementRelationships.toRequirementVersionId))
-            .orderBy(asc(smartReq.sortKey));
+            .innerJoin(fromReq, eq(fromReq.id, requirementRelationships.fromRequirementVersionId))
+            .innerJoin(toReq, eq(toReq.id, requirementRelationships.toRequirementVersionId))
+            .innerJoin(fromVer, eq(fromVer.id, fromReq.standardVersionId))
+            .innerJoin(toVer, eq(toVer.id, toReq.standardVersionId))
+            .where(conditions.length ? and(...conditions) : undefined)
+            .orderBy(asc(fromReq.sortKey));
 
           return {
             relationships: rows.map((row) => ({
@@ -226,7 +245,13 @@ export function adminRoutes(db: Database) {
             })),
           };
         },
-        { detail: { summary: "Stored Smart ↔ GFS relationships" } },
+        {
+          query: t.Object({
+            from: t.Optional(t.String()),
+            to: t.Optional(t.String()),
+          }),
+          detail: { summary: "Stored requirement relationships between versions" },
+        },
       )
 
       .get(

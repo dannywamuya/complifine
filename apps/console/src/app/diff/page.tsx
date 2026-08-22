@@ -1,5 +1,8 @@
 import { api } from "@/lib/api";
+import { certScopeFromCookie } from "@/lib/scope-server";
+import { scopeQuery } from "@/lib/scope";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -11,76 +14,138 @@ import {
 } from "@/components/ui/table";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Smart vs GFS" };
+export const metadata = { title: "Compare" };
 
-interface DiffReport {
-  matched: number;
-  smartOnly: string[];
-  gfsOnly: string[];
-  escalations: Array<{
-    sourceRequirementId: string;
-    smartLevel: string;
-    gfsLevel: string;
-    textSimilarity: number;
-  }>;
-  textChanges: Array<{ sourceRequirementId: string; textSimilarity: number }>;
+interface VersionsResponse {
+  versions: Array<{ code: string; name: string; standardCode: string }>;
 }
 
-export default async function DiffPage() {
-  const report = await api<DiffReport>("/diff");
+interface Relationship {
+  type: string;
+  origin: string;
+  from: string;
+  fromLevel: string;
+  fromVersion: string;
+  to: string;
+  toLevel: string;
+  toVersion: string;
+}
+
+export default async function ComparePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ from?: string; to?: string }>;
+}) {
+  const params = await searchParams;
+  const scope = await certScopeFromCookie();
+  const qs = scopeQuery(scope);
+  const catalog = await api<VersionsResponse>(`/versions${qs ? `?${qs}` : ""}`);
+  const versions = catalog.versions;
+  const from = params.from ?? versions[0]?.code;
+  const to =
+    params.to ??
+    versions.find((version) => version.code !== from && version.standardCode === versions[0]?.standardCode)
+      ?.code ??
+    versions.find((version) => version.code !== from)?.code;
+
+  if (!from || !to) {
+    return (
+      <div className="space-y-2">
+        <h1 className="font-heading text-2xl font-medium">Compare</h1>
+        <p className="text-sm text-muted-foreground">
+          Need two ingested versions in scope to compare relationships.
+        </p>
+      </div>
+    );
+  }
+
+  const { relationships } = await api<{ relationships: Relationship[] }>(
+    `/relationships?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`,
+  );
+  const escalations = relationships.filter((row) => row.fromLevel !== row.toLevel);
 
   return (
     <div className="space-y-6">
       <div>
-        <p className="font-mono text-xs uppercase tracking-widest text-muted-foreground">Correspondence</p>
-        <h1 className="font-heading text-2xl font-medium">Smart ↔ GFS</h1>
+        <p className="font-mono text-xs uppercase tracking-widest text-muted-foreground">
+          Correspondence
+        </p>
+        <h1 className="font-heading text-2xl font-medium">Compare</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Stored links between two versions. Pair any ingested editions — not only Smart and GFS.
+        </p>
       </div>
+      <form className="flex flex-wrap gap-2" method="get">
+        <select
+          name="from"
+          defaultValue={from}
+          className="h-8 rounded-lg border border-input bg-background px-2.5 text-sm"
+        >
+          {versions.map((item) => (
+            <option key={item.code} value={item.code}>
+              {item.name}
+            </option>
+          ))}
+        </select>
+        <select
+          name="to"
+          defaultValue={to}
+          className="h-8 rounded-lg border border-input bg-background px-2.5 text-sm"
+        >
+          {versions.map((item) => (
+            <option key={item.code} value={item.code}>
+              {item.name}
+            </option>
+          ))}
+        </select>
+        <Button type="submit" variant="outline" size="sm">
+          Compare
+        </Button>
+      </form>
       <div className="grid gap-3 sm:grid-cols-3">
         <Card size="sm">
           <CardHeader>
-            <CardDescription>Shared</CardDescription>
-            <CardTitle>{report.matched}</CardTitle>
+            <CardDescription>Linked pairs</CardDescription>
+            <CardTitle>{relationships.length}</CardTitle>
           </CardHeader>
         </Card>
         <Card size="sm">
           <CardHeader>
-            <CardDescription>GFS only</CardDescription>
-            <CardTitle>{report.gfsOnly.length}</CardTitle>
+            <CardDescription>Level changes</CardDescription>
+            <CardTitle>{escalations.length}</CardTitle>
           </CardHeader>
         </Card>
         <Card size="sm">
           <CardHeader>
-            <CardDescription>Escalations</CardDescription>
-            <CardTitle>{report.escalations.length}</CardTitle>
+            <CardDescription>From → to</CardDescription>
+            <CardTitle className="text-base font-medium">
+              {from} → {to}
+            </CardTitle>
           </CardHeader>
         </Card>
       </div>
-      {report.gfsOnly.length > 0 ? (
-        <p className="flex min-w-0 flex-wrap items-center gap-1.5 text-sm">
-          <span>GFS-only:</span>
-          {report.gfsOnly.map((id) => (
-            <Badge key={id} variant="outline" className="font-mono">
-              {id}
-            </Badge>
-          ))}
-        </p>
-      ) : null}
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Criterion</TableHead>
-            <TableHead className="w-[22%]">Smart</TableHead>
-            <TableHead className="w-[22%]">GFS</TableHead>
-            <TableHead className="w-[18%]">Text similarity</TableHead>
+            <TableHead>From</TableHead>
+            <TableHead className="w-[18%]">Level</TableHead>
+            <TableHead>To</TableHead>
+            <TableHead className="w-[18%]">Level</TableHead>
+            <TableHead className="w-[16%]">Type</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {report.escalations.map((row) => (
-            <TableRow key={row.sourceRequirementId}>
-              <TableCell className="font-mono text-sm">{row.sourceRequirementId}</TableCell>
-              <TableCell>{row.smartLevel}</TableCell>
-              <TableCell>{row.gfsLevel}</TableCell>
-              <TableCell className="font-mono text-xs">{row.textSimilarity.toFixed(3)}</TableCell>
+          {(escalations.length ? escalations : relationships.slice(0, 80)).map((row) => (
+            <TableRow key={`${row.from}-${row.to}-${row.type}`}>
+              <TableCell className="font-mono text-sm">{row.from}</TableCell>
+              <TableCell>
+                <Badge variant="secondary">{row.fromLevel}</Badge>
+              </TableCell>
+              <TableCell className="font-mono text-sm">{row.to}</TableCell>
+              <TableCell>
+                <Badge variant="secondary">{row.toLevel}</Badge>
+              </TableCell>
+              <TableCell className="text-muted-foreground">{row.type}</TableCell>
             </TableRow>
           ))}
         </TableBody>

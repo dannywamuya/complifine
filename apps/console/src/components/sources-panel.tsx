@@ -1,10 +1,12 @@
+"use client";
+
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { BookOpen } from "lucide-react";
 import { LevelBadge } from "@/components/level-badge";
 import { Badge } from "@/components/ui/badge";
 import type { Citation, SearchHit } from "@/lib/chat";
-import { EDITIONS } from "@/lib/editions";
+import { useCertScope } from "@/components/cert-scope";
 import { cn } from "@/lib/utils";
 
 export function SourcesPanel({
@@ -115,7 +117,8 @@ function Group({ label, children }: { label: string; children: ReactNode }) {
 }
 
 function SourceHit({ hit, rank }: { hit: SearchHit; rank: number }) {
-  const edition = EDITIONS.find((item) => item.value === hit.edition)?.label ?? hit.edition;
+  const { versions } = useCertScope();
+  const edition = versions.find((item) => item.code === hit.edition)?.name ?? hit.edition;
   const title = hit.criterion ?? hit.heading ?? hit.document;
   const inner = (
     <div

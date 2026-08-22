@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { api } from "@/lib/api";
+import { certScopeFromCookie } from "@/lib/scope-server";
+import { scopeQuery } from "@/lib/scope";
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
@@ -20,6 +22,7 @@ interface DocumentsResponse {
     type: string;
     authority: string;
     edition: string;
+    standardName?: string;
     sourceUrl: string | null;
     pages: number | null;
     status: string;
@@ -29,7 +32,9 @@ interface DocumentsResponse {
 }
 
 export default async function SourcesPage() {
-  const data = await api<DocumentsResponse>("/documents");
+  const scope = await certScopeFromCookie();
+  const qs = scopeQuery(scope);
+  const data = await api<DocumentsResponse>(`/documents${qs ? `?${qs}` : ""}`);
 
   return (
     <div className="space-y-6">
@@ -41,7 +46,7 @@ export default async function SourcesPage() {
         <TableHeader>
           <TableRow>
             <TableHead>Title</TableHead>
-            <TableHead className="w-[16%]">Edition</TableHead>
+            <TableHead className="w-[16%]">Version</TableHead>
             <TableHead className="w-[14%]">Type</TableHead>
             <TableHead className="w-[12%]">Binding</TableHead>
             <TableHead className="w-[12%]">Status</TableHead>

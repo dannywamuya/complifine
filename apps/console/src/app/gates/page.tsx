@@ -1,5 +1,6 @@
 import { api } from "@/lib/api";
-import { EDITIONS } from "@/lib/editions";
+import { certScopeFromCookie } from "@/lib/scope-server";
+import { scopeQuery } from "@/lib/scope";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -28,13 +29,29 @@ interface GateReport {
   }>;
 }
 
+interface VersionsResponse {
+  versions: Array<{ code: string; name: string }>;
+}
+
 export default async function GatesPage({
   searchParams,
 }: {
   searchParams: Promise<{ version?: string }>;
 }) {
   const params = await searchParams;
-  const version = params.version ?? "ifa-v6-smart-fv";
+  const scope = await certScopeFromCookie();
+  const qs = scopeQuery(scope);
+  const catalog = await api<VersionsResponse>(`/versions${qs ? `?${qs}` : ""}`);
+  const version = params.version ?? catalog.versions[0]?.code;
+  if (!version) {
+    return (
+      <div className="space-y-2">
+        <h1 className="font-heading text-2xl font-medium">Quality gates</h1>
+        <p className="text-sm text-muted-foreground">No versions in the current certification filter.</p>
+      </div>
+    );
+  }
+
   const report = await api<GateReport>(`/versions/${version}/gates`);
 
   return (
@@ -56,9 +73,9 @@ export default async function GatesPage({
           defaultValue={version}
           className="h-8 rounded-lg border border-input bg-background px-2.5 text-sm"
         >
-          {EDITIONS.map((edition) => (
-            <option key={edition.value} value={edition.value}>
-              {edition.label}
+          {catalog.versions.map((item) => (
+            <option key={item.code} value={item.code}>
+              {item.name}
             </option>
           ))}
         </select>

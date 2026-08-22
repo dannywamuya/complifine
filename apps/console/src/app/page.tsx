@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { api } from "@/lib/api";
+import { certScopeFromCookie } from "@/lib/scope-server";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -21,6 +22,8 @@ interface Status {
     name: string;
     edition: string;
     status: string;
+    standardCode: string;
+    standardName: string;
     criteria: number;
     documents: number;
     fetched: number;
@@ -49,6 +52,7 @@ export default async function OverviewPage() {
   let jobs: JobsResponse | null = null;
   let storage: Storage | null = null;
   let error: string | null = null;
+  const scope = await certScopeFromCookie();
 
   try {
     [status, jobs, storage] = await Promise.all([
@@ -60,6 +64,10 @@ export default async function OverviewPage() {
     error = (err as Error).message;
   }
 
+  const versions = (status?.versions ?? []).filter(
+    (version) => scope.length === 0 || scope.includes(version.standardCode),
+  );
+
   return (
     <div className="space-y-6">
       <div>
@@ -68,12 +76,12 @@ export default async function OverviewPage() {
       </div>
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
       <div className="grid gap-3 sm:grid-cols-3">
-        {(status?.versions ?? []).map((version) => (
+        {versions.map((version) => (
           <Link key={version.code} href={`/versions/${version.code}`}>
             <Card className="h-full hover:bg-muted/30">
               <CardHeader>
                 <CardDescription className="font-mono text-xs uppercase">
-                  {version.edition} · {version.status}
+                  {version.standardName} · {version.edition} · {version.status}
                 </CardDescription>
                 <CardTitle>{version.name}</CardTitle>
               </CardHeader>

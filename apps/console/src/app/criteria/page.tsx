@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { api } from "@/lib/api";
-import { EDITIONS } from "@/lib/editions";
+import { certScopeFromCookie } from "@/lib/scope-server";
+import { scopeQuery } from "@/lib/scope";
 import { LevelBadge } from "@/components/level-badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,18 +28,45 @@ interface Listing {
   }>;
 }
 
+interface VersionsResponse {
+  versions: Array<{
+    code: string;
+    name: string;
+    levelScheme?: string;
+  }>;
+}
+
+interface VersionDetail {
+  levelOptions?: Array<{ code: string; label: string; count: number }>;
+}
+
 export default async function CriteriaPage({
   searchParams,
 }: {
   searchParams: Promise<{ version?: string; q?: string; level?: string }>;
 }) {
   const params = await searchParams;
-  const version = params.version ?? "ifa-v6-smart-fv";
+  const scope = await certScopeFromCookie();
+  const qs = scopeQuery(scope);
+  const catalog = await api<VersionsResponse>(`/versions${qs ? `?${qs}` : ""}`);
+  const version = params.version ?? catalog.versions[0]?.code;
+  if (!version) {
+    return (
+      <div className="space-y-2">
+        <h1 className="font-heading text-2xl font-medium">Criteria</h1>
+        <p className="text-sm text-muted-foreground">No versions in the current certification filter.</p>
+      </div>
+    );
+  }
+
   const query = new URLSearchParams();
   if (params.q) query.set("q", params.q);
   if (params.level) query.set("level", params.level);
   query.set("limit", "80");
-  const data = await api<Listing>(`/versions/${version}/requirements?${query}`);
+  const [data, detail] = await Promise.all([
+    api<Listing>(`/versions/${version}/requirements?${query}`),
+    api<VersionDetail>(`/versions/${version}`),
+  ]);
 
   return (
     <div className="space-y-6">
@@ -55,18 +83,20 @@ export default async function CriteriaPage({
           className="h-8 rounded-lg border border-input bg-background px-2.5 text-sm"
         >
           <option value="">All levels</option>
-          <option value="major_must">Major Must</option>
-          <option value="minor_must">Minor Must</option>
-          <option value="recommendation">Recommendation</option>
+          {(detail.levelOptions ?? []).map((option) => (
+            <option key={option.code} value={option.code}>
+              {option.label}
+            </option>
+          ))}
         </select>
         <select
           name="version"
           defaultValue={version}
           className="h-8 rounded-lg border border-input bg-background px-2.5 text-sm"
         >
-          {EDITIONS.map((edition) => (
-            <option key={edition.value} value={edition.value}>
-              {edition.label}
+          {catalog.versions.map((item) => (
+            <option key={item.code} value={item.code}>
+              {item.name}
             </option>
           ))}
         </select>

@@ -3,17 +3,10 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { api } from "@/lib/api";
-import { EDITIONS } from "@/lib/editions";
+import { VersionSelect, useScopedVersionState } from "@/components/version-select";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -50,7 +43,7 @@ interface JobsResponse {
 }
 
 export default function IngestPage() {
-  const [version, setVersion] = useState("ifa-v6-smart-fv");
+  const [version, setVersion] = useScopedVersionState();
   const [data, setData] = useState<JobsResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState<string | null>(null);
@@ -116,18 +109,7 @@ export default function IngestPage() {
         </Alert>
       ) : null}
       <div className="flex flex-wrap items-center gap-2">
-        <Select value={version} onValueChange={setVersion}>
-          <SelectTrigger className="w-full min-w-0 max-w-48">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {EDITIONS.map((edition) => (
-              <SelectItem key={edition.value} value={edition.value}>
-                {edition.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <VersionSelect value={version} onValueChange={setVersion} />
         {STEPS.map((step) => (
           <Button
             key={step.id}

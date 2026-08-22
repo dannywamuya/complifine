@@ -4,17 +4,18 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   BookOpen,
+  Calendar,
   Database,
   FileSearch,
   GitCompare,
   LayoutDashboard,
   ListChecks,
+  Network,
   Radar,
   ScrollText,
   Search,
   ShieldCheck,
   Stamp,
-  Calendar,
 } from "lucide-react";
 import {
   Sidebar,
@@ -31,6 +32,7 @@ import {
 
 const LINKS = [
   { href: "/", label: "Overview", icon: LayoutDashboard },
+  { href: "/graph", label: "Graph", icon: Network },
   { href: "/ingest", label: "Ingest", icon: Database },
   { href: "/versions", label: "Versions", icon: BookOpen },
   { href: "/sources", label: "Sources", icon: ScrollText },
@@ -38,7 +40,7 @@ const LINKS = [
   { href: "/search", label: "Search", icon: Search },
   { href: "/gates", label: "Gates", icon: ShieldCheck },
   { href: "/review", label: "Review", icon: Stamp },
-  { href: "/diff", label: "Smart ↔ GFS", icon: GitCompare },
+  { href: "/diff", label: "Compare", icon: GitCompare },
   { href: "/watch", label: "Watch", icon: Radar },
   { href: "/demo", label: "Demos", icon: Calendar },
   { href: "/audit", label: "Audit", icon: FileSearch },

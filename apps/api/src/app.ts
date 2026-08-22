@@ -52,6 +52,7 @@ import {
 } from "@complifine/ai";
 import { recordReview, runGates, transitionVersion } from "@complifine/ingestion";
 import { adminRoutes } from "./admin.ts";
+import { knowledgeGraph, listStandards, lookupRequirementIds, parseCodeList } from "./catalog.ts";
 import { httpError } from "./errors.ts";
 import { authModule } from "./auth/plugin.ts";
 import { demoRoutes } from "./demo.ts";
@@ -88,7 +89,7 @@ export function createApp(database = createDatabase()) {
               title: "CompliFine API",
               version: "0.1.0",
               description:
-                "GLOBALG.A.P. IFA v6 knowledge base: versions, criteria, hybrid search, the compliance agent, and quality gates.",
+                "Multi-standard compliance knowledge base: certifications, versions, criteria, hybrid search, the agent, and quality gates.",
             },
             servers: [{ url: `http://localhost:${env().API_PORT}` }],
           },
@@ -120,7 +121,20 @@ export function createApp(database = createDatabase()) {
       .get(
         "/status",
         async () => {
-          const versions = await db.select().from(standardVersions).orderBy(standardVersions.code);
+          const versions = await db
+            .select({
+              id: standardVersions.id,
+              code: standardVersions.code,
+              name: standardVersions.name,
+              edition: standardVersions.edition,
+              status: standardVersions.status,
+              standardId: standardVersions.standardId,
+              standardCode: standards.code,
+              standardName: standards.name,
+            })
+            .from(standardVersions)
+            .innerJoin(standards, eq(standards.id, standardVersions.standardId))
+            .orderBy(standardVersions.code);
           const chunks = await db
             .select({
               model: chunkEmbeddings.model,
@@ -148,6 +162,8 @@ export function createApp(database = createDatabase()) {
               name: version.name,
               edition: version.edition,
               status: version.status,
+              standardCode: version.standardCode,
+              standardName: version.standardName,
               criteria: Number(requirements?.value ?? 0),
               documents: documents.length,
               fetched: documents.filter((document) => document.status !== "registered").length,
@@ -165,12 +181,35 @@ export function createApp(database = createDatabase()) {
         { detail: { summary: "Knowledge-base coverage at a glance" } },
       )
 
+      .get(
+        "/standards",
+        async () => listStandards(db),
+        { detail: { summary: "Certifications and their ingested versions" } },
+      )
+
+      .get(
+        "/graph",
+        async ({ query }) =>
+          knowledgeGraph(db, {
+            standardCodes: parseCodeList(query.standards),
+            detail: query.detail === "sections" ? "sections" : "overview",
+          }),
+        {
+          query: t.Object({
+            standards: t.Optional(t.String()),
+            detail: t.Optional(t.String()),
+          }),
+          detail: { summary: "Aggregated knowledge graph of certs, versions, controls and links" },
+        },
+      )
+
       // ---------------------------------------------------------------------
       // Versions
       // ---------------------------------------------------------------------
       .get(
         "/versions",
-        async () => {
+        async ({ query }) => {
+          const standardCodes = parseCodeList(query.standards);
           const rows = await db
             .select({
               id: standardVersions.id,
@@ -180,21 +219,30 @@ export function createApp(database = createDatabase()) {
               version: standardVersions.version,
               scope: standardVersions.scope,
               status: standardVersions.status,
+              levelScheme: standardVersions.levelScheme,
               effectiveDate: standardVersions.effectiveDate,
               publishedAt: standardVersions.publishedAt,
+              standardCode: standards.code,
+              standardName: standards.name,
+              publisher: standards.publisher,
               criteria: count(requirementVersions.id),
             })
             .from(standardVersions)
+            .innerJoin(standards, eq(standards.id, standardVersions.standardId))
             .leftJoin(
               requirementVersions,
               eq(requirementVersions.standardVersionId, standardVersions.id),
             )
-            .groupBy(standardVersions.id)
+            .where(standardCodes.length ? inArray(standards.code, standardCodes) : undefined)
+            .groupBy(standardVersions.id, standards.id)
             .orderBy(standardVersions.code);
 
           return { versions: rows };
         },
-        { detail: { summary: "List ingested standard versions" } },
+        {
+          query: t.Object({ standards: t.Optional(t.String()) }),
+          detail: { summary: "List ingested standard versions" },
+        },
       )
 
       .get(
@@ -238,8 +286,13 @@ export function createApp(database = createDatabase()) {
             allowedNext: VERSION_TRANSITIONS[version.status as VersionStatus],
             standard,
             levels: Object.fromEntries(
-              levels.map((row) => [requirementLevelLabel(row.level), Number(row.count)]),
+              levels.map((row) => [requirementLevelLabel(row.level, version.levelScheme), Number(row.count)]),
             ),
+            levelOptions: levels.map((row) => ({
+              code: row.level,
+              label: requirementLevelLabel(row.level, version.levelScheme),
+              count: Number(row.count),
+            })),
             documents: documents.map((document) => ({
               ...document,
               type: DOCUMENT_TYPE_LABELS[document.type],
@@ -338,10 +391,8 @@ export function createApp(database = createDatabase()) {
 
           const conditions = [eq(requirementVersions.standardVersionId, version.id)];
           if (query.level) {
-            const levels = query.level.split(",") as Array<
-              "major_must" | "minor_must" | "recommendation"
-            >;
-            conditions.push(inArray(requirementVersions.level, levels));
+            const levels = query.level.split(",").map((part) => part.trim()).filter(Boolean);
+            if (levels.length) conditions.push(inArray(requirementVersions.level, levels));
           }
           if (query.q) {
             conditions.push(
@@ -385,7 +436,7 @@ export function createApp(database = createDatabase()) {
             offset,
             requirements: rows.map((row) => ({
               ...row,
-              level: requirementLevelLabel(row.level),
+              level: requirementLevelLabel(row.level, version.levelScheme),
             })),
           };
         },
@@ -528,14 +579,13 @@ export function createApp(database = createDatabase()) {
       .get(
         "/requirements/:id",
         async ({ params, query }) => {
-          const { canonicalizeCriterionNumber } = await import("@complifine/core");
-          const candidates = params.id.match(/^(FV-)/i)
-            ? [canonicalizeCriterionNumber(params.id) ?? params.id]
-            : ["FV-Smart", "FV-GFS"].map(
-                (prefix) => canonicalizeCriterionNumber(`${prefix} ${params.id}`) ?? "",
-              ).filter(Boolean);
-
-          const conditions = [inArray(requirementVersions.sourceRequirementId, candidates)];
+          const candidates = await lookupRequirementIds(params.id);
+          const conditions = [
+            or(
+              inArray(requirementVersions.sourceRequirementId, candidates),
+              ilike(requirementVersions.sourceRequirementId, `%${params.id}%`),
+            )!,
+          ];
           if (query.version) {
             const version = await versionByCode(db, query.version);
             if (!version) return httpError(404, `Unknown version "${query.version}"`);
@@ -555,6 +605,7 @@ export function createApp(database = createDatabase()) {
               status: requirementVersions.status,
               edition: standardVersions.code,
               editionName: standardVersions.name,
+              levelScheme: standardVersions.levelScheme,
               section: standardSections.title,
               sectionNumber: standardSections.sourceIdentifier,
               document: standardDocuments.title,
@@ -576,7 +627,7 @@ export function createApp(database = createDatabase()) {
           return {
             requirements: rows.map((row) => ({
               ...row,
-              level: requirementLevelLabel(row.level),
+              level: requirementLevelLabel(row.level, row.levelScheme),
             })),
           };
         },
@@ -590,10 +641,14 @@ export function createApp(database = createDatabase()) {
       .get(
         "/documents",
         async ({ query }) => {
+          const standardCodes = parseCodeList(query.standards);
           const conditions = [];
           if (query.version) {
             const version = await versionByCode(db, query.version);
             if (version) conditions.push(eq(standardDocuments.standardVersionId, version.id));
+          }
+          if (standardCodes.length) {
+            conditions.push(inArray(standards.code, standardCodes));
           }
           if (query.type) {
             conditions.push(eq(standardDocuments.documentType, query.type as DocumentType));
@@ -606,6 +661,8 @@ export function createApp(database = createDatabase()) {
               type: standardDocuments.documentType,
               authorityLevel: standardDocuments.authorityLevel,
               edition: standardVersions.code,
+              standardCode: standards.code,
+              standardName: standards.name,
               filename: standardDocuments.filename,
               sourceUrl: standardDocuments.sourceUrl,
               pages: standardDocuments.pageCount,
@@ -619,6 +676,7 @@ export function createApp(database = createDatabase()) {
               standardVersions,
               eq(standardVersions.id, standardDocuments.standardVersionId),
             )
+            .innerJoin(standards, eq(standards.id, standardVersions.standardId))
             .where(conditions.length > 0 ? and(...conditions) : undefined)
             .orderBy(asc(standardDocuments.authorityLevel), asc(standardDocuments.slug));
 
@@ -634,6 +692,7 @@ export function createApp(database = createDatabase()) {
         {
           query: t.Object({
             version: t.Optional(t.String()),
+            standards: t.Optional(t.String()),
             type: t.Optional(t.String()),
           }),
           detail: { summary: "Source documents, with authority and provenance" },
