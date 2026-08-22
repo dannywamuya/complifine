@@ -51,7 +51,7 @@ export default function WatchPage() {
 
   return (
     <div className="space-y-6">
-      <div>
+      <div id="tour-watch" className="w-fit max-w-full">
         <p className="font-mono text-xs uppercase tracking-widest text-muted-foreground">Publisher</p>
         <h1 className="font-heading text-2xl font-medium">Watch</h1>
         <p className="mt-1 max-w-2xl text-sm text-muted-foreground">

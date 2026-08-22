@@ -21,6 +21,15 @@ export const REFRESH_COOKIE = "cf_refresh";
 const ACCESS_MAX_AGE = 60 * 15;
 const REFRESH_MAX_AGE = 60 * 60 * 24 * 30;
 
+type CookieJar = Record<
+  string,
+  { value?: unknown; set: (attrs: Record<string, unknown>) => void; remove: () => void } | undefined
+>;
+
+type AccessJwt = {
+  sign: (payload: Record<string, string | undefined>) => Promise<string>;
+};
+
 export interface AccessClaims {
   readonly sub: string;
   readonly email: string;
@@ -76,6 +85,66 @@ function cookieToken(value: unknown): string | undefined {
   return typeof value === "string" && value.length > 0 ? value : undefined;
 }
 
+function authFromUser(
+  user: typeof users.$inferSelect,
+  orgId: string | null,
+  role: MembershipRole | null,
+): AuthUser {
+  return {
+    id: user.id,
+    email: user.email,
+    name: user.name,
+    kind: user.kind,
+    orgId,
+    role,
+  };
+}
+
+async function membershipFor(db: Database, userId: string) {
+  const [membership] = await db.select().from(memberships).where(eq(memberships.userId, userId)).limit(1);
+  return membership;
+}
+
+async function writeAccessCookie(accessJwt: AccessJwt, cookie: CookieJar, user: AuthUser) {
+  const access = await accessJwt.sign({
+    sub: user.id,
+    email: user.email,
+    kind: user.kind,
+    ...(user.orgId ? { orgId: user.orgId } : {}),
+    ...(user.role ? { role: user.role } : {}),
+  });
+  cookie[ACCESS_COOKIE]?.set({ value: access, ...cookieAttrs(ACCESS_MAX_AGE) });
+  return access;
+}
+
+/**
+ * Mint a new access JWT from a still-valid refresh cookie.
+ * Does not rotate the refresh token — rotation races concurrent 401 retries
+ * and logs the operator out. Logout still revokes the row.
+ */
+async function resumeFromRefresh(
+  db: Database,
+  accessJwt: AccessJwt,
+  cookie: CookieJar,
+): Promise<AuthUser | null> {
+  const raw = cookieToken(cookie[REFRESH_COOKIE]?.value);
+  if (!raw) return null;
+  const [stored] = await db
+    .select()
+    .from(refreshTokens)
+    .where(and(eq(refreshTokens.tokenHash, hashRefreshToken(raw)), isNull(refreshTokens.revokedAt)));
+  if (!stored || stored.expiresAt.getTime() < Date.now()) return null;
+  const [user] = await db.select().from(users).where(eq(users.id, stored.userId));
+  if (!user) return null;
+  const membership = await membershipFor(db, user.id);
+  const auth = authFromUser(user, membership?.organizationId ?? null, membership?.role ?? null);
+  await writeAccessCookie(accessJwt, cookie, auth);
+  const slid = new Date(Date.now() + REFRESH_MAX_AGE * 1000);
+  await db.update(refreshTokens).set({ expiresAt: slid }).where(eq(refreshTokens.id, stored.id));
+  cookie[REFRESH_COOKIE]?.set({ value: raw, ...cookieAttrs(REFRESH_MAX_AGE) });
+  return auth;
+}
+
 export async function assertOrgMember(db: Database, userId: string, organizationId: string) {
   const [row] = await db
     .select()
@@ -90,36 +159,25 @@ export function authModule(db: Database) {
     .derive(async ({ accessJwt, cookie, headers }): Promise<{ auth: AuthUser | null }> => {
       const bearer = headers.authorization?.match(/^Bearer\s+(.+)$/i)?.[1];
       const token = bearer ?? cookieToken(cookie[ACCESS_COOKIE]?.value);
-      if (!token) return { auth: null };
+      if (token) {
+        const claims = (await accessJwt.verify(token)) as AccessClaims | false;
+        if (claims && claims.sub) {
+          const [user] = await db.select().from(users).where(eq(users.id, claims.sub));
+          if (!user) return { auth: null };
 
-      const claims = (await accessJwt.verify(token)) as AccessClaims | false;
-      if (!claims || !claims.sub) return { auth: null };
+          let orgId = claims.orgId ?? null;
+          let role = claims.role ?? null;
+          if (!orgId && user.kind === "member") {
+            const membership = await membershipFor(db, user.id);
+            orgId = membership?.organizationId ?? null;
+            role = membership?.role ?? null;
+          }
 
-      const [user] = await db.select().from(users).where(eq(users.id, claims.sub));
-      if (!user) return { auth: null };
-
-      let orgId = claims.orgId ?? null;
-      let role = claims.role ?? null;
-      if (!orgId && user.kind === "member") {
-        const [membership] = await db
-          .select()
-          .from(memberships)
-          .where(eq(memberships.userId, user.id))
-          .limit(1);
-        orgId = membership?.organizationId ?? null;
-        role = membership?.role ?? null;
+          return { auth: authFromUser(user, orgId, role) };
+        }
       }
 
-      return {
-        auth: {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          kind: user.kind,
-          orgId,
-          role,
-        },
-      };
+      return { auth: await resumeFromRefresh(db, accessJwt, cookie) };
     })
     .post("/auth/register", async ({ body, accessJwt, cookie, request }) => {
       const email = normalizeEmail(body.email);
@@ -176,30 +234,11 @@ export function authModule(db: Database) {
       body: t.Object({ email: t.String(), password: t.String() }),
       detail: { summary: "Sign in" },
     })
-    .post("/auth/refresh", async ({ accessJwt, cookie, request }) => {
-      const raw = cookieToken(cookie[REFRESH_COOKIE]?.value);
-      if (!raw) throw status(401, { error: "No refresh token" });
-      const [stored] = await db
-        .select()
-        .from(refreshTokens)
-        .where(and(eq(refreshTokens.tokenHash, hashRefreshToken(raw)), isNull(refreshTokens.revokedAt)));
-      if (!stored || stored.expiresAt.getTime() < Date.now()) {
-        throw status(401, { error: "Refresh token is invalid" });
-      }
-      await db.update(refreshTokens).set({ revokedAt: new Date() }).where(eq(refreshTokens.id, stored.id));
-      const [user] = await db.select().from(users).where(eq(users.id, stored.userId));
-      if (!user) throw status(401, { error: "Account no longer exists" });
-      const [membership] = await db.select().from(memberships).where(eq(memberships.userId, user.id)).limit(1);
-      return issueSession(
-        db,
-        user,
-        membership?.organizationId ?? null,
-        membership?.role ?? null,
-        accessJwt,
-        cookie,
-        request,
-      );
-    }, { detail: { summary: "Rotate the refresh token" } })
+    .post("/auth/refresh", async ({ auth, accessJwt, cookie }) => {
+      const user = auth ?? (await resumeFromRefresh(db, accessJwt, cookie));
+      if (!user) throw status(401, { error: "Refresh token is invalid" });
+      return { user };
+    }, { detail: { summary: "Mint a new access cookie from the refresh cookie" } })
     .post("/auth/logout", async ({ cookie }) => {
       const raw = cookieToken(cookie[REFRESH_COOKIE]?.value);
       if (raw) {
@@ -231,18 +270,12 @@ async function issueSession(
   user: typeof users.$inferSelect,
   orgId: string | null,
   role: MembershipRole | null,
-  accessJwt: { sign: (payload: Record<string, string | undefined>) => Promise<string> },
-  cookie: Record<string, { set: (value: Record<string, unknown>) => void; remove: () => void } | undefined>,
+  accessJwt: AccessJwt,
+  cookie: CookieJar,
   request: Request,
 ) {
-  const claims: Record<string, string | undefined> = {
-    sub: user.id,
-    email: user.email,
-    kind: user.kind,
-    ...(orgId ? { orgId } : {}),
-    ...(role ? { role } : {}),
-  };
-  const access = await accessJwt.sign(claims);
+  const auth = authFromUser(user, orgId, role);
+  const access = await writeAccessCookie(accessJwt, cookie, auth);
   const refresh = newRefreshToken();
   await db.insert(refreshTokens).values({
     userId: user.id,
@@ -250,10 +283,6 @@ async function issueSession(
     expiresAt: new Date(Date.now() + REFRESH_MAX_AGE * 1000),
     userAgent: request.headers.get("user-agent"),
   });
-  cookie[ACCESS_COOKIE]?.set({ value: access, ...cookieAttrs(ACCESS_MAX_AGE) });
   cookie[REFRESH_COOKIE]?.set({ value: refresh.raw, ...cookieAttrs(REFRESH_MAX_AGE) });
-  return {
-    user: { id: user.id, email: user.email, name: user.name, kind: user.kind, orgId, role },
-    accessToken: access,
-  };
+  return { user: auth, accessToken: access };
 }

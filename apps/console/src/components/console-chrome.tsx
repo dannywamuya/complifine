@@ -2,11 +2,12 @@
 
 import { useEffect, useState, type ReactNode } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { api } from "@/lib/api";
+import { api, startSessionKeepAlive } from "@/lib/api";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { CertScopeFilter, CertScopeProvider } from "@/components/cert-scope";
+import { OnboardingTrigger } from "@/components/onboarding-trigger";
 
 interface Me {
   id: string;
@@ -37,6 +38,11 @@ export function ConsoleChrome({ children }: { children: ReactNode }) {
       });
   }, [path, router]);
 
+  useEffect(() => {
+    if (!me) return;
+    return startSessionKeepAlive();
+  }, [me]);
+
   if (path === "/login") {
     return <>{children}</>;
   }
@@ -55,7 +61,10 @@ export function ConsoleChrome({ children }: { children: ReactNode }) {
               <SidebarTrigger />
               <span className="truncate text-sm text-muted-foreground md:hidden">CompliFine</span>
               <span className="ml-auto flex min-w-0 items-center gap-2">
-                <CertScopeFilter />
+                <span id="tour-cert-scope">
+                  <CertScopeFilter />
+                </span>
+                <OnboardingTrigger />
                 <span className="hidden truncate text-sm text-muted-foreground sm:inline">{me.name}</span>
               </span>
             </header>

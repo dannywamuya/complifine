@@ -52,7 +52,7 @@ export default async function CriteriaPage({
   const version = params.version ?? catalog.versions[0]?.code;
   if (!version) {
     return (
-      <div className="space-y-2">
+      <div id="tour-criteria" className="w-fit max-w-full space-y-2">
         <h1 className="font-heading text-2xl font-medium">Criteria</h1>
         <p className="text-sm text-muted-foreground">No versions in the current certification filter.</p>
       </div>
@@ -70,7 +70,7 @@ export default async function CriteriaPage({
 
   return (
     <div className="space-y-6">
-      <div>
+      <div id="tour-criteria" className="w-fit max-w-full">
         <p className="font-mono text-xs uppercase tracking-widest text-muted-foreground">{version}</p>
         <h1 className="font-heading text-2xl font-medium">Criteria</h1>
         <p className="text-sm text-muted-foreground">{data.total} rows</p>

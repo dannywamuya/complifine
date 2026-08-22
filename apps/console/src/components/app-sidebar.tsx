@@ -71,7 +71,7 @@ export function AppSidebar() {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <SidebarGroup>
+        <SidebarGroup id="tour-sidebar">
           <SidebarGroupLabel>Knowledge base</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>

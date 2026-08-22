@@ -50,7 +50,7 @@ export default async function ComparePage({
 
   if (!from || !to) {
     return (
-      <div className="space-y-2">
+      <div id="tour-compare" className="w-fit max-w-full space-y-2">
         <h1 className="font-heading text-2xl font-medium">Compare</h1>
         <p className="text-sm text-muted-foreground">
           Need two ingested versions in scope to compare relationships.
@@ -66,7 +66,7 @@ export default async function ComparePage({
 
   return (
     <div className="space-y-6">
-      <div>
+      <div id="tour-compare" className="w-fit max-w-full">
         <p className="font-mono text-xs uppercase tracking-widest text-muted-foreground">
           Correspondence
         </p>

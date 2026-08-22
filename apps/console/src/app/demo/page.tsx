@@ -45,7 +45,7 @@ export default function DemoInboxPage() {
 
   return (
     <div className="space-y-6">
-      <div>
+      <div id="tour-demo" className="w-fit max-w-full">
         <h1 className="font-heading text-2xl font-medium">Demo requests</h1>
         <p className="text-sm text-muted-foreground">Inbound Book a Demo form from the public site.</p>
       </div>

@@ -22,7 +22,7 @@ export default async function GraphPage({
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
+        <div id="tour-graph" className="w-fit max-w-full">
           <p className="font-mono text-xs uppercase tracking-widest text-muted-foreground">
             Knowledge base
           </p>

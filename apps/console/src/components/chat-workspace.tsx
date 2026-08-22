@@ -211,7 +211,7 @@ export function ChatWorkspace() {
   return (
     <div className="-m-6 flex h-[calc(100svh-3rem)] min-w-0 flex-col overflow-hidden bg-background">
       <header className="flex min-w-0 flex-wrap items-center justify-between gap-3 border-b px-4 py-3 sm:px-5">
-        <div>
+        <div id="tour-search">
           <p className="font-mono text-[10px] tracking-widest text-muted-foreground uppercase">
             Retrieval debug
           </p>

@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { api } from "@/lib/api";
+import { api, startSessionKeepAlive } from "@/lib/api";
 
 interface Me {
   id: string;
@@ -23,6 +23,11 @@ export function SiteHeader() {
       .then(setMe)
       .catch(() => setMe(null));
   }, [path]);
+
+  useEffect(() => {
+    if (!me) return;
+    return startSessionKeepAlive();
+  }, [me]);
 
   const links = inApp
     ? [
