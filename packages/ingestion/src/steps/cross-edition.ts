@@ -22,11 +22,11 @@
 
 import { eq, type Database } from "@complifine/db";
 import { requirementRelationships, requirementVersions, standardVersions } from "@complifine/db";
-import { diceCoefficient, parseCriterionNumber, type RequirementLevel } from "@complifine/core";
+import { diceCoefficient, parseCriterionNumber } from "@complifine/core";
 import type { JobContext } from "../jobs.ts";
 
 /** Ordered from most to least demanding, for detecting escalation direction. */
-const LEVEL_SEVERITY: Record<RequirementLevel, number> = {
+const LEVEL_SEVERITY: Record<string, number> = {
   major_must: 3,
   minor_must: 2,
   recommendation: 1,
@@ -34,8 +34,8 @@ const LEVEL_SEVERITY: Record<RequirementLevel, number> = {
 
 export interface EditionDelta {
   readonly sourceRequirementId: string;
-  readonly smartLevel: RequirementLevel;
-  readonly gfsLevel: RequirementLevel;
+  readonly smartLevel: string;
+  readonly gfsLevel: string;
   readonly levelChanged: boolean;
   readonly escalated: boolean;
   readonly textSimilarity: number;
@@ -124,7 +124,7 @@ export async function linkEditions(
     if (!textChanged) identicalTexts++;
 
     const levelChanged = smartRow.level !== gfsRow.level;
-    const escalated = LEVEL_SEVERITY[gfsRow.level] > LEVEL_SEVERITY[smartRow.level];
+    const escalated = (LEVEL_SEVERITY[gfsRow.level] ?? 0) > (LEVEL_SEVERITY[smartRow.level] ?? 0);
 
     const delta: EditionDelta = {
       sourceRequirementId: key,

@@ -25,9 +25,17 @@ import { alias } from "drizzle-orm/pg-core";
 import { and, asc, count, eq, inArray, or, sql, type Database } from "@complifine/db";
 import {
   applicabilityQuestions,
+  controlEvidenceTypes,
+  controlRequirements,
+  controls,
+  evidenceTypes,
+  organizationScopes,
+  organizations,
   requirementApplicability,
   requirementRelationships,
   requirementVersions,
+  siteScopingAnswers,
+  sites,
   standardDocuments,
   standardSections,
   standardVersions,
@@ -39,6 +47,7 @@ import {
   REQUIREMENT_LEVELS,
   canonicalizeCriterionNumber,
   parseSectionNumber,
+  requirementLevelLabel,
   type AuthorityLevel,
   type DocumentType,
 } from "@complifine/core";
@@ -49,6 +58,9 @@ export interface ToolContext {
   readonly db: Database;
   readonly embedder: Embedder | null;
   readonly agentRunId?: string;
+  readonly organizationId?: string;
+  readonly siteId?: string;
+  readonly userId?: string;
   /** Called for every tool invocation, for logging and for the UI. */
   readonly onCall?: (call: {
     name: string;
@@ -60,11 +72,21 @@ export interface ToolContext {
 }
 
 const versionCodeSchema = z
-  .enum(["ifa-v6-smart-fv", "ifa-v6-gfs-fv"])
+  .string()
+  .min(3)
   .describe(
-    "Which edition to search. IFA v6 Smart and IFA v6 GFS are parallel, equally valid " +
-      "editions with different criteria; omit only when the question is genuinely about both.",
+    "Standard version code from the knowledge base, e.g. 'ifa-v6-smart-fv', 'ifa-v6-gfs-fv', " +
+      "'smeta-7-2-pillar', 'smeta-7-4-pillar'. Omit only when the question is genuinely about more than one.",
   );
+
+function requireOrgId(context: ToolContext): string {
+  if (!context.organizationId) {
+    throw new Error(
+      "No organisation is attached to this conversation. Sign in, or answer from the published standard only.",
+    );
+  }
+  return context.organizationId;
+}
 
 /** Wrap a tool body so every call is timed, logged and never throws at the model. */
 function instrument<A, R>(
@@ -109,6 +131,22 @@ async function versionIdFor(db: Database, code: string): Promise<string> {
   return version.id;
 }
 
+function requirementIdentifiers(criterionId: string): string[] {
+  const trimmed = criterionId.trim();
+  if (/^(eti:|smeta-wr:)/i.test(trimmed)) return [trimmed];
+  if (/^ETI\s+/i.test(trimmed)) {
+    const number = trimmed.replace(/^ETI\s+/i, "");
+    return [`eti:${number}`, `ETI ${number}`];
+  }
+  if (/^(FV[\s-])/i.test(trimmed)) {
+    const id = canonicalizeCriterionNumber(trimmed);
+    return id ? [id] : [];
+  }
+  return ["FV-Smart", "FV-GFS"]
+    .map((prefix) => canonicalizeCriterionNumber(`${prefix} ${trimmed}`))
+    .filter((id): id is string => id !== null);
+}
+
 // ---------------------------------------------------------------------------
 
 export function buildTools(context: ToolContext) {
@@ -148,7 +186,9 @@ export function buildTools(context: ToolContext) {
           strategy: result.strategy,
           hits: result.hits.map((hit) => ({
             criterion: hit.requirementId,
-            level: hit.requirementLevel ? REQUIREMENT_LEVEL_LABELS[hit.requirementLevel] : null,
+            level: hit.requirementLevel
+              ? requirementLevelLabel(hit.requirementLevel)
+              : null,
             section: hit.sectionTitle,
             edition: hit.versionCode,
             document: hit.documentTitle,
@@ -170,16 +210,11 @@ export function buildTools(context: ToolContext) {
         versionCode: versionCodeSchema.optional(),
       }),
       execute: instrument(context, "getRequirement", async (args) => {
-        const candidates = args.criterionId.match(/^(FV-)/i)
-          ? [canonicalizeCriterionNumber(args.criterionId)]
-          : ["FV-Smart", "FV-GFS"].map((prefix) =>
-              canonicalizeCriterionNumber(`${prefix} ${args.criterionId}`),
-            );
-
-        const identifiers = candidates.filter((id): id is string => id !== null);
+        const identifiers = requirementIdentifiers(args.criterionId);
         if (identifiers.length === 0) {
           throw new Error(
-            `"${args.criterionId}" is not a criterion number. They look like "FV-Smart 32.10.06".`,
+            `"${args.criterionId}" is not a recognised requirement id. ` +
+              `GLOBALG.A.P. looks like "FV-Smart 32.10.06"; ETI looks like "eti:3.1" or "ETI 3.1".`,
           );
         }
 
@@ -201,6 +236,7 @@ export function buildTools(context: ToolContext) {
             phuRelated: requirementVersions.phuRelated,
             edition: standardVersions.code,
             editionName: standardVersions.name,
+            levelScheme: standardVersions.levelScheme,
             section: standardSections.title,
             sectionNumber: standardSections.sourceIdentifier,
             document: standardDocuments.title,
@@ -220,7 +256,7 @@ export function buildTools(context: ToolContext) {
 
         return rows.map((row) => ({
           ...row,
-          level: REQUIREMENT_LEVEL_LABELS[row.level],
+          level: requirementLevelLabel(row.level, row.levelScheme ?? "globalgap_ifa"),
           naExempt: row.naExempt
             ? "This criterion can never be marked not applicable."
             : undefined,
@@ -254,7 +290,11 @@ export function buildTools(context: ToolContext) {
             and(
               eq(standardSections.standardVersionId, versionId),
               eq(standardSections.depth, 1),
-              eq(standardDocuments.documentType, "checklist"),
+              inArray(standardDocuments.documentType, [
+                "checklist",
+                "base_code",
+                "principles_and_criteria",
+              ]),
             ),
           )
           .groupBy(standardSections.id, standardSections.sourceIdentifier, standardSections.title)
@@ -281,9 +321,15 @@ export function buildTools(context: ToolContext) {
         // Sections are stored as the publisher prints them ("FV 32", "FV 32.10"),
         // but people say "32", "FV 32" and "section 32" interchangeably, and the
         // P&C table of contents drops the leading zero that the checklist keeps.
-        const bare = args.sectionNumber.replace(/^(section\s+)?FV[\s-]*/i, "").trim();
+        const bare = args.sectionNumber
+          .replace(/^(section\s+)?(FV|ETI)[\s-]*/i, "")
+          .trim();
         const parsed = parseSectionNumber(`FV ${bare}`);
-        const candidates = [...new Set([bare, `FV ${bare}`, parsed?.formatted].filter(Boolean))];
+        const candidates = [
+          ...new Set(
+            [bare, `FV ${bare}`, `ETI ${bare}`, parsed?.formatted].filter(Boolean),
+          ),
+        ];
 
         const [section] = await db
           .select({
@@ -296,7 +342,11 @@ export function buildTools(context: ToolContext) {
           .where(
             and(
               eq(standardSections.standardVersionId, versionId),
-              eq(standardDocuments.documentType, "checklist"),
+              inArray(standardDocuments.documentType, [
+                "checklist",
+                "base_code",
+                "principles_and_criteria",
+              ]),
               inArray(standardSections.sourceIdentifier, candidates as string[]),
             ),
           );
@@ -329,7 +379,7 @@ export function buildTools(context: ToolContext) {
           criteriaCount: criteria.length,
           criteria: criteria.map((row) => ({
             ...row,
-            level: REQUIREMENT_LEVEL_LABELS[row.level],
+            level: requirementLevelLabel(row.level),
           })),
         };
       }),
@@ -428,8 +478,8 @@ export function buildTools(context: ToolContext) {
           return matches.map((row) => ({
             smart: row.smart,
             gfs: row.gfs,
-            smartLevel: REQUIREMENT_LEVEL_LABELS[row.smartLevel],
-            gfsLevel: REQUIREMENT_LEVEL_LABELS[row.gfsLevel],
+            smartLevel: requirementLevelLabel(row.smartLevel),
+            gfsLevel: requirementLevelLabel(row.gfsLevel),
             stricterInGfs: row.levelChanged,
             reworded: (row.similarity ?? 1) < 0.99,
           }));
@@ -452,8 +502,8 @@ export function buildTools(context: ToolContext) {
             .filter((row) => row.levelChanged)
             .map((row) => ({
               criterion: row.gfs,
-              smartLevel: REQUIREMENT_LEVEL_LABELS[row.smartLevel],
-              gfsLevel: REQUIREMENT_LEVEL_LABELS[row.gfsLevel],
+              smartLevel: requirementLevelLabel(row.smartLevel),
+              gfsLevel: requirementLevelLabel(row.gfsLevel),
             })),
           reworded: relationships
             .filter((row) => (row.similarity ?? 1) < 0.99)
@@ -505,6 +555,8 @@ export function buildTools(context: ToolContext) {
             "guidance",
             "update",
             "transition_tool",
+            "base_code",
+            "methodology",
           ])
           .optional(),
       }),
@@ -546,6 +598,214 @@ export function buildTools(context: ToolContext) {
           authority: AUTHORITY_LEVEL_LABELS[row.authorityLevel as AuthorityLevel],
           binding: (row.authorityLevel as AuthorityLevel) <= 3,
         }));
+      }),
+    }),
+
+    // -----------------------------------------------------------------------
+    getCompanyContext: tool({
+      description:
+        "The signed-in organisation: name, country, Sedex ZC, sites, and which standard versions they pursue. " +
+        "Call this before answering a question about 'our farm' or 'this company'.",
+      inputSchema: z.object({}),
+      execute: instrument(context, "getCompanyContext", async () => {
+        const orgId = requireOrgId(context);
+        const [org] = await db.select().from(organizations).where(eq(organizations.id, orgId));
+        if (!org) throw new Error("Organisation not found.");
+        const orgSites = await db.select().from(sites).where(eq(sites.organizationId, orgId));
+        const scopes = await db
+          .select({
+            code: standardVersions.code,
+            name: standardVersions.name,
+            edition: standardVersions.edition,
+          })
+          .from(organizationScopes)
+          .innerJoin(standardVersions, eq(standardVersions.id, organizationScopes.standardVersionId))
+          .where(eq(organizationScopes.organizationId, orgId));
+        return {
+          organization: {
+            name: org.name,
+            country: org.country,
+            sedexZc: org.sedexZc,
+          },
+          sites: orgSites.map((site) => ({
+            id: site.id,
+            name: site.name,
+            siteType: site.siteType,
+            location: site.location,
+          })),
+          scopes,
+        };
+      }),
+    }),
+
+    // -----------------------------------------------------------------------
+    listMySites: tool({
+      description: "List the organisation's farms, packhouses and other sites.",
+      inputSchema: z.object({}),
+      execute: instrument(context, "listMySites", async () => {
+        const orgId = requireOrgId(context);
+        return db.select().from(sites).where(eq(sites.organizationId, orgId));
+      }),
+    }),
+
+    // -----------------------------------------------------------------------
+    getSiteProfile: tool({
+      description:
+        "One site: type, location, and saved scoping / SMETA profile answers. " +
+        "Use before getMyApplicableRequirements when the question names a site.",
+      inputSchema: z.object({
+        siteId: z.string().optional().describe("Defaults to the site attached to this conversation."),
+      }),
+      execute: instrument(context, "getSiteProfile", async (args) => {
+        const orgId = requireOrgId(context);
+        const siteId = args.siteId ?? context.siteId;
+        if (!siteId) throw new Error("No site selected. Ask which farm or packhouse, or call listMySites.");
+        const [site] = await db
+          .select()
+          .from(sites)
+          .where(and(eq(sites.id, siteId), eq(sites.organizationId, orgId)));
+        if (!site) throw new Error("That site is not in this organisation.");
+        const answers = await db
+          .select({
+            questionNumber: applicabilityQuestions.sourceNumber,
+            question: applicabilityQuestions.questionText,
+            answer: siteScopingAnswers.answer,
+            versionId: applicabilityQuestions.standardVersionId,
+          })
+          .from(siteScopingAnswers)
+          .innerJoin(applicabilityQuestions, eq(applicabilityQuestions.id, siteScopingAnswers.questionId))
+          .where(eq(siteScopingAnswers.siteId, site.id));
+        return { site, answers };
+      }),
+    }),
+
+    // -----------------------------------------------------------------------
+    getMyApplicableRequirements: tool({
+      description:
+        "Resolve which criteria apply to a saved site using its stored scoping answers. " +
+        "Prefer this over filterChecklist when the producer already has a farm profile.",
+      inputSchema: z.object({
+        versionCode: versionCodeSchema,
+        siteId: z.string().optional(),
+      }),
+      execute: instrument(context, "getMyApplicableRequirements", async (args) => {
+        const orgId = requireOrgId(context);
+        const siteId = args.siteId ?? context.siteId;
+        if (!siteId) throw new Error("No site selected. Ask which site, or call listMySites.");
+        const [site] = await db
+          .select()
+          .from(sites)
+          .where(and(eq(sites.id, siteId), eq(sites.organizationId, orgId)));
+        if (!site) throw new Error("That site is not in this organisation.");
+        const versionId = await versionIdFor(db, args.versionCode);
+        const saved = await db
+          .select({
+            questionNumber: applicabilityQuestions.sourceNumber,
+            answer: siteScopingAnswers.answer,
+          })
+          .from(siteScopingAnswers)
+          .innerJoin(applicabilityQuestions, eq(applicabilityQuestions.id, siteScopingAnswers.questionId))
+          .where(
+            and(
+              eq(siteScopingAnswers.siteId, site.id),
+              eq(applicabilityQuestions.standardVersionId, versionId),
+            ),
+          );
+        const answers = saved
+          .filter(
+            (row): row is { questionNumber: number; answer: "yes" | "no" } =>
+              row.questionNumber !== null && (row.answer === "yes" || row.answer === "no"),
+          )
+          .map((row) => ({ questionNumber: row.questionNumber, answer: row.answer }));
+        const resolution = await resolveChecklist(db, versionId, answers);
+        return { site: { id: site.id, name: site.name }, ...resolution };
+      }),
+    }),
+
+    // -----------------------------------------------------------------------
+    compareStandards: tool({
+      description:
+        "Show a control from the library mapped to GLOBALG.A.P. and SMETA/ETI requirements. " +
+        "Refuse when the control is not mapped. Do not invent a correspondence.",
+      inputSchema: z.object({
+        controlSlug: z
+          .string()
+          .optional()
+          .describe("Control slug, e.g. 'hs-induction-training'. Omit to list mapped controls."),
+      }),
+      execute: instrument(context, "compareStandards", async (args) => {
+        if (!args.controlSlug) {
+          const rows = await db
+            .select({
+              slug: controls.slug,
+              title: controls.title,
+              controlType: controls.controlType,
+            })
+            .from(controls)
+            .orderBy(asc(controls.slug));
+          return { controls: rows, note: "Pass a controlSlug to see the mapped requirements." };
+        }
+
+        const [control] = await db.select().from(controls).where(eq(controls.slug, args.controlSlug));
+        if (!control) {
+          throw new Error(
+            `No control "${args.controlSlug}" in the library. Call compareStandards without a slug to list them.`,
+          );
+        }
+
+        const mapped = await db
+          .select({
+            criterion: requirementVersions.sourceRequirementId,
+            level: requirementVersions.level,
+            principle: requirementVersions.principleText,
+            edition: standardVersions.code,
+            editionName: standardVersions.name,
+            scheme: standardVersions.levelScheme,
+            notes: controlRequirements.notes,
+          })
+          .from(controlRequirements)
+          .innerJoin(
+            requirementVersions,
+            eq(requirementVersions.id, controlRequirements.requirementVersionId),
+          )
+          .innerJoin(standardVersions, eq(standardVersions.id, requirementVersions.standardVersionId))
+          .where(eq(controlRequirements.controlId, control.id));
+
+        if (mapped.length === 0) {
+          return {
+            control: { slug: control.slug, title: control.title },
+            mapped: [],
+            note:
+              "This control is not mapped to a published requirement yet. Do not invent a GLOBALG.A.P. or SMETA counterpart.",
+          };
+        }
+
+        const evidence = await db
+          .select({
+            slug: evidenceTypes.slug,
+            title: evidenceTypes.title,
+            mandatory: controlEvidenceTypes.mandatory,
+          })
+          .from(controlEvidenceTypes)
+          .innerJoin(evidenceTypes, eq(evidenceTypes.id, controlEvidenceTypes.evidenceTypeId))
+          .where(eq(controlEvidenceTypes.controlId, control.id));
+
+        return {
+          control: {
+            slug: control.slug,
+            title: control.title,
+            description: control.description,
+            objective: control.objective,
+            controlType: control.controlType,
+            ownerRole: control.ownerRole,
+            frequency: control.frequency,
+          },
+          mapped: mapped.map((row) => ({
+            ...row,
+            level: requirementLevelLabel(row.level, row.scheme ?? "globalgap_ifa"),
+          })),
+          expectedEvidence: evidence,
+        };
       }),
     }),
   };
@@ -623,6 +883,12 @@ export async function resolveChecklist(
   standardVersionId: string,
   answers: readonly ChecklistAnswer[],
 ): Promise<ChecklistResolution> {
+  const [version] = await db
+    .select({ levelScheme: standardVersions.levelScheme })
+    .from(standardVersions)
+    .where(eq(standardVersions.id, standardVersionId));
+  const scheme = version?.levelScheme ?? "globalgap_ifa";
+
   const questions = await db
     .select()
     .from(applicabilityQuestions)
@@ -676,9 +942,12 @@ export async function resolveChecklist(
     }
   }
 
-  const byLevel: Record<string, number> = Object.fromEntries(
-    REQUIREMENT_LEVELS.map((level) => [REQUIREMENT_LEVEL_LABELS[level], 0]),
-  );
+  const byLevel: Record<string, number> = {};
+  if (scheme === "globalgap_ifa") {
+    for (const level of REQUIREMENT_LEVELS) {
+      byLevel[REQUIREMENT_LEVEL_LABELS[level]] = 0;
+    }
+  }
 
   const exclusions: Array<ChecklistResolution["exclusions"][number]> = [];
 
@@ -690,14 +959,15 @@ export async function resolveChecklist(
     if (exclusion) {
       exclusions.push({
         criterion: requirement.criterion,
-        level: REQUIREMENT_LEVEL_LABELS[requirement.level],
+        level: requirementLevelLabel(requirement.level, scheme),
         reason:
           exclusion.justification ??
           `Excluded by the scoping question "${exclusion.question}".`,
         question: exclusion.question,
       });
     } else {
-      byLevel[REQUIREMENT_LEVEL_LABELS[requirement.level]]! += 1;
+      const label = requirementLevelLabel(requirement.level, scheme);
+      byLevel[label] = (byLevel[label] ?? 0) + 1;
     }
   }
 

@@ -25,8 +25,8 @@ import {
   createdAtOnly,
   documentStatusEnum,
   documentTypeEnum,
-  editionEnum,
   primaryId,
+  sourceChannelEnum,
   timestamps,
   versionStatusEnum,
 } from "./_shared.ts";
@@ -68,14 +68,17 @@ export const standardVersions = pgTable(
     name: text("name").notNull(),
 
     /**
-     * Smart and GFS are parallel, equally valid editions with separate
-     * requirement sets and separate GUID namespaces - verified during
-     * research: the two workbooks share zero criterion GUIDs. Modelling them
-     * as distinct versions rather than variants of one is therefore not a
-     * stylistic choice, it is what the source data requires.
+     * Publisher variant of this version. Text, not a Postgres enum: GLOBALG.A.P.
+     * uses `smart`/`gfs`, SMETA uses `2-pillar`/`4-pillar`, and a third cert
+     * must not require a migration. Was a `smart|gfs` enum until multi-standard.
      */
-    edition: editionEnum("edition").notNull(),
-    /** Numeric version as the publisher writes it, e.g. `6.0`, `6.0-GFS`. */
+    edition: text("edition").notNull(),
+    /**
+     * Vocabulary for `requirement_versions.level`.
+     * `globalgap_ifa`, `smeta_7`, `eti_base_code`.
+     */
+    levelScheme: text("level_scheme").notNull().default("globalgap_ifa"),
+    /** Numeric version as the publisher writes it, e.g. `6.0`, `6.0-GFS`, `7.0`. */
     version: text("version").notNull(),
     /** Product scope slug, e.g. `fruit-and-vegetables`. */
     scope: text("scope").notNull(),
@@ -142,6 +145,8 @@ export const standardDocuments = pgTable(
 
     /** Original filename as published. Not identity - see `fileHash`. */
     filename: text("filename").notNull(),
+    /** How this file is obtained. Public HTTP, local drop, or membership portal. */
+    channel: sourceChannelEnum("channel").notNull().default("http"),
     sourceUrl: text("source_url"),
     /** Alternate URL for the same bytes, used when the primary host fails. */
     mirrorUrl: text("mirror_url"),
@@ -195,7 +200,7 @@ export const standardDocuments = pgTable(
     uniqueIndex("standard_documents_singular_key")
       .on(t.standardVersionId, t.documentType, t.language)
       .where(
-        sql`status <> 'superseded' AND document_type IN ('principles_and_criteria', 'checklist')`,
+        sql`status <> 'superseded' AND document_type IN ('principles_and_criteria', 'checklist', 'base_code')`,
       ),
   ],
 );

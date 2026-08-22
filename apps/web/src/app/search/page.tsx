@@ -1,7 +1,5 @@
-"use client";
+import { redirect } from "next/navigation";
 
-import { ChatWorkspace } from "@/components/chat-workspace";
-
-export default function SearchPage() {
-  return <ChatWorkspace />;
+export default function SearchRedirect() {
+  redirect("/app/search");
 }

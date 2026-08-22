@@ -1,8 +1,9 @@
 # CompliFine
 
-A knowledge base for **GLOBALG.A.P. IFA v6 Fruit & Vegetables**, Smart and GFS as
-separate editions. Built from the publisher's own files, not from a model's
-memory of them.
+A knowledge base and operations layer for **GLOBALG.A.P. IFA v6 Fruit & Vegetables**
+(Smart and GFS) plus **SMETA 7.0** (ETI Base Code public; Workplace Requirements
+member-gated). Built from the publishers' own files, not from a model's memory
+of them.
 
 Every criterion keeps its number, its level, its page, and the SHA-256 of the
 source it came from. The agent may only answer from those records. Citations
@@ -15,10 +16,10 @@ that name a criterion the tools never returned are flagged, not trusted.
 | Ingestion | Fetch official documents, parse the checklist XLSX and the PDFs, map Smart to GFS, run quality gates |
 | Knowledge base | Postgres + pgvector. 190 Smart criteria, 191 GFS, 16 scoping questions, publisher GUIDs as identity |
 | Retrieval | Identifier lookup, then IDF-weighted full text fused with embeddings by Reciprocal Rank Fusion |
-| Agent | Nine tools over the database. The model chooses what to fetch; the database answers questions of fact |
-| API | Elysia on port 3311. OpenAPI at `/swagger` |
-| Explorer | Next.js on port 3000. Ask, search, browse criteria, resolve applicability |
-| Console | Next.js on port 3001. Ingest, gates, review, sources, drift |
+| Agent | Tools over the database, including the signed-in farm profile. The model chooses what to fetch; the database answers questions of fact |
+| API | Elysia on port 3311. JWT auth, OpenAPI at `/swagger` |
+| Web | Next.js on port 3000. Marketing site, Book a Demo, producer `/app` |
+| Console | Next.js on port 3001. Ingest, gates, review, demo inbox. Operator login |
 
 ## Requirements
 
@@ -80,9 +81,10 @@ workbooks share zero publisher GUIDs, so identity is not inferred from numbers.
 - [Data model](docs/DATA-MODEL.md) — tables, identity, authority levels
 - [Retrieval and the agent](docs/RAG.md) — chunking, hybrid search, tools, eval
 - [Quality gates](docs/QUALITY-GATES.md) — the numbers that must match the publisher
-- [Sources](docs/SOURCES.md) — official files, authority, licence notes
+- [Sources](docs/SOURCES.md) — GLOBALG.A.P. official files, authority, licence notes
+- [SMETA sources](docs/SOURCES-SMETA.md) — ETI public vs Sedex member-gated
 - [Workbook structure](docs/WORKBOOK-STRUCTURE.md) — the hidden Excel tables
-- [Runbook](docs/RUNBOOK.md) — operate, recover, re-index
+- [Runbook](docs/RUNBOOK.md) — operate, recover, re-index, drop a SMETA file
 
 ## Licence
 

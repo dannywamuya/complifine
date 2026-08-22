@@ -16,13 +16,26 @@ bun run bootstrap
 2. Start `complifine-postgres` (port **5434**) and wait until it is **healthy**,
    not merely accepting TCP (initdb accepts connections, then restarts)
 3. Migrate
-4. Fetch and ingest both editions
-5. Embed if a key is present
+4. Seed the operator user (`OPERATOR_EMAIL` / `OPERATOR_PASSWORD`) and the
+   pilot control library
+5. Fetch and ingest GLOBALG.A.P. IFA v6 and the public ETI Base Code
+6. Seed again so SMETA profile questions and control-to-requirement links attach
+7. Embed if a key is present
 
 Re-run after fixing a problem. Every step is idempotent.
 
 Skip Docker with `--skip-docker` if `DATABASE_URL` already points at a
 Postgres 16+ with `vector` and `pg_trgm`. Skip embeddings with `--skip-index`.
+
+## Migrations
+
+Always apply schema with `bun run db:migrate`, not `drizzle-kit migrate`.
+Postgres will not let a newly added enum value be used until that `ALTER TYPE
+… ADD VALUE` has been committed, and Drizzle wraps every pending journal file
+in one transaction. The runner therefore commits `0003_multi_cert_operations.sql`
+(new `document_type` / `applicability_source` labels) before applying the rest.
+
+Then seed: `bun run db:seed`.
 
 ## Daily
 
@@ -127,6 +140,39 @@ corpus.
 ## Ports
 
 | 5434 | Postgres |
-| 3311 | API |
-| 3000 | User app |
-| 3001 | Operator console |
+| 3311 | API (`/swagger`, `/auth`, `/demo-requests`) |
+| 3000 | Marketing site + producer app (`/app`) |
+| 3001 | Operator console (sign in as `OPERATOR_EMAIL`) |
+
+## Auth
+
+Producer register/login is `/signup` and `/login` on :3000. The console is
+operator-only. JWT cookies (`cf_access`, `cf_refresh`) are set by the API and
+sent through the Next `/api` rewrite so they stay same-origin.
+
+`bun run db:seed` (also part of bootstrap) creates or updates the operator.
+
+## SMETA member drop
+
+Workplace Requirements are not on a public CDN. After a Sedex member obtains
+the official PDF:
+
+```bash
+mkdir -p storage/drops/smeta
+cp /path/to/member-file.pdf storage/drops/smeta/SMETA-7.0-Workplace-Requirements.pdf
+bun run kb parse --version smeta-7-4-pillar
+bun run ai index
+```
+
+Until that file exists, ingest still fetches the public ETI Base Code. The
+agent must refuse invented Workplace Requirement numbers. See
+[SOURCES-SMETA.md](SOURCES-SMETA.md).
+
+## Answer evaluation
+
+```bash
+bun run ai eval retrieval          # no chat model
+bun run ai eval answer             # costs tokens; needs OPENAI_API_KEY
+bun run ai eval all
+```
+

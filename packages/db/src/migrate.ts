@@ -17,6 +17,12 @@ import { createDatabase } from "./client.ts";
 const here = dirname(fileURLToPath(import.meta.url));
 const migrationsFolder = resolve(here, "../drizzle");
 const prerequisites = resolve(here, "../../../infra/initdb/00-extensions.sql");
+/**
+ * Postgres forbids using a newly added enum value until it is committed.
+ * Drizzle applies every pending journal file in a single transaction, so ADD
+ * VALUE files must be executed (and committed) before `migrate()` starts.
+ */
+const enumCommits = resolve(migrationsFolder, "0003_multi_cert_operations.sql");
 
 async function main() {
   const db = createDatabase({ max: 1 });
@@ -26,6 +32,9 @@ async function main() {
     // `unsafe` because this is a multi-statement script including a DO block;
     // the content is a checked-in file, not user input.
     await db.$client.unsafe(await readFile(prerequisites, "utf8"));
+
+    console.log(`Committing new enum values from ${enumCommits}...`);
+    await db.$client.unsafe(await readFile(enumCommits, "utf8"));
 
     console.log(`Applying migrations from ${migrationsFolder}...`);
     await migrate(db, { migrationsFolder });

@@ -10,18 +10,21 @@ import { sql } from "drizzle-orm";
 import {
   APPLICABILITY_SOURCES,
   CHUNK_TYPES,
+  CONTROL_TYPES,
   DOCUMENT_STATUSES,
   DOCUMENT_TYPES,
-  EDITIONS,
   JOB_STAGES,
   JOB_STATUSES,
   LOG_LEVELS,
+  MEMBERSHIP_ROLES,
   RELATIONSHIP_ORIGINS,
   RELATIONSHIP_TYPES,
-  REQUIREMENT_LEVELS,
   REQUIREMENT_STATUSES,
   REVIEW_DECISIONS,
   SCOPING_ANSWERS,
+  SITE_TYPES,
+  SOURCE_CHANNELS,
+  USER_KINDS,
   VERSION_STATUSES,
 } from "@complifine/core";
 
@@ -56,12 +59,15 @@ export const EMBEDDING_DIMENSIONS = 1536;
 // Enums
 // ---------------------------------------------------------------------------
 
-export const editionEnum = pgEnum("edition", EDITIONS);
 export const documentTypeEnum = pgEnum("document_type", DOCUMENT_TYPES);
 export const documentStatusEnum = pgEnum("document_status", DOCUMENT_STATUSES);
 export const versionStatusEnum = pgEnum("version_status", VERSION_STATUSES);
-export const requirementLevelEnum = pgEnum("requirement_level", REQUIREMENT_LEVELS);
 export const requirementStatusEnum = pgEnum("requirement_status", REQUIREMENT_STATUSES);
+export const sourceChannelEnum = pgEnum("source_channel", SOURCE_CHANNELS);
+export const userKindEnum = pgEnum("user_kind", USER_KINDS);
+export const membershipRoleEnum = pgEnum("membership_role", MEMBERSHIP_ROLES);
+export const siteTypeEnum = pgEnum("site_type", SITE_TYPES);
+export const controlTypeEnum = pgEnum("control_type", CONTROL_TYPES);
 export const relationshipTypeEnum = pgEnum("relationship_type", RELATIONSHIP_TYPES);
 export const relationshipOriginEnum = pgEnum("relationship_origin", RELATIONSHIP_ORIGINS);
 export const scopingAnswerEnum = pgEnum("scoping_answer", SCOPING_ANSWERS);

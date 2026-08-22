@@ -5,10 +5,14 @@ import {
   DOCUMENT_TYPE_AUTHORITY,
   DOCUMENT_TYPES,
   EDITION_ID_PREFIX,
+  isGgapEdition,
   isNormative,
   parseRequirementLevel,
+  parseSmetaLevel,
+  requirementLevelLabel,
   REQUIREMENT_LEVEL_LABELS,
   REQUIREMENT_LEVELS,
+  SOURCE_CHANNELS,
   VERSION_STATUSES,
   VERSION_TRANSITIONS,
 } from "../src/enums.ts";
@@ -160,5 +164,30 @@ describe("editions", () => {
     expect(EDITION_ID_PREFIX.smart).toBe("FV-Smart");
     expect(EDITION_ID_PREFIX.gfs).toBe("FV-GFS");
     expect(EDITION_ID_PREFIX.smart).not.toBe(EDITION_ID_PREFIX.gfs);
+  });
+});
+
+describe("SMETA / multi-standard vocabulary", () => {
+  test("parses SMETA finding grades and refuses unknown labels", () => {
+    expect(parseSmetaLevel("NC")).toBe("nc");
+    expect(parseSmetaLevel("Collaborative Action Required")).toBe("car");
+    expect(parseSmetaLevel("MSA")).toBe("msa");
+    expect(parseSmetaLevel("Major Must")).toBeNull();
+  });
+
+  test("labels a level using the version's scheme, not a global enum", () => {
+    expect(requirementLevelLabel("major_must")).toBe("Major Must");
+    expect(requirementLevelLabel("car", "smeta_7")).toBe("Collaborative Action Required");
+    expect(requirementLevelLabel("eti_clause", "smeta_7")).toBe("ETI Base Code clause");
+  });
+
+  test("Smart and GFS are GLOBALG.A.P. editions; 2-pillar is not", () => {
+    expect(isGgapEdition("smart")).toBe(true);
+    expect(isGgapEdition("2-pillar")).toBe(false);
+  });
+
+  test("source channels include a member-gated drop", () => {
+    expect(SOURCE_CHANNELS).toContain("member_gated");
+    expect(SOURCE_CHANNELS).toContain("http");
   });
 });

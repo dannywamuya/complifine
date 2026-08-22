@@ -33,7 +33,6 @@ import {
   primaryId,
   relationshipOriginEnum,
   relationshipTypeEnum,
-  requirementLevelEnum,
   requirementStatusEnum,
   timestamps,
 } from "./_shared.ts";
@@ -123,7 +122,12 @@ export const requirementVersions = pgTable(
     criteriaText: text("criteria_text"),
 
     levelGuid: text("level_guid"),
-    level: requirementLevelEnum("level").notNull(),
+    /**
+     * Publisher classification, interpreted via `standard_versions.level_scheme`.
+     * GLOBALG.A.P.: `major_must` / `minor_must` / `recommendation`.
+     * SMETA 7: `nc` / `car` / `msa` / `eti_clause`.
+     */
+    level: text("level").notNull(),
 
     /**
      * `NA Exempt` in the workbook: the criterion may never be marked not

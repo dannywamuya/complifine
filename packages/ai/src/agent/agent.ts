@@ -26,7 +26,7 @@ import { createLogger, requireAiEnv } from "@complifine/core";
 import { createOpenAI } from "@ai-sdk/openai";
 import { generateText, streamText, stepCountIs, type ModelMessage } from "ai";
 import { randomUUID } from "node:crypto";
-import { agentRuns, agentToolCalls, eq, type Database } from "@complifine/db";
+import { agentRuns, agentToolCalls, conversations, eq, type Database } from "@complifine/db";
 import type { Embedder } from "../embed/provider.ts";
 import { buildTools, type ToolContext } from "./tools.ts";
 import {
@@ -56,6 +56,9 @@ export interface AskOptions {
   readonly temperature?: number;
   /** Persist the run and its tool calls. Off for evals that would flood the table. */
   readonly persist?: boolean;
+  readonly userId?: string;
+  readonly organizationId?: string;
+  readonly siteId?: string;
 }
 
 export interface ToolCallRecord {
@@ -169,6 +172,9 @@ export async function ask(question: string, options: AskOptions): Promise<AskRes
     db: options.db,
     embedder: options.embedder,
     agentRunId: persist ? runId : undefined,
+    organizationId: options.organizationId,
+    siteId: options.siteId,
+    userId: options.userId,
     onCall: (call) => {
       toolCalls.push({ stepIndex: toolCalls.length, ...call });
       collectIdentifiers(call.result, retrievedIdentifiers);
@@ -176,9 +182,13 @@ export async function ask(question: string, options: AskOptions): Promise<AskRes
   };
 
   if (persist) {
+    await ensureConversation(options.db, conversationId, question, options);
     await options.db.insert(agentRuns).values({
       id: runId,
       conversationId,
+      userId: options.userId ?? null,
+      organizationId: options.organizationId ?? null,
+      siteId: options.siteId ?? null,
       model: modelName,
       systemPromptHash: SYSTEM_PROMPT_HASH,
       question,
@@ -286,6 +296,9 @@ export async function* askStream(
     db: options.db,
     embedder: options.embedder,
     agentRunId: persist ? runId : undefined,
+    organizationId: options.organizationId,
+    siteId: options.siteId,
+    userId: options.userId,
     onCall: (call) => {
       toolCalls.push({ stepIndex: toolCalls.length, ...call });
       collectIdentifiers(call.result, retrievedIdentifiers);
@@ -293,9 +306,13 @@ export async function* askStream(
   };
 
   if (persist) {
+    await ensureConversation(options.db, conversationId, question, options);
     await options.db.insert(agentRuns).values({
       id: runId,
       conversationId,
+      userId: options.userId ?? null,
+      organizationId: options.organizationId ?? null,
+      siteId: options.siteId ?? null,
       model: modelName,
       systemPromptHash: SYSTEM_PROMPT_HASH,
       question,
@@ -413,6 +430,36 @@ function historyToMessages(history: AskOptions["history"]): ModelMessage[] {
   return [...history.slice(-16)];
 }
 
+async function ensureConversation(
+  db: Database,
+  conversationId: string,
+  question: string,
+  options: AskOptions,
+): Promise<void> {
+  await db
+    .insert(conversations)
+    .values({
+      id: conversationId,
+      userId: options.userId ?? null,
+      organizationId: options.organizationId ?? null,
+      siteId: options.siteId ?? null,
+      title: question.slice(0, 120),
+    })
+    .onConflictDoNothing();
+
+  if (options.siteId || options.organizationId || options.userId) {
+    await db
+      .update(conversations)
+      .set({
+        ...(options.userId ? { userId: options.userId } : {}),
+        ...(options.organizationId ? { organizationId: options.organizationId } : {}),
+        ...(options.siteId ? { siteId: options.siteId } : {}),
+        updatedAt: new Date(),
+      })
+      .where(eq(conversations.id, conversationId));
+  }
+}
+
 // ---------------------------------------------------------------------------
 
 async function persistRun(
@@ -475,6 +522,15 @@ function collectIdentifiers(value: unknown, into: Set<string>): void {
         .filter((part): part is string => part !== undefined)
         .map((part) => part.padStart(2, "0"));
       into.add(`${edition} ${parts.join(".")}`);
+    }
+    for (const match of value.matchAll(/\beti:(\d+(?:\.\d+)?)\b/gi)) {
+      into.add(`eti:${match[1]}`);
+    }
+    for (const match of value.matchAll(/\bETI\s+(\d+(?:\.\d+)?)\b/g)) {
+      into.add(`eti:${match[1]}`);
+    }
+    for (const match of value.matchAll(/\bsmeta-wr:([A-Za-z0-9.]+)\b/gi)) {
+      into.add(`smeta-wr:${match[1]}`);
     }
     return;
   }

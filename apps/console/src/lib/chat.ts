@@ -1,4 +1,4 @@
-import { API, ApiError } from "@/lib/api";
+import { apiBase, ApiError } from "@/lib/api";
 
 export interface Citation {
   raw: string;
@@ -121,13 +121,15 @@ export async function streamAsk(
   body: {
     question: string;
     conversationId?: string;
+    siteId?: string;
     history?: ChatTurn[];
   },
   onEvent: (event: AskStreamEvent) => void,
   signal?: AbortSignal,
 ): Promise<void> {
-  const response = await fetch(`${API}/ask/stream`, {
+  const response = await fetch(`${apiBase()}/ask/stream`, {
     method: "POST",
+    credentials: "include",
     headers: {
       "Content-Type": "application/json",
       Accept: "text/event-stream",

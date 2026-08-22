@@ -30,10 +30,12 @@ import {
   requirementVersions,
   standardDocuments,
   standardSections,
+  standards,
   standardVersions,
 } from "@complifine/db";
-import { REQUIREMENT_LEVEL_LABELS, type Edition, type RequirementLevel } from "@complifine/core";
+import { REQUIREMENT_LEVEL_LABELS, isGgapEdition, type Edition, type RequirementLevel } from "@complifine/core";
 import { verifyStoredFile } from "./storage.ts";
+import { SMETA_GATES } from "./smeta/gates.ts";
 
 // ---------------------------------------------------------------------------
 // Expectations
@@ -112,7 +114,7 @@ export interface GateContext {
   readonly db: Database;
   readonly standardVersionId: string;
   readonly versionCode: string;
-  readonly edition: Edition;
+  readonly edition: string;
 }
 
 export interface GateReport {
@@ -131,6 +133,9 @@ const requirementCount: Gate = {
   description: "The version holds exactly the number of criteria the publisher declares",
   blocking: true,
   async run({ db, standardVersionId, edition }) {
+    if (!isGgapEdition(edition)) {
+      return { passed: true, expected: "n/a", actual: "not a GLOBALG.A.P. edition" };
+    }
     const expected = EDITION_EXPECTATIONS[edition];
     const [row] = await db
       .select({ value: count() })
@@ -151,6 +156,9 @@ const levelDistribution: Gate = {
   description: "Criteria are graded Major Must / Minor Must / Recommendation in the expected proportions",
   blocking: true,
   async run({ db, standardVersionId, edition }) {
+    if (!isGgapEdition(edition)) {
+      return { passed: true, expected: "n/a", actual: "not a GLOBALG.A.P. edition" };
+    }
     const expected = EDITION_EXPECTATIONS[edition].levels;
 
     const rows = await db
@@ -381,6 +389,9 @@ const applicabilityIntegrity: Gate = {
   description: "Scoping questions are complete and every applicability link resolves",
   blocking: true,
   async run({ db, standardVersionId, edition }) {
+    if (!isGgapEdition(edition)) {
+      return { passed: true, expected: "n/a", actual: "not a GLOBALG.A.P. edition" };
+    }
     const expected = EDITION_EXPECTATIONS[edition].scopingQuestions;
 
     const questions = await db
@@ -660,6 +671,13 @@ export async function runGates(
 
   if (!version) throw new Error(`Unknown standard version: ${standardVersionId}`);
 
+  const [standard] = await db
+    .select()
+    .from(standards)
+    .where(eq(standards.id, version.standardId));
+
+  const suite = standard?.code === "smeta" ? SMETA_GATES : GATES;
+
   const context: GateContext = {
     db,
     standardVersionId,
@@ -668,8 +686,8 @@ export async function runGates(
   };
 
   const selected = options.only?.length
-    ? GATES.filter((gate) => options.only!.includes(gate.name))
-    : GATES;
+    ? suite.filter((gate) => options.only!.includes(gate.name))
+    : suite;
 
   const results: Array<GateOutcome & { gate: string; description: string; blocking: boolean }> = [];
 

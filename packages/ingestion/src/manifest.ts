@@ -22,8 +22,9 @@ import {
   AUTHORITY_LEVELS,
   type AuthorityLevel,
   type DocumentType,
-  type Edition,
+  type SourceChannel,
 } from "@complifine/core";
+import { SMETA_7 } from "./manifest-smeta.ts";
 
 const DOCS = "https://documents.globalgap.org/documents";
 /** Azure blob mirror serving the same objects, used when the primary fails. */
@@ -39,8 +40,16 @@ export interface ManifestDocument {
   readonly title: string;
   readonly documentType: DocumentType;
   readonly authorityLevel: AuthorityLevel;
-  /** Filename at the origin. Combined with `DOCS` to form the URL. */
+  /** Filename at the origin, or a local basename when there is no public URL. */
   readonly filename: string;
+  /**
+   * How the bytes are obtained. Default is inferred: `localPath` → local,
+   * otherwise the GLOBALG.A.P. CDN. SMETA Workplace Requirements are
+   * `member_gated` until an operator drops the member file.
+   */
+  readonly channel?: SourceChannel;
+  /** Absolute URL when the file is not named on the GLOBALG.A.P. document CDN. */
+  readonly originUrl?: string;
   /** Set when the file is supplied locally rather than downloaded. */
   readonly localPath?: string;
   /**
@@ -65,7 +74,12 @@ export interface ManifestDocument {
 export interface ManifestVersion {
   readonly code: string;
   readonly name: string;
-  readonly edition: Edition;
+  readonly edition: string;
+  /**
+   * Vocabulary for requirement levels on this version.
+   * Defaults to `globalgap_ifa` for IFA editions.
+   */
+  readonly levelScheme?: string;
   readonly version: string;
   readonly scope: string;
   readonly effectiveDate?: string;
@@ -82,6 +96,11 @@ export interface ManifestStandard {
   readonly homepageUrl: string;
   /** Server-rendered pages re-scraped by the watcher to find new documents. */
   readonly discoveryPages: readonly string[];
+  /**
+   * Regex (as a string) matching document URLs on those pages.
+   * GLOBALG.A.P. defaults to documents.globalgap.org pdf/xlsx links.
+   */
+  readonly discoveryUrlPattern?: string;
   readonly versions: readonly ManifestVersion[];
 }
 
@@ -324,19 +343,31 @@ export const NON_AUTHORITATIVE_SOURCES: readonly ManifestDocument[] = [
   },
 ];
 
-export const MANIFEST: readonly ManifestStandard[] = [GLOBALGAP_IFA_FV];
+export const MANIFEST: readonly ManifestStandard[] = [GLOBALGAP_IFA_FV, SMETA_7];
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
 export function documentUrl(doc: ManifestDocument): string | null {
-  return doc.localPath ? null : `${DOCS}/${encodeURIComponent(doc.filename)}`;
+  if (doc.localPath || resolveChannel(doc) === "member_gated") return doc.originUrl ?? null;
+  if (doc.originUrl) return doc.originUrl;
+  if (resolveChannel(doc) === "local") return null;
+  return `${DOCS}/${encodeURIComponent(doc.filename)}`;
+}
+
+export function resolveChannel(doc: ManifestDocument): SourceChannel {
+  if (doc.channel) return doc.channel;
+  if (doc.localPath) return "local";
+  return "http";
 }
 
 export function documentMirrorUrl(doc: ManifestDocument): string | null {
+  if (resolveChannel(doc) === "local" || resolveChannel(doc) === "member_gated") return null;
+  if (doc.mirrorOverride) return doc.mirrorOverride;
+  if (doc.originUrl && !doc.originUrl.includes("documents.globalgap.org")) return null;
   if (doc.localPath) return null;
-  return doc.mirrorOverride ?? `${MIRROR}/${encodeURIComponent(doc.filename)}`;
+  return `${MIRROR}/${encodeURIComponent(doc.filename)}`;
 }
 
 export function isWithdrawn(doc: ManifestDocument): boolean {

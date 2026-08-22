@@ -16,6 +16,7 @@ import {
   NON_AUTHORITATIVE_SOURCES,
   documentMirrorUrl,
   documentUrl,
+  resolveChannel,
   type ManifestDocument,
 } from "../manifest.ts";
 import type { JobContext } from "../jobs.ts";
@@ -54,6 +55,7 @@ export async function syncRegistry(db: Database, ctx: JobContext): Promise<Regis
           .set({
             name: version.name,
             edition: version.edition,
+            levelScheme: version.levelScheme ?? defaultLevelScheme(version.edition),
             version: version.version,
             scope: version.scope,
             effectiveDate: version.effectiveDate ?? null,
@@ -70,6 +72,7 @@ export async function syncRegistry(db: Database, ctx: JobContext): Promise<Regis
             code: version.code,
             name: version.name,
             edition: version.edition,
+            levelScheme: version.levelScheme ?? defaultLevelScheme(version.edition),
             version: version.version,
             scope: version.scope,
             status: "draft",
@@ -161,6 +164,11 @@ async function upsertStandard(
   return row!.id;
 }
 
+function defaultLevelScheme(edition: string): string {
+  if (edition === "2-pillar" || edition === "4-pillar") return "smeta_7";
+  return "globalgap_ifa";
+}
+
 async function upsertDocument(
   db: Database,
   ctx: JobContext,
@@ -176,6 +184,7 @@ async function upsertDocument(
     documentCode: document.documentCode ?? null,
     language: document.language ?? parsed.language,
     filename: document.filename,
+    channel: resolveChannel(document),
     sourceUrl: documentUrl(document),
     mirrorUrl: documentMirrorUrl(document),
     publishedAt: document.publishedAt ?? parsed.fileDate,

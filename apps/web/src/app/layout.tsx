@@ -15,7 +15,7 @@ export const metadata: Metadata = {
     template: "%s · CompliFine",
   },
   description:
-    "Ask GLOBALG.A.P. IFA v6 Fruit & Vegetables. Answers come from the published standard, with citations.",
+    "Know what GLOBALG.A.P. IFA v6 and SMETA 7 require on your farm. Answers cite the published standard.",
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

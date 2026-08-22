@@ -20,3 +20,5 @@ export * from "./steps/verify-text.ts";
 export * from "./steps/cross-edition.ts";
 export * from "./steps/publish.ts";
 export * from "./steps/watch.ts";
+export * from "./adapters/index.ts";
+export * from "./manifest-smeta.ts";

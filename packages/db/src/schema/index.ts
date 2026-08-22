@@ -7,3 +7,6 @@ export * from "./applicability.ts";
 export * from "./ingestion.ts";
 export * from "./governance.ts";
 export * from "./ai.ts";
+export * from "./tenancy.ts";
+export * from "./operations.ts";
+export * from "./controls.ts";

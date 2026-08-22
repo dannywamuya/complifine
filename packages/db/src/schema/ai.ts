@@ -42,8 +42,10 @@ import {
   tsvector,
 } from "./_shared.ts";
 import { standardDocuments, standardVersions } from "./standards.ts";
+import { organizations, users } from "./tenancy.ts";
 import { standardSections } from "./structure.ts";
 import { requirementVersions } from "./requirements.ts";
+import { sites } from "./operations.ts";
 
 // ---------------------------------------------------------------------------
 // document_chunks
@@ -199,6 +201,28 @@ export const retrievalLogs = pgTable(
 );
 
 // ---------------------------------------------------------------------------
+// conversations
+// ---------------------------------------------------------------------------
+
+export const conversations = pgTable(
+  "conversations",
+  {
+    id: primaryId(),
+    userId: uuid("user_id").references(() => users.id, { onDelete: "set null" }),
+    organizationId: uuid("organization_id").references(() => organizations.id, {
+      onDelete: "cascade",
+    }),
+    siteId: uuid("site_id").references(() => sites.id, { onDelete: "set null" }),
+    title: text("title"),
+    ...timestamps,
+  },
+  (t) => [
+    index("conversations_user_idx").on(t.userId, t.createdAt),
+    index("conversations_org_idx").on(t.organizationId, t.createdAt),
+  ],
+);
+
+// ---------------------------------------------------------------------------
 // agent_runs and agent_tool_calls
 // ---------------------------------------------------------------------------
 
@@ -208,7 +232,14 @@ export const agentRuns = pgTable(
     id: primaryId(),
 
     /** Groups turns of one conversation. */
-    conversationId: uuid("conversation_id").notNull(),
+    conversationId: uuid("conversation_id")
+      .notNull()
+      .references(() => conversations.id, { onDelete: "cascade" }),
+    userId: uuid("user_id").references(() => users.id, { onDelete: "set null" }),
+    organizationId: uuid("organization_id").references(() => organizations.id, {
+      onDelete: "set null",
+    }),
+    siteId: uuid("site_id").references(() => sites.id, { onDelete: "set null" }),
 
     model: text("model").notNull(),
     systemPromptHash: text("system_prompt_hash"),
@@ -234,6 +265,8 @@ export const agentRuns = pgTable(
   (t) => [
     index("agent_runs_conversation_idx").on(t.conversationId, t.createdAt),
     index("agent_runs_created_idx").on(t.createdAt),
+    index("agent_runs_org_idx").on(t.organizationId),
+    index("agent_runs_user_idx").on(t.userId),
   ],
 );
 

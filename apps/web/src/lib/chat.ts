@@ -1,4 +1,4 @@
-import { API, ApiError } from "@/lib/api";
+import { apiBase, ApiError } from "@/lib/api";
 
 export interface Citation {
   raw: string;
@@ -122,8 +122,13 @@ export const TOOL_LABELS: Record<string, string> = {
   getApplicability: "Checking applicability",
   filterChecklist: "Resolving the checklist",
   compareEditions: "Comparing Smart and GFS",
+  compareStandards: "Comparing mapped controls",
   searchGeneralRegulations: "Searching the General Regulations",
   getDocument: "Opening a document",
+  getCompanyContext: "Reading the company profile",
+  listMySites: "Listing sites",
+  getSiteProfile: "Opening a site profile",
+  getMyApplicableRequirements: "Resolving saved applicability",
 };
 
 export function toolLabel(name: string): string {
@@ -134,13 +139,15 @@ export async function streamAsk(
   body: {
     question: string;
     conversationId?: string;
+    siteId?: string;
     history?: ChatTurn[];
   },
   onEvent: (event: AskStreamEvent) => void,
   signal?: AbortSignal,
 ): Promise<void> {
-  const response = await fetch(`${API}/ask/stream`, {
+  const response = await fetch(`${apiBase()}/ask/stream`, {
     method: "POST",
+    credentials: "include",
     headers: {
       "Content-Type": "application/json",
       Accept: "text/event-stream",

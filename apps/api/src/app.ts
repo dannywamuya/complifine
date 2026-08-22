@@ -35,7 +35,7 @@ import {
 import {
   AUTHORITY_LEVEL_LABELS,
   DOCUMENT_TYPE_LABELS,
-  REQUIREMENT_LEVEL_LABELS,
+  requirementLevelLabel,
   VERSION_TRANSITIONS,
   env,
   hasAiCredentials,
@@ -53,6 +53,9 @@ import {
 import { recordReview, runGates, transitionVersion } from "@complifine/ingestion";
 import { adminRoutes } from "./admin.ts";
 import { httpError } from "./errors.ts";
+import { authModule } from "./auth/plugin.ts";
+import { demoRoutes } from "./demo.ts";
+import { farmRoutes } from "./farm.ts";
 
 const chatTurn = t.Object({
   role: t.Union([t.Literal("user"), t.Literal("assistant")]),
@@ -72,8 +75,9 @@ export function createApp(database = createDatabase()) {
             "http://localhost:3001",
             "http://127.0.0.1:3001",
           ],
-          methods: ["GET", "POST", "OPTIONS"],
-          allowedHeaders: ["Content-Type", "Accept"],
+          methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+          allowedHeaders: ["Content-Type", "Accept", "Authorization"],
+          credentials: true,
         }),
       )
       .use(
@@ -91,6 +95,9 @@ export function createApp(database = createDatabase()) {
         }),
       )
       .decorate("db", db)
+      .use(authModule(db))
+      .use(demoRoutes(db))
+      .use(farmRoutes(db))
       .use(adminRoutes(db))
       .onError(({ code, error, set }) => {
         const message = error instanceof Error ? error.message : String(error);
@@ -231,7 +238,7 @@ export function createApp(database = createDatabase()) {
             allowedNext: VERSION_TRANSITIONS[version.status as VersionStatus],
             standard,
             levels: Object.fromEntries(
-              levels.map((row) => [REQUIREMENT_LEVEL_LABELS[row.level], Number(row.count)]),
+              levels.map((row) => [requirementLevelLabel(row.level), Number(row.count)]),
             ),
             documents: documents.map((document) => ({
               ...document,
@@ -378,7 +385,7 @@ export function createApp(database = createDatabase()) {
             offset,
             requirements: rows.map((row) => ({
               ...row,
-              level: REQUIREMENT_LEVEL_LABELS[row.level],
+              level: requirementLevelLabel(row.level),
             })),
           };
         },
@@ -569,7 +576,7 @@ export function createApp(database = createDatabase()) {
           return {
             requirements: rows.map((row) => ({
               ...row,
-              level: REQUIREMENT_LEVEL_LABELS[row.level],
+              level: requirementLevelLabel(row.level),
             })),
           };
         },
@@ -659,7 +666,7 @@ export function createApp(database = createDatabase()) {
             hits: result.hits.map((hit) => ({
               criterion: hit.requirementId,
               level: hit.requirementLevel
-                ? REQUIREMENT_LEVEL_LABELS[hit.requirementLevel]
+                ? requirementLevelLabel(hit.requirementLevel)
                 : null,
               heading: hit.heading,
               section: hit.sectionTitle,
@@ -688,7 +695,7 @@ export function createApp(database = createDatabase()) {
 
       .post(
         "/ask",
-        async ({ body }) => {
+        async ({ body, auth }) => {
           if (!hasAiCredentials()) {
             return httpError(
               503,
@@ -703,6 +710,9 @@ export function createApp(database = createDatabase()) {
             conversationId: body.conversationId,
             history: body.history,
             persist: true,
+            userId: auth?.id,
+            organizationId: auth?.orgId ?? undefined,
+            siteId: body.siteId,
           });
 
           return {
@@ -725,6 +735,7 @@ export function createApp(database = createDatabase()) {
           body: t.Object({
             question: t.String({ minLength: 2 }),
             conversationId: t.Optional(t.String()),
+            siteId: t.Optional(t.String()),
             history: t.Optional(t.Array(chatTurn)),
           }),
           detail: { summary: "Ask the compliance agent" },
@@ -733,7 +744,7 @@ export function createApp(database = createDatabase()) {
 
       .post(
         "/ask/stream",
-        async ({ body, request }) => {
+        async ({ body, request, auth }) => {
           if (!hasAiCredentials()) {
             return httpError(
               503,
@@ -760,6 +771,9 @@ export function createApp(database = createDatabase()) {
                   history: body.history,
                   persist: true,
                   abortSignal: request.signal,
+                  userId: auth?.id,
+                  organizationId: auth?.orgId ?? undefined,
+                  siteId: body.siteId,
                 })) {
                   send(event);
                 }
@@ -789,6 +803,7 @@ export function createApp(database = createDatabase()) {
               Connection: "keep-alive",
               "X-Accel-Buffering": "no",
               "Access-Control-Allow-Origin": allowed.includes(origin) ? origin : "http://localhost:3000",
+              "Access-Control-Allow-Credentials": "true",
             },
           });
         },
@@ -796,6 +811,7 @@ export function createApp(database = createDatabase()) {
           body: t.Object({
             question: t.String({ minLength: 2 }),
             conversationId: t.Optional(t.String()),
+            siteId: t.Optional(t.String()),
             history: t.Optional(t.Array(chatTurn)),
           }),
           detail: { summary: "Ask the compliance agent, streaming tokens and tool calls" },

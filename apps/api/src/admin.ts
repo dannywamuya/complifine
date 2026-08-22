@@ -16,7 +16,7 @@ import {
   requirementVersions,
   standardVersions,
 } from "@complifine/db";
-import { REQUIREMENT_LEVEL_LABELS } from "@complifine/core";
+import { requirementLevelLabel } from "@complifine/core";
 import {
   checkForDrift,
   linkEditions,
@@ -24,6 +24,7 @@ import {
   type JobContext,
 } from "@complifine/ingestion";
 import { httpError } from "./errors.ts";
+import { readAuth, requireOperator } from "./auth/plugin.ts";
 import {
   runningProcess,
   startIndex,
@@ -60,6 +61,9 @@ export function adminRoutes(db: Database) {
 
   return (
     new Elysia({ name: "complifine-admin" })
+      .onBeforeHandle((ctx) => {
+        requireOperator(readAuth(ctx));
+      })
       .get(
         "/jobs",
         async ({ query }) => {
@@ -217,8 +221,8 @@ export function adminRoutes(db: Database) {
           return {
             relationships: rows.map((row) => ({
               ...row,
-              fromLevel: REQUIREMENT_LEVEL_LABELS[row.fromLevel],
-              toLevel: REQUIREMENT_LEVEL_LABELS[row.toLevel],
+              fromLevel: requirementLevelLabel(row.fromLevel),
+              toLevel: requirementLevelLabel(row.toLevel),
             })),
           };
         },

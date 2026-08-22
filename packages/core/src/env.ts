@@ -63,6 +63,9 @@ const BLANKABLE = [
   "AGENT_MODEL",
   "LOG_FORMAT",
   "LOG_LEVEL",
+  "OPERATOR_EMAIL",
+  "OPERATOR_PASSWORD",
+  "NEXT_PUBLIC_CAL_URL",
 ] as const;
 
 function unsetBlanks(): void {
@@ -88,6 +91,10 @@ const baseSchema = z.object({
     .default("CompliFine/0.1 (compliance knowledge base)"),
   API_PORT: z.coerce.number().int().positive().default(3311),
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
+  JWT_SECRET: z.string().min(16).default("complifine-dev-jwt-secret-change-me"),
+  OPERATOR_EMAIL: z.string().email().default("operator@complifine.local"),
+  OPERATOR_PASSWORD: z.string().min(8).default("changeme-operator"),
+  NEXT_PUBLIC_CAL_URL: z.string().optional(),
 });
 
 const aiSchema = z.object({

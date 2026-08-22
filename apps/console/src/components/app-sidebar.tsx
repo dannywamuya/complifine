@@ -14,6 +14,7 @@ import {
   Search,
   ShieldCheck,
   Stamp,
+  Calendar,
 } from "lucide-react";
 import {
   Sidebar,
@@ -39,6 +40,7 @@ const LINKS = [
   { href: "/review", label: "Review", icon: Stamp },
   { href: "/diff", label: "Smart ↔ GFS", icon: GitCompare },
   { href: "/watch", label: "Watch", icon: Radar },
+  { href: "/demo", label: "Demos", icon: Calendar },
   { href: "/audit", label: "Audit", icon: FileSearch },
 ];
 

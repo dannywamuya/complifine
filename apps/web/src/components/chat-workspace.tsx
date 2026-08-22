@@ -35,7 +35,7 @@ const SUGGESTIONS = [
 ];
 
 type Mode = "answer" | "passages";
-type EditionFilter = "both" | "ifa-v6-smart-fv" | "ifa-v6-gfs-fv";
+type EditionFilter = "both" | (typeof EDITIONS)[number]["value"];
 
 interface ToolChip {
   name: string;
@@ -213,7 +213,7 @@ export function ChatWorkspace() {
       <header className="relative z-10 flex min-w-0 flex-wrap items-center justify-between gap-3 border-b border-zinc-950/5 bg-[#f6f4ef]/80 px-4 py-3 backdrop-blur-md sm:px-6">
         <div>
           <p className="text-[11px] font-medium tracking-[0.16em] text-emerald-900/50 uppercase">
-            IFA v6 Fruit &amp; Vegetables
+            IFA v6 · SMETA 7
           </p>
           <h1 className="font-heading text-lg font-medium tracking-tight text-zinc-900">
             Ask the standard

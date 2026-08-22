@@ -14,7 +14,7 @@ import {
   CHECK,
   CROSS,
   WARN,
-  REQUIREMENT_LEVEL_LABELS,
+  requirementLevelLabel,
   flagBool,
   flagList,
   flagNumber,
@@ -299,7 +299,7 @@ async function commandSearch(db: Database, args: Args): Promise<void> {
   for (const [index, hit] of result.hits.entries()) {
     const label = hit.requirementId ?? hit.heading ?? "(untitled)";
     const level = hit.requirementLevel
-      ? ` ${style.dim("·")} ${style.bold(REQUIREMENT_LEVEL_LABELS[hit.requirementLevel])}`
+      ? ` ${style.dim("·")} ${style.bold(requirementLevelLabel(hit.requirementLevel))}`
       : "";
 
     console.log(`  ${style.dim(`${index + 1}.`)} ${style.cyan(label)}${level}`);

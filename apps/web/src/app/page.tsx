@@ -4,76 +4,95 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageShell } from "@/components/page-shell";
 
-export const metadata = { title: "Ask the standard" };
+export const metadata = {
+  title: "Compliance for Kenyan horticultural exporters",
+  description:
+    "Know what GLOBALG.A.P. IFA v6 and SMETA 7 actually require on your farm — with citations, not guesses.",
+};
 
 export default function HomePage() {
   return (
-    <PageShell className="space-y-10">
-      <section className="max-w-2xl space-y-4 pt-4">
-        <p className="text-sm text-muted-foreground">GLOBALG.A.P. IFA v6 · Fruit &amp; Vegetables</p>
-        <h1 className="font-heading text-4xl font-medium tracking-tight">
-          The published standard, answerable in your words.
+    <PageShell className="space-y-16 pb-20">
+      <section className="max-w-2xl space-y-5 pt-8">
+        <p className="text-sm text-muted-foreground">Kenya · Fruit &amp; vegetables · Exporters</p>
+        <h1 className="font-heading text-4xl font-medium tracking-tight sm:text-5xl">
+          Know what applies, what evidence you need, and what is still missing.
         </h1>
         <p className="text-lg text-muted-foreground">
-          Ask when workers can re-enter a field, whether a criterion is a Major Must, or which
-          rules drop if you do not irrigate. Every answer cites a criterion or a General
-          Regulations clause. Nothing is invented from a model&apos;s memory.
+          CompliFine is a compliance operating system for horticultural exporters. It starts from
+          the publisher&apos;s own documents — GLOBALG.A.P. IFA v6 and SMETA 7.0 — and answers in
+          your words, with the criterion number on every claim.
         </p>
         <div className="flex flex-wrap gap-2">
           <Button asChild size="lg">
-            <Link href="/search">
-              Ask a question
+            <Link href="/demo">
+              Book a demo
               <ArrowRight />
             </Link>
           </Button>
           <Button asChild variant="outline" size="lg">
-            <Link href="/criteria">Browse criteria</Link>
+            <Link href="/criteria">See the criteria</Link>
           </Button>
         </div>
       </section>
 
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>Ask</CardTitle>
+            <CardTitle>GLOBALG.A.P. IFA v6</CardTitle>
             <CardDescription>
-              A streaming answer with a plain-language summary, the rule as published, and
-              cited passages.
+              Smart and GFS as parallel editions. 190 / 191 principles and criteria, the 16 scoping
+              questions, and the General Regulations — ingested from the official files, not recalled
+              from a model.
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <Button asChild variant="outline" size="sm">
-              <Link href="/search">Open chat</Link>
-            </Button>
-          </CardContent>
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle>Criteria</CardTitle>
+            <CardTitle>SMETA 7.0</CardTitle>
             <CardDescription>
-              190 Smart and 191 GFS principles and criteria, with level, page and source.
+              2-pillar and 4-pillar scopes against the ETI Base Code. Workplace Requirements stay
+              member-gated until you drop the official file. Sedex is the platform (your ZC), not a
+              second standard.
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <Button asChild variant="outline" size="sm">
-              <Link href="/criteria">Browse criteria</Link>
-            </Button>
-          </CardContent>
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle>My farm</CardTitle>
+            <CardTitle>Grounded answers</CardTitle>
             <CardDescription>
-              Answer the publisher&apos;s 16 scoping questions. See which criteria no longer apply.
+              Every answer cites a criterion or clause. A citation the tools never retrieved is
+              flagged, not hidden. The database answers questions of fact; the model only writes
+              prose.
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <Button asChild variant="outline" size="sm">
-              <Link href="/scope">Resolve checklist</Link>
-            </Button>
-          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Your farm, not a generic checklist</CardTitle>
+            <CardDescription>
+              Sites, certification scope and saved scoping answers live with your organisation. Ask
+              “what applies to the Naivasha packhouse” and the agent reads that profile.
+            </CardDescription>
+          </CardHeader>
         </Card>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Quality gates before anything is published</CardTitle>
+          <CardDescription>
+            Criterion counts, level distributions and source hashes are checked against numbers the
+            publisher states independently of the file being parsed. Operators review; members only
+            see published knowledge.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button asChild variant="outline">
+            <Link href="/signup">Create a producer account</Link>
+          </Button>
+        </CardContent>
+      </Card>
     </PageShell>
   );
 }

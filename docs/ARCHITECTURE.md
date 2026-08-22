@@ -17,13 +17,13 @@ a criterion the tools never returned is a failure rather than a flourish.
 ```
 complifine/
   packages/core        identifiers, enums, env, errors, hashing
-  packages/db          Drizzle schema, client, migrations
-  packages/ingestion   fetch, parse, map, gate, publish
+  packages/db          Drizzle schema, client, migrations, seeds
+  packages/ingestion   adapters, fetch, parse, map, gate, publish
   packages/ai          chunk, embed, search, agent, eval
-  apps/api             HTTP over the packages above
-  apps/web             explorer UI
+  apps/api             HTTP: JWT auth, demo, farm, knowledge, ingest
+  apps/web             marketing site + producer app (`/app`)
+  apps/console         operator console (ingest, gates, demo inbox)
   infra/               Postgres 17 + pgvector
-  sources/             manifest of official URLs (the bytes live in storage/)
 ```
 
 Workspaces share TypeScript path aliases. There is no compiled `dist/`: Bun
@@ -32,23 +32,25 @@ imports `.ts` files directly.
 ## Data flow
 
 ```
-documents.globalgap.org
+documents.globalgap.org  +  ethicaltrade.org  +  member-gated drops
         │  fetch (SHA-256, Last-Modified, byte-for-byte storage)
         ▼
-  storage/globalgap/…
-        │  XLSX adapter  +  PDF section parser + page map
+  storage/<publisher>/…
+        │  StandardAdapter (GlobalGapAdapter | SmetaAdapter)
         ▼
   Postgres
    requirements, sections, applicability, documents, gates
-        │  chunk (one criterion = one chunk; GR by heading)
+   users, organizations, sites, controls
+        │  chunk (one criterion = one chunk; GR by heading; ETI by clause)
         ▼
   document_chunks  ──embed──►  chunk_embeddings
         │
-        ├─ hybrid search (id → lexical IDF + cosine → RRF)
-        └─ agent tools (lookups, not inferences)
+        ├─ hybrid search
+        └─ tenant-aware agent tools
                 │
                 ▼
-         apps/api  ──►  apps/web
+         apps/api  ──►  apps/web (`/` marketing, `/app` product)
+                   ──►  apps/console (operators)
 ```
 
 Nothing in the right-hand column writes requirement text. The agent can fail to
@@ -101,6 +103,15 @@ a comment on a chat transcript.
 | User app | 3000 | `bun run web` |
 | Operator console | 3001 | `bun run console` |
 
-The user app is for asking questions, searching, browsing criteria and resolving
-the publisher's scoping questions. The console is for ingesting, reviewing and
-publishing. Both talk only to the API.
+The user app is a public marketing site plus a signed-in producer product under
+`/app` (ask, farm profile). The console is for ingesting, reviewing, publishing
+and reading demo requests. Both talk only to the API, via `/api` rewrites so
+JWT cookies stay same-origin.
+
+Auth is Elysia JWT (`cf_access` / `cf_refresh` httpOnly cookies, or
+`Authorization: Bearer`). Knowledge tables are global. Sites, scoping answers
+and conversations hang off `organizations`.
+
+SMETA 7.0 is adapter #2. Until the member Workplace Requirements PDF is dropped
+at `storage/drops/smeta/`, the knowledge base answers from the public ETI Base
+Code and refuses invented WR numbers. See [SOURCES-SMETA.md](SOURCES-SMETA.md).

@@ -169,6 +169,11 @@ async function migrate(): Promise<void> {
   console.log(`  ${CHECK} Schema migrated`);
 }
 
+async function seed(): Promise<void> {
+  await run(["bun", "packages/db/src/seed.ts"], { quiet: false });
+  console.log(`  ${CHECK} Operator user and control library seeded`);
+}
+
 async function ingest(): Promise<void> {
   console.log();
   await run(["bun", "packages/ingestion/src/cli.ts", "all"]);
@@ -221,7 +226,9 @@ async function main(): Promise<number> {
     }
 
     await migrate();
+    await seed();
     await ingest();
+    await seed();
     if (!skipIndex) await index();
 
     console.log(`\n${CHECK} ${style.green(style.bold("Ready."))}`);

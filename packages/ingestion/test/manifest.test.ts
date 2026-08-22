@@ -81,20 +81,19 @@ describe("manifest integrity", () => {
 
   // Exactly one of each per version: these are the two documents the whole
   // import is built from, and a second copy would make "the standard" ambiguous.
-  test("each version has exactly one Principles & Criteria and one checklist", () => {
-    for (const standard of MANIFEST) {
-      for (const version of standard.versions) {
-        const ofType = (type: string) =>
-          version.documents.filter((d) => d.documentType === type).length;
-        expect(ofType("principles_and_criteria")).toBe(1);
-        expect(ofType("checklist")).toBe(1);
-      }
+  test("each GLOBALG.A.P. version has exactly one Principles & Criteria and one checklist", () => {
+    const ggap = MANIFEST.find((s) => s.code === "globalgap-ifa") ?? MANIFEST[0]!;
+    for (const version of ggap.versions) {
+      const ofType = (type: string) =>
+        version.documents.filter((d) => d.documentType === type).length;
+      expect(ofType("principles_and_criteria")).toBe(1);
+      expect(ofType("checklist")).toBe(1);
     }
   });
 
-  test("both editions register the shared general regulations", () => {
-    for (const standard of MANIFEST) {
-      for (const version of standard.versions) {
+  test("both GLOBALG.A.P. editions register the shared general regulations", () => {
+    for (const standard of MANIFEST.filter((s) => s.versions.some((v) => v.edition === "smart" || v.edition === "gfs"))) {
+      for (const version of standard.versions.filter((v) => v.edition === "smart" || v.edition === "gfs")) {
         const count = version.documents.filter(
           (d) => d.documentType === "general_regulations",
         ).length;
@@ -117,8 +116,18 @@ describe("manifest integrity", () => {
 });
 
 describe("manifest URLs", () => {
-  test("a remote document has a primary and a mirror URL; a local one has neither", () => {
+  test("a remote GLOBALG.A.P. document has a primary and a mirror URL; a local one has neither", () => {
     for (const { document } of documents) {
+      const channel = document.channel ?? (document.localPath ? "local" : "http");
+      if (channel === "member_gated" || channel === "local") {
+        expect(documentMirrorUrl(document)).toBeNull();
+        continue;
+      }
+      if (document.originUrl && !document.originUrl.includes("documents.globalgap.org")) {
+        expect(documentUrl(document)).toBe(document.originUrl);
+        expect(documentMirrorUrl(document)).toBeNull();
+        continue;
+      }
       if (document.localPath) {
         expect(documentUrl(document)).toBeNull();
         expect(documentMirrorUrl(document)).toBeNull();
@@ -144,7 +153,7 @@ describe("manifest URLs", () => {
   test("manifestUrls deduplicates the documents shared by both editions", () => {
     const urls = manifestUrls();
     const remote = documents
-      .filter(({ document }) => !document.localPath)
+      .filter(({ document }) => documentUrl(document))
       .map(({ document }) => documentUrl(document)!);
 
     expect(new Set(urls).size).toBe(urls.length);
@@ -171,9 +180,10 @@ describe("manifest URLs", () => {
 });
 
 describe("locally supplied documents", () => {
-  test("every declared local file exists on disk", () => {
+  test("every declared local file exists on disk, except member-gated drop targets", () => {
     for (const { document } of documents) {
       if (!document.localPath) continue;
+      if ((document.channel ?? "local") === "member_gated") continue;
       const path = isAbsolute(document.localPath)
         ? document.localPath
         : resolve(REPO_ROOT, document.localPath);
@@ -195,5 +205,29 @@ describe("lookup helpers", () => {
   test("returns null rather than throwing for an unknown key", () => {
     expect(findVersion("ifa-v7")).toBeNull();
     expect(findDocument("nope")).toBeNull();
+  });
+});
+
+describe("SMETA 7 registry", () => {
+  test("registers 2-pillar and 4-pillar as parallel editions", () => {
+    expect(findVersion("smeta-7-2-pillar")?.edition).toBe("2-pillar");
+    expect(findVersion("smeta-7-4-pillar")?.edition).toBe("4-pillar");
+    expect(findVersion("smeta-7-2-pillar")?.levelScheme).toBe("smeta_7");
+  });
+
+  test("ETI Base Code is a public HTTP source", () => {
+    const eti = findDocument("eti-base-code-en")!;
+    expect(eti.documentType).toBe("base_code");
+    expect(eti.channel).toBe("http");
+    expect(documentUrl(eti)).toContain("ethicaltrade.org");
+    expect(documentMirrorUrl(eti)).toBeNull();
+  });
+
+  test("Workplace Requirements are member-gated drop targets, not Scribd", () => {
+    const wr = findDocument("smeta-7-2p-workplace-requirements")!;
+    expect(wr.channel).toBe("member_gated");
+    expect(wr.localPath).toContain("SMETA-7.0-Workplace-Requirements.pdf");
+    expect(wr.note?.toLowerCase()).not.toContain("scribd");
+    expect(documentUrl(wr)).toBeNull();
   });
 });

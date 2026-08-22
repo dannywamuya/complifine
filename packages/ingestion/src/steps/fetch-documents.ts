@@ -10,11 +10,11 @@
  */
 
 import { eq, type Database } from "@complifine/db";
-import { standardDocuments, standardVersions } from "@complifine/db";
+import { standardDocuments, standards, standardVersions } from "@complifine/db";
 import { parseGlobalGapFilename } from "@complifine/core";
 import { fetchDocument, headDocument, loadLocalDocument, validateMagicBytes } from "../fetch.ts";
 import { storeSourceFile, verifyStoredFile } from "../storage.ts";
-import { findDocument } from "../manifest.ts";
+import { findDocument, resolveChannel } from "../manifest.ts";
 import type { JobContext } from "../jobs.ts";
 import { recordAudit } from "../audit.ts";
 
@@ -132,7 +132,19 @@ async function fetchOne(
   options: FetchOptions,
 ): Promise<Outcome> {
   const manifestEntry = findDocument(row.slug);
+  const channel = manifestEntry ? resolveChannel(manifestEntry) : row.channel;
   const localPath = manifestEntry?.localPath ?? (row.metadata.localPath as string | null);
+
+  if (channel === "member_gated") {
+    const { existsSync } = await import("node:fs");
+    const { resolve } = await import("node:path");
+    if (!localPath || !existsSync(resolve(options.localBaseDir, localPath))) {
+      await ctx.info(
+        `${row.slug} is member-gated and no local file is present. Skipping (not an error).`,
+      );
+      return "unchanged";
+    }
+  }
   const parsed = parseGlobalGapFilename(row.filename);
 
   // --- cheap change detection ---------------------------------------------
@@ -189,8 +201,12 @@ async function fetchOne(
     .from(standardVersions)
     .where(eq(standardVersions.id, row.standardVersionId));
 
+  const [standard] = version
+    ? await db.select().from(standards).where(eq(standards.id, version.standardId))
+    : [];
+
   const stored = await storeSourceFile({
-    standardSlug: "globalgap-ifa",
+    standardSlug: standard?.code ?? "unknown-standard",
     scopeSlug: version?.scope ?? "unscoped",
     versionSlug: version?.code ?? "unversioned",
     extension: parsed.extension,

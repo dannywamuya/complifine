@@ -75,6 +75,8 @@ export const DOCUMENT_TYPES = [
   "update",
   "transition_tool",
   "third_party_summary",
+  "base_code",
+  "methodology",
 ] as const;
 
 export type DocumentType = (typeof DOCUMENT_TYPES)[number];
@@ -87,6 +89,8 @@ export const DOCUMENT_TYPE_LABELS: Record<DocumentType, string> = {
   update: "Official update",
   transition_tool: "Transition tool",
   third_party_summary: "Third-party summary",
+  base_code: "Base code",
+  methodology: "Audit methodology",
 };
 
 /** The default authority level implied by a document type. Overridable per document. */
@@ -98,6 +102,8 @@ export const DOCUMENT_TYPE_AUTHORITY: Record<DocumentType, AuthorityLevel> = {
   update: AUTHORITY_LEVELS.OFFICIAL_UPDATE,
   transition_tool: AUTHORITY_LEVELS.OFFICIAL_UPDATE,
   third_party_summary: AUTHORITY_LEVELS.CB_GUIDANCE,
+  base_code: AUTHORITY_LEVELS.OFFICIAL_STANDARD,
+  methodology: AUTHORITY_LEVELS.OFFICIAL_REGULATIONS,
 };
 
 export const DOCUMENT_STATUSES = [
@@ -300,6 +306,8 @@ export type ScopingAnswer = (typeof SCOPING_ANSWERS)[number];
  */
 export const APPLICABILITY_SOURCES = [
   "globalgap_official",
+  "eti_official",
+  "smeta_official",
   "complifine_authored",
   "ai_proposed",
 ] as const;
@@ -345,3 +353,114 @@ export type RelationshipOrigin = (typeof RELATIONSHIP_ORIGINS)[number];
 
 export const REVIEW_DECISIONS = ["approved", "rejected", "changes_requested"] as const;
 export type ReviewDecision = (typeof REVIEW_DECISIONS)[number];
+
+// ---------------------------------------------------------------------------
+// Source channels (how a document is obtained)
+// ---------------------------------------------------------------------------
+
+/**
+ * GLOBALG.A.P. publishes a public CDN. SMETA Workplace Requirements do not.
+ * The channel is data, so a future cert can be HTTP, a membership portal drop,
+ * or a local file without a schema change.
+ */
+export const SOURCE_CHANNELS = ["http", "mirror", "local", "member_gated"] as const;
+export type SourceChannel = (typeof SOURCE_CHANNELS)[number];
+
+export const SOURCE_CHANNEL_LABELS: Record<SourceChannel, string> = {
+  http: "Public HTTP",
+  mirror: "Mirror",
+  local: "Local file",
+  member_gated: "Membership / e-Learning (operator drop)",
+};
+
+// ---------------------------------------------------------------------------
+// Level schemes
+// ---------------------------------------------------------------------------
+
+/**
+ * Requirement "level" is publisher vocabulary, not a universal enum.
+ * GLOBALG.A.P. uses Major/Minor/Recommendation. SMETA 7 uses NC / CAR / MSA.
+ * Stored as text + scheme so a third cert does not require a migration.
+ */
+export const LEVEL_SCHEMES = ["globalgap_ifa", "smeta_7", "eti_base_code"] as const;
+export type LevelScheme = (typeof LEVEL_SCHEMES)[number];
+
+export const SMETA_LEVELS = ["nc", "car", "msa", "eti_clause"] as const;
+export type SmetaLevel = (typeof SMETA_LEVELS)[number];
+
+export const SMETA_LEVEL_LABELS: Record<SmetaLevel, string> = {
+  nc: "Non-compliance criterion",
+  car: "Collaborative Action Required",
+  msa: "Management Systems Assessment",
+  eti_clause: "ETI Base Code clause",
+};
+
+export function parseSmetaLevel(raw: string | null | undefined): SmetaLevel | null {
+  if (!raw) return null;
+  const key = raw.trim().toLowerCase().replace(/\s+/g, " ");
+  if (key === "nc" || key === "non-compliance" || key === "non compliance") return "nc";
+  if (key === "car" || key.includes("collaborative action")) return "car";
+  if (key === "msa" || key.includes("management system")) return "msa";
+  if (key.includes("eti") || key === "clause" || key === "base code") return "eti_clause";
+  return null;
+}
+
+export function requirementLevelLabel(code: string, scheme: string = "globalgap_ifa"): string {
+  if (scheme === "globalgap_ifa" && (REQUIREMENT_LEVELS as readonly string[]).includes(code)) {
+    return REQUIREMENT_LEVEL_LABELS[code as RequirementLevel];
+  }
+  if (scheme === "smeta_7" && (SMETA_LEVELS as readonly string[]).includes(code)) {
+    return SMETA_LEVEL_LABELS[code as SmetaLevel];
+  }
+  if (scheme === "eti_base_code") return "ETI clause";
+  return code;
+}
+
+export function isGgapEdition(value: string): value is Edition {
+  return (EDITIONS as readonly string[]).includes(value);
+}
+
+// ---------------------------------------------------------------------------
+// Tenancy and farm operations
+// ---------------------------------------------------------------------------
+
+export const USER_KINDS = ["member", "operator"] as const;
+export type UserKind = (typeof USER_KINDS)[number];
+
+export const MEMBERSHIP_ROLES = [
+  "owner",
+  "compliance_manager",
+  "site_manager",
+  "viewer",
+] as const;
+export type MembershipRole = (typeof MEMBERSHIP_ROLES)[number];
+
+export const MEMBERSHIP_ROLE_LABELS: Record<MembershipRole, string> = {
+  owner: "Owner",
+  compliance_manager: "Compliance manager",
+  site_manager: "Site manager",
+  viewer: "Viewer",
+};
+
+export const SITE_TYPES = ["farm", "packhouse", "collection_centre", "warehouse"] as const;
+export type SiteType = (typeof SITE_TYPES)[number];
+
+export const SITE_TYPE_LABELS: Record<SiteType, string> = {
+  farm: "Farm",
+  packhouse: "Packhouse",
+  collection_centre: "Collection centre",
+  warehouse: "Warehouse",
+};
+
+export const CONTROL_TYPES = [
+  "policy",
+  "procedure",
+  "training",
+  "inspection",
+  "record",
+  "physical",
+] as const;
+export type ControlType = (typeof CONTROL_TYPES)[number];
+
+export const DEMO_INTERESTS = ["globalgap-ifa", "smeta-7", "both"] as const;
+export type DemoInterest = (typeof DEMO_INTERESTS)[number];

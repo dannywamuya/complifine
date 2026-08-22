@@ -18,7 +18,7 @@ import {
   standardSections,
   standardVersions,
 } from "@complifine/db";
-import { REQUIREMENT_LEVEL_LABELS } from "@complifine/core";
+import { requirementLevelLabel } from "@complifine/core";
 import {
   chunkProse,
   chunkRequirements,
@@ -136,7 +136,7 @@ async function chunkVersion(
   const requirementSources: RequirementChunkSource[] = requirements.map((requirement) => ({
     requirementVersionId: requirement.id,
     sourceRequirementId: requirement.sourceRequirementId,
-    levelLabel: REQUIREMENT_LEVEL_LABELS[requirement.level],
+    levelLabel: requirementLevelLabel(requirement.level),
     principleText: requirement.principleText,
     criteriaText: requirement.criteriaText,
     sectionId: requirement.subsectionId ?? requirement.sectionId,

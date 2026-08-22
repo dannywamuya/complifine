@@ -128,9 +128,10 @@ async function discoverUndeclaredDocuments(): Promise<string[]> {
         if (!response.ok) continue;
 
         const html = await response.text();
-        for (const match of html.matchAll(
-          /https:\/\/documents\.globalgap\.org\/documents\/[^"'\s<>\\]+\.(?:pdf|xlsx|docx)/gi,
-        )) {
+        const pattern = standard.discoveryUrlPattern
+          ? new RegExp(standard.discoveryUrlPattern, "gi")
+          : /https:\/\/documents\.globalgap\.org\/documents\/[^"'\s<>\\]+\.(?:pdf|xlsx|docx)/gi;
+        for (const match of html.matchAll(pattern)) {
           const url = decodeHtmlEntities(match[0]);
           if (!declared.has(normalizeUrl(url))) found.add(url);
         }
