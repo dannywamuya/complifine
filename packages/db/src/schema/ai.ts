@@ -214,6 +214,7 @@ export const conversations = pgTable(
     }),
     siteId: uuid("site_id").references(() => sites.id, { onDelete: "set null" }),
     title: text("title"),
+    activeLeafId: uuid("active_leaf_id"),
     ...timestamps,
   },
   (t) => [
@@ -221,6 +222,57 @@ export const conversations = pgTable(
     index("conversations_org_idx").on(t.organizationId, t.createdAt),
   ],
 );
+
+export type Conversation = typeof conversations.$inferSelect;
+
+export interface MessageAttachment {
+  id: string;
+  kind: "image" | "file";
+  name: string;
+  size: number;
+  mime: string;
+  /** Data URL for images in the prototype; omitted for large files. */
+  dataUrl?: string;
+}
+
+export interface StoredCitation {
+  raw: string;
+  criterionId: string | null;
+  kind: string;
+}
+
+export type MessageRole = "user" | "assistant" | "system";
+export type MessageStatus = "pending" | "streaming" | "complete" | "error" | "stopped";
+
+export const conversationMessages = pgTable(
+  "conversation_messages",
+  {
+    id: primaryId(),
+    conversationId: uuid("conversation_id")
+      .notNull()
+      .references(() => conversations.id, { onDelete: "cascade" }),
+    parentId: uuid("parent_id"),
+    role: text("role").$type<MessageRole>().notNull(),
+    content: text("content").notNull().default(""),
+    status: text("status").$type<MessageStatus>().notNull().default("complete"),
+    attachments: jsonb("attachments").$type<MessageAttachment[]>().notNull().default([]),
+    citations: jsonb("citations").$type<StoredCitation[]>(),
+    ungrounded: jsonb("ungrounded").$type<StoredCitation[]>(),
+    tools: jsonb("tools").$type<unknown[]>(),
+    hits: jsonb("hits").$type<unknown[]>(),
+    error: text("error"),
+    runId: uuid("run_id"),
+    durationMs: integer("duration_ms"),
+    feedback: text("feedback").$type<"up" | "down">(),
+    ...timestamps,
+  },
+  (t) => [
+    index("conversation_messages_conv_idx").on(t.conversationId, t.createdAt),
+    index("conversation_messages_parent_idx").on(t.parentId),
+  ],
+);
+
+export type ConversationMessage = typeof conversationMessages.$inferSelect;
 
 // ---------------------------------------------------------------------------
 // agent_runs and agent_tool_calls

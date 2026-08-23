@@ -44,7 +44,7 @@ export default function SignupPage() {
                     country: String(form.get("country") ?? "KE"),
                   }),
                 });
-                router.push("/app/farm");
+                router.push("/app");
                 router.refresh();
               } catch (err) {
                 setError(err instanceof ApiError ? err.message : (err as Error).message);

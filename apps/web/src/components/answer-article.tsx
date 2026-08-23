@@ -170,7 +170,7 @@ function Inline({ text }: { text: string }) {
 
 function CitationChip({ raw }: { raw: string }) {
   const match = CRITERION.exec(raw);
-  const href = match ? `/criteria/${encodeURIComponent(canonicalize(match[0]))}` : null;
+  const href = match ? `/app/criteria/${encodeURIComponent(canonicalize(match[0]))}` : null;
   const className = cn(
     "mx-0.5 inline-flex translate-y-px items-center rounded-full bg-zinc-900/[0.06] px-1.5 py-0.5 font-mono text-[11px] text-zinc-700",
     href && "transition-colors hover:bg-emerald-900/10 hover:text-emerald-950",

@@ -4,42 +4,26 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 import { api, startSessionKeepAlive } from "@/lib/api";
-
-interface Me {
-  id: string;
-  name: string;
-  kind: string;
-}
+import type { Me } from "@/lib/farm";
 
 export function SiteHeader() {
   const path = usePathname();
-  const inApp = path.startsWith("/app");
   const [me, setMe] = useState<Me | null>(null);
 
   useEffect(() => {
+    if (path.startsWith("/app")) return;
     api<Me>("/auth/me")
       .then(setMe)
       .catch(() => setMe(null));
   }, [path]);
 
   useEffect(() => {
-    if (!me) return;
+    if (!me || path.startsWith("/app")) return;
     return startSessionKeepAlive();
-  }, [me]);
+  }, [me, path]);
 
-  const links = inApp
-    ? [
-        { href: "/app/search", label: "Ask" },
-        { href: "/app/farm", label: "Farm" },
-        { href: "/criteria", label: "Criteria" },
-      ]
-    : [
-        { href: "/demo", label: "Book a demo" },
-        { href: "/criteria", label: "Criteria" },
-        { href: "/app/search", label: "Product" },
-      ];
+  if (path.startsWith("/app")) return null;
 
   return (
     <header className="sticky top-0 z-20 min-w-0 overflow-x-hidden border-b bg-background/90 backdrop-blur">
@@ -47,37 +31,16 @@ export function SiteHeader() {
         <Link href="/" className="shrink-0 font-heading text-base font-medium tracking-tight">
           CompliFine
         </Link>
-        <nav className="flex min-w-0 flex-1 flex-wrap items-center gap-1">
-          {links.map((link) => {
-            const active = path === link.href || path.startsWith(`${link.href}/`);
-            return (
-              <Button
-                key={link.href}
-                asChild
-                variant="ghost"
-                size="sm"
-                className={cn(active && "bg-muted text-foreground")}
-              >
-                <Link href={link.href}>{link.label}</Link>
-              </Button>
-            );
-          })}
+        <nav className="flex min-w-0 flex-1 items-center gap-1">
+          <Button asChild variant="ghost" size="sm">
+            <Link href="/demo">Book a demo</Link>
+          </Button>
         </nav>
         <div className="ml-auto flex shrink-0 items-center gap-2">
           {me ? (
-            <>
-              <span className="hidden text-sm text-muted-foreground sm:inline">{me.name}</span>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={async () => {
-                  await api("/auth/logout", { method: "POST" });
-                  window.location.href = "/";
-                }}
-              >
-                Sign out
-              </Button>
-            </>
+            <Button asChild size="sm">
+              <Link href="/app">Open dashboard</Link>
+            </Button>
           ) : (
             <>
               <Button asChild variant="ghost" size="sm">

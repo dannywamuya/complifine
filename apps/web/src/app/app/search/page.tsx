@@ -1,7 +1,5 @@
-import { ChatWorkspace } from "@/components/chat-workspace";
+import { redirect } from "next/navigation";
 
-export const metadata = { title: "Ask" };
-
-export default function AppSearchPage() {
-  return <ChatWorkspace />;
+export default function AppSearchRedirect() {
+  redirect("/app/ask");
 }

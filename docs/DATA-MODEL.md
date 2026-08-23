@@ -130,6 +130,12 @@ migration; see [RAG.md](RAG.md). Indexed with HNSW over cosine distance.
 Every search, every tool call, every eval case. Tuning fusion without logs is
 guesswork; reconstructing an agent answer without them is impossible.
 
+### `conversations` / `conversation_messages`
+
+The assistant's history. Messages form a tree: `parent_id` is the previous
+turn, and siblings under the same parent are edits or regenerations. The row
+the user is looking at is `conversations.active_leaf_id`. See [CHAT.md](CHAT.md).
+
 ## Authority levels
 
 | Level | Meaning | Citable as a requirement? |

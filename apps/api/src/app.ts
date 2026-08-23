@@ -52,6 +52,7 @@ import {
 } from "@complifine/ai";
 import { recordReview, runGates, transitionVersion } from "@complifine/ingestion";
 import { adminRoutes } from "./admin.ts";
+import { conversationRoutes, finishAssistant, insertTurn } from "./conversations.ts";
 import { knowledgeGraph, listStandards, lookupRequirementIds, parseCodeList } from "./catalog.ts";
 import { httpError } from "./errors.ts";
 import { authModule } from "./auth/plugin.ts";
@@ -99,6 +100,7 @@ export function createApp(database = createDatabase()) {
       .use(authModule(db))
       .use(demoRoutes(db))
       .use(farmRoutes(db))
+      .use(conversationRoutes(db))
       .use(adminRoutes(db))
       .onError(({ code, error, set }) => {
         const message = error instanceof Error ? error.message : String(error);
@@ -813,20 +815,58 @@ export function createApp(database = createDatabase()) {
 
           const choice = await embedderForQuery(db);
           const encoder = new TextEncoder();
+          const conversationId = body.conversationId ?? crypto.randomUUID();
 
           const stream = new ReadableStream({
             async start(controller) {
-              const send = (event: { type: string }) => {
+              const send = (event: { type: string } & Record<string, unknown>) => {
                 controller.enqueue(
                   encoder.encode(`event: ${event.type}\ndata: ${JSON.stringify(event)}\n\n`),
                 );
               };
 
+              let turn: { userMessageId: string; assistantMessageId: string } | null = null;
+              let answer = "";
+              let completed:
+                | {
+                    citations?: unknown;
+                    ungrounded?: unknown;
+                    tools?: unknown;
+                    runId?: string;
+                    durationMs?: number;
+                  }
+                | null = null;
+              let failed: string | null = null;
+
+              if (auth) {
+                try {
+                  turn = await insertTurn(db, {
+                    conversationId,
+                    userId: auth.id,
+                    organizationId: auth.orgId,
+                    siteId: body.siteId,
+                    parentId: body.parentId ?? null,
+                    question: body.userContent ?? body.question,
+                    attachments: body.attachments,
+                    userMessageId: body.userMessageId,
+                    assistantMessageId: body.assistantMessageId,
+                    skipUser: Boolean(body.skipUser),
+                  });
+                } catch (error) {
+                  send({
+                    type: "error",
+                    message: error instanceof Error ? error.message : String(error),
+                  } as { type: string });
+                  controller.close();
+                  return;
+                }
+              }
+
               try {
                 for await (const event of askStream(body.question, {
                   db,
                   embedder: choice.embedder,
-                  conversationId: body.conversationId,
+                  conversationId,
                   history: body.history,
                   persist: true,
                   abortSignal: request.signal,
@@ -834,14 +874,47 @@ export function createApp(database = createDatabase()) {
                   organizationId: auth?.orgId ?? undefined,
                   siteId: body.siteId,
                 })) {
-                  send(event);
+                  if (event.type === "start" && turn) {
+                    send({
+                      ...event,
+                      conversationId,
+                      userMessageId: turn.userMessageId,
+                      assistantMessageId: turn.assistantMessageId,
+                    });
+                  } else {
+                    send(event);
+                  }
+                  if (event.type === "text") answer += event.text;
+                  if (event.type === "done") {
+                    answer = event.answer;
+                    completed = {
+                      citations: event.citations,
+                      ungrounded: event.ungroundedCitations,
+                      tools: event.toolCalls,
+                      runId: event.runId,
+                      durationMs: event.durationMs,
+                    };
+                  }
+                  if (event.type === "error") failed = event.message;
                 }
               } catch (error) {
+                failed = error instanceof Error ? error.message : String(error);
                 send({
                   type: "error",
-                  message: error instanceof Error ? error.message : String(error),
+                  message: failed,
                 } as { type: string });
               } finally {
+                if (turn) {
+                  const aborted = request.signal.aborted;
+                  await finishAssistant(db, turn.assistantMessageId, {
+                    content: answer,
+                    status: aborted ? "stopped" : failed ? "error" : "complete",
+                    error: aborted ? null : failed,
+                    ...completed,
+                    runId: completed?.runId,
+                    durationMs: completed?.durationMs,
+                  }).catch(() => undefined);
+                }
                 controller.close();
               }
             },
@@ -870,8 +943,25 @@ export function createApp(database = createDatabase()) {
           body: t.Object({
             question: t.String({ minLength: 2 }),
             conversationId: t.Optional(t.String()),
+            parentId: t.Optional(t.Union([t.String(), t.Null()])),
+            userMessageId: t.Optional(t.String()),
+            assistantMessageId: t.Optional(t.String()),
+            skipUser: t.Optional(t.Boolean()),
+            userContent: t.Optional(t.String()),
             siteId: t.Optional(t.String()),
             history: t.Optional(t.Array(chatTurn)),
+            attachments: t.Optional(
+              t.Array(
+                t.Object({
+                  id: t.String(),
+                  kind: t.Union([t.Literal("image"), t.Literal("file")]),
+                  name: t.String(),
+                  size: t.Number(),
+                  mime: t.String(),
+                  dataUrl: t.Optional(t.String()),
+                }),
+              ),
+            ),
           }),
           detail: { summary: "Ask the compliance agent, streaming tokens and tool calls" },
         },

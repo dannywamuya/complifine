@@ -1,6 +1,9 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
+@import "@complifine/chat/styles.css";
+
+@source "../../../../packages/chat/src";
 
 @custom-variant dark (&:is(.dark *));
 

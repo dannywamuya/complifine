@@ -1,5 +1,7 @@
 import { describe, expect, test } from "bun:test";
+import { createDatabase, users } from "@complifine/db";
 import { createApp } from "../src/app.ts";
+import { hashPassword } from "../src/auth/crypto.ts";
 
 const app = createApp();
 
@@ -69,5 +71,52 @@ describe("farm tenancy", () => {
       headers: { Authorization: `Bearer ${tokenA}` },
     });
     expect(own.status).toBe(200);
+  });
+
+  test("a member without an organisation can create a farm profile", async () => {
+    if (!(await databaseReachable())) return;
+
+    const database = createDatabase({ max: 1 });
+    const suffix = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const email = `orphan-${suffix}@farm.test`;
+    try {
+      await database.insert(users).values({
+        email,
+        name: "Orphan Farmer",
+        passwordHash: await hashPassword("password12"),
+        kind: "member",
+      });
+
+      const login = await json("/auth/login", {
+        method: "POST",
+        body: JSON.stringify({ email, password: "password12" }),
+      });
+      expect(login.status).toBe(200);
+      const token = (login.body as { accessToken: string }).accessToken;
+
+      const empty = await json("/org", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      expect(empty.status).toBe(200);
+      expect((empty.body as { organization: unknown }).organization).toBeNull();
+
+      const created = await json("/org", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ name: `New Farm ${suffix}`, country: "KE" }),
+      });
+      expect(created.status).toBe(200);
+      expect((created.body as { name: string }).name).toBe(`New Farm ${suffix}`);
+
+      const loaded = await json("/org", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      expect(loaded.status).toBe(200);
+      expect((loaded.body as { organization: { name: string } | null }).organization?.name).toBe(
+        `New Farm ${suffix}`,
+      );
+    } finally {
+      await database.$close();
+    }
   });
 });

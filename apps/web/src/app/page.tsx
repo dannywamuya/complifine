@@ -25,13 +25,13 @@ export default function HomePage() {
         </p>
         <div className="flex flex-wrap gap-2">
           <Button asChild size="lg">
-            <Link href="/demo">
-              Book a demo
+            <Link href="/signup">
+              Create a producer account
               <ArrowRight />
             </Link>
           </Button>
           <Button asChild variant="outline" size="lg">
-            <Link href="/criteria">See the criteria</Link>
+            <Link href="/demo">Book a demo</Link>
           </Button>
         </div>
       </section>
@@ -89,7 +89,7 @@ export default function HomePage() {
         </CardHeader>
         <CardContent>
           <Button asChild variant="outline">
-            <Link href="/signup">Create a producer account</Link>
+            <Link href="/login">Sign in to your dashboard</Link>
           </Button>
         </CardContent>
       </Card>

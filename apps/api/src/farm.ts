@@ -2,13 +2,13 @@ import { Elysia, status, t } from "elysia";
 import { and, desc, eq, type Database } from "@complifine/db";
 import {
   applicabilityQuestions,
-  conversations,
   controlEvidenceTypes,
   controlRequirements,
   controls,
   evidenceTypes,
   organizationScopes,
   organizations,
+  memberships,
   requirementVersions,
   siteScopingAnswers,
   sites,
@@ -21,7 +21,10 @@ export function farmRoutes(db: Database) {
   return new Elysia({ name: "complifine-farm" })
     .derive((ctx): { auth: AuthUser | null } => ({ auth: readAuth(ctx) }))
     .get("/org", async ({ auth }) => {
-      const user = requireOrg(auth);
+      const user = requireUser(auth);
+      if (!user.orgId) {
+        return { organization: null, sites: [], scopes: [], role: user.role };
+      }
       const [org] = await db.select().from(organizations).where(eq(organizations.id, user.orgId));
       const orgSites = await db.select().from(sites).where(eq(sites.organizationId, user.orgId));
       const scopes = await db
@@ -35,12 +38,30 @@ export function farmRoutes(db: Database) {
         .from(organizationScopes)
         .innerJoin(standardVersions, eq(standardVersions.id, organizationScopes.standardVersionId))
         .where(eq(organizationScopes.organizationId, user.orgId));
-      return { organization: org, sites: orgSites, scopes, role: user.role };
+      return { organization: org ?? null, sites: orgSites, scopes, role: user.role };
     })
     .post(
       "/org",
       async ({ auth, body }) => {
-        const user = requireOrg(auth);
+        const user = requireUser(auth);
+        if (!user.orgId) {
+          const name = body.name?.trim();
+          if (!name) throw status(400, { error: "Company name is required" });
+          const [org] = await db
+            .insert(organizations)
+            .values({
+              name,
+              country: body.country?.trim() || "KE",
+              sedexZc: body.sedexZc?.trim() || null,
+            })
+            .returning();
+          await db.insert(memberships).values({
+            userId: user.id,
+            organizationId: org!.id,
+            role: "owner",
+          });
+          return org;
+        }
         const [org] = await db
           .update(organizations)
           .set({
@@ -195,20 +216,6 @@ export function farmRoutes(db: Database) {
     }, {
       params: t.Object({ id: t.String() }),
       query: t.Object({ versionCode: t.String() }),
-    })
-    .get("/conversations", async ({ auth }) => {
-      const user = requireUser(auth);
-      const rows = await db
-        .select()
-        .from(conversations)
-        .where(
-          user.orgId
-            ? eq(conversations.organizationId, user.orgId)
-            : eq(conversations.userId, user.id),
-        )
-        .orderBy(desc(conversations.updatedAt))
-        .limit(40);
-      return { conversations: rows };
     })
     .get("/controls", async ({ auth }) => {
       requireUser(auth);

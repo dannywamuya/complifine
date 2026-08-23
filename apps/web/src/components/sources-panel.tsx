@@ -51,7 +51,7 @@ export function SourcesPanel({
             {criterionCitations.map((citation) => (
               <Link
                 key={citation.raw}
-                href={`/criteria/${encodeURIComponent(citation.criterionId!)}`}
+                href={`/app/criteria/${encodeURIComponent(citation.criterionId!)}`}
                 className="block rounded-xl px-3 py-2 text-sm transition-colors hover:bg-white"
               >
                 <p className="font-mono text-[13px] font-medium">{citation.criterionId}</p>
@@ -130,7 +130,7 @@ function SourceHit({ hit }: { hit: SearchHit }) {
 
   if (hit.criterion) {
     return (
-      <Link href={`/criteria/${encodeURIComponent(hit.criterion)}`} className="block">
+      <Link href={`/app/criteria/${encodeURIComponent(hit.criterion)}`} className="block">
         {inner}
       </Link>
     );

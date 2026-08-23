@@ -20,7 +20,8 @@ complifine/
   packages/db          Drizzle schema, client, migrations, seeds
   packages/ingestion   adapters, fetch, parse, map, gate, publish
   packages/ai          chunk, embed, search, agent, eval
-  apps/api             HTTP: JWT auth, demo, farm, knowledge, ingest
+  packages/chat        shared assistant UI (web + console)
+  apps/api             HTTP: JWT auth, demo, farm, knowledge, ingest, chat
   apps/web             marketing site + producer app (`/app`)
   apps/console         operator console (ingest, gates, demo inbox)
   infra/               Postgres 17 + pgvector

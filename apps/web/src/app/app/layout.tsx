@@ -1,7 +1,8 @@
 import type { ReactNode } from "react";
+import { AppChrome } from "@/components/app-chrome";
 
-export const metadata = { title: "Farm" };
+export const metadata = { title: "App" };
 
 export default function AppLayout({ children }: { children: ReactNode }) {
-  return children;
+  return <AppChrome>{children}</AppChrome>;
 }

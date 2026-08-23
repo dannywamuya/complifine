@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { api, ApiError } from "@/lib/api";
 import { PageShell } from "@/components/page-shell";
 import { Button } from "@/components/ui/button";
@@ -12,9 +12,19 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
+  );
+}
+
+function LoginForm() {
   const router = useRouter();
+  const params = useSearchParams();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const next = safeNext(params.get("next"));
 
   return (
     <PageShell className="max-w-md space-y-6 pt-10">
@@ -39,7 +49,7 @@ export default function LoginPage() {
                     password: String(form.get("password") ?? ""),
                   }),
                 });
-                router.push("/app/farm");
+                router.push(next);
                 router.refresh();
               } catch (err) {
                 setError(err instanceof ApiError ? err.message : (err as Error).message);
@@ -76,4 +86,10 @@ export default function LoginPage() {
       </Card>
     </PageShell>
   );
+}
+
+function safeNext(value: string | null): string {
+  if (!value || !value.startsWith("/") || value.startsWith("//")) return "/app";
+  if (value.startsWith("/app")) return value;
+  return "/app";
 }

@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
 
-export default function AskPage() {
-  redirect("/app/search");
+export default function AskRedirect() {
+  redirect("/app/ask");
 }

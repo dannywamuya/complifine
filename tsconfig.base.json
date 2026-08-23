@@ -29,7 +29,9 @@
       "@complifine/ingestion": ["./packages/ingestion/src/index.ts"],
       "@complifine/ingestion/*": ["./packages/ingestion/src/*"],
       "@complifine/ai": ["./packages/ai/src/index.ts"],
-      "@complifine/ai/*": ["./packages/ai/src/*"]
+      "@complifine/ai/*": ["./packages/ai/src/*"],
+      "@complifine/chat": ["./packages/chat/src/index.ts"],
+      "@complifine/chat/*": ["./packages/chat/src/*"]
     }
   }
 }

@@ -60,7 +60,7 @@ export default function DemoPage() {
             <Link href="/signup" className="underline">
               create an account
             </Link>{" "}
-            and browse the published criteria.
+            and set up your farm.
           </AlertDescription>
         </Alert>
       ) : (
