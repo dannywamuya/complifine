@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useState, type ReactNode } from "react";
+import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { Tractor } from "lucide-react";
 import { api, startSessionKeepAlive } from "@/lib/api";
-import type { Me } from "@/lib/farm";
+import type { Me, OrgPayload } from "@/lib/farm";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
@@ -32,37 +34,40 @@ export function AppChrome({ children }: { children: ReactNode }) {
   const path = usePathname();
   const router = useRouter();
   const [me, setMe] = useState<Me | null | undefined>(undefined);
+  const [orgName, setOrgName] = useState<string | null>(null);
 
   useEffect(() => {
     api<Me>("/auth/me")
       .then(setMe)
       .catch(() => {
-        const next = encodeURIComponent(path || "/app");
-        router.replace(`/login?next=${next}`);
+        const next =
+          path === "/app/ask" || path.startsWith("/app/search") ? "/app" : path || "/app";
+        router.replace(`/login?next=${encodeURIComponent(next)}`);
       });
   }, [path, router]);
+
+  useEffect(() => {
+    if (!me) return;
+    api<OrgPayload>("/org")
+      .then((payload) => setOrgName(payload.organization?.name ?? null))
+      .catch(() => setOrgName(null));
+  }, [me]);
 
   useEffect(() => {
     if (!me) return;
     return startSessionKeepAlive();
   }, [me]);
 
-  const flush = path.startsWith("/app/ask") || path.startsWith("/app/search");
-  const title =
-    path.startsWith("/app/ask") || path.startsWith("/app/search")
-      ? "Chat"
-      : path.startsWith("/app/criteria")
-        ? "Criteria"
-        : path.startsWith("/app/farm")
-          ? "Farm"
-          : "Overview";
+  const chatHome = path === "/app";
+  const onCriteria = path.startsWith("/app/criteria");
+  const onFarm = path.startsWith("/app/farm");
 
   if (!me) {
     return (
-      <div className="flex min-h-svh flex-col gap-3 p-8">
-        <Skeleton className="h-8 w-48" />
-        <Skeleton className="h-24 w-full max-w-xl" />
-        <p className="text-sm text-muted-foreground">Checking your session…</p>
+      <div className="flex min-h-svh flex-col gap-3 bg-black p-8 text-white">
+        <Skeleton className="h-8 w-48 bg-white/10" />
+        <Skeleton className="h-24 w-full max-w-xl bg-white/10" />
+        <p className="text-sm text-white/60">Checking your session…</p>
       </div>
     );
   }
@@ -74,7 +79,11 @@ export function AppChrome({ children }: { children: ReactNode }) {
         <header className="flex h-12 shrink-0 items-center gap-2 border-b px-3">
           <SidebarTrigger />
           <Separator orientation="vertical" className="h-4" />
-          <span className="truncate text-sm font-medium">{title}</span>
+          <nav className="flex min-w-0 items-center gap-1">
+            <Button asChild variant={onCriteria ? "secondary" : "ghost"} size="sm">
+              <Link href="/app/criteria">Criteria</Link>
+            </Button>
+          </nav>
           <div className="ml-auto flex min-w-0 items-center gap-2">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -85,11 +94,21 @@ export function AppChrome({ children }: { children: ReactNode }) {
                   <span className="hidden max-w-40 truncate sm:inline">{me.name}</span>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-52">
+              <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel className="font-normal">
                   <p className="truncate text-sm font-medium">{me.name}</p>
                   <p className="truncate text-xs text-muted-foreground">{me.email}</p>
+                  {orgName ? (
+                    <p className="mt-1 truncate text-xs text-muted-foreground">{orgName}</p>
+                  ) : null}
                 </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link href="/app/farm" className={onFarm ? "bg-accent" : undefined}>
+                    <Tractor className="size-4" />
+                    Farm profile
+                  </Link>
+                </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={async () => {
@@ -105,7 +124,7 @@ export function AppChrome({ children }: { children: ReactNode }) {
         </header>
         <div
           className={
-            flush
+            chatHome
               ? "flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden"
               : "min-h-0 min-w-0 flex-1 overflow-x-hidden p-6"
           }

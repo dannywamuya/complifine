@@ -3,13 +3,20 @@
 import { useState } from "react";
 import Link from "next/link";
 import { api, ApiError } from "@/lib/api";
-import { PageShell } from "@/components/page-shell";
+import { AuthShell } from "@/components/marketing/auth-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const CAL = process.env.NEXT_PUBLIC_CAL_URL;
 
@@ -17,6 +24,7 @@ export default function DemoPage() {
   const [pending, setPending] = useState(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [interests, setInterests] = useState("both");
 
   async function submit(form: FormData) {
     setPending(true);
@@ -42,29 +50,33 @@ export default function DemoPage() {
   }
 
   return (
-    <PageShell className="max-w-xl space-y-6 pt-8">
-      <div>
-        <p className="text-sm text-muted-foreground">Talk to us</p>
-        <h1 className="font-heading text-3xl font-medium tracking-tight">Book a demo</h1>
-        <p className="mt-2 text-muted-foreground">
-          We work with Kenyan horticultural exporters preparing for GLOBALG.A.P. and SMETA. Tell us
-          which sites you run and which buyers you sell to.
+    <AuthShell className="max-w-xl">
+      <div className="mb-8">
+        <p className="font-mono text-[11px] font-medium tracking-[0.18em] text-primary uppercase">
+          Talk to us
+        </p>
+        <h1 className="font-heading mt-2 text-3xl font-medium tracking-tight">
+          Book a demo
+        </h1>
+        <p className="mt-2 max-w-[65ch] text-muted-foreground">
+          We work with Kenyan horticultural exporters preparing for GLOBALG.A.P. and
+          SMETA. Tell us which sites you run and which buyers you sell to.
         </p>
       </div>
 
       {done ? (
-        <Alert>
+        <Alert className="border-white/10">
           <AlertTitle>Request received</AlertTitle>
           <AlertDescription>
             We will write to the address you gave. Meanwhile you can{" "}
-            <Link href="/signup" className="underline">
+            <Link href="/signup" className="text-foreground underline-offset-4 hover:underline">
               create an account
             </Link>{" "}
             and set up your farm.
           </AlertDescription>
         </Alert>
       ) : (
-        <Card>
+        <Card className="border border-white/10 bg-card/80 ring-0">
           <CardHeader>
             <CardTitle>Your details</CardTitle>
             <CardDescription>We use this only to arrange a walkthrough.</CardDescription>
@@ -77,22 +89,29 @@ export default function DemoPage() {
                 void submit(new FormData(event.currentTarget));
               }}
             >
-              <Field label="Name" name="name" required />
-              <Field label="Company" name="company" required />
-              <Field label="Work email" name="email" type="email" required />
-              <Field label="Phone" name="phone" />
+              <Field label="Name" name="name" autoComplete="name" required />
+              <Field label="Company" name="company" autoComplete="organization" required />
+              <Field
+                label="Work email"
+                name="email"
+                type="email"
+                autoComplete="email"
+                required
+              />
+              <Field label="Phone" name="phone" type="tel" autoComplete="tel" />
               <div className="space-y-2">
                 <Label htmlFor="interests">Standards of interest</Label>
-                <select
-                  id="interests"
-                  name="interests"
-                  defaultValue="both"
-                  className="flex h-9 w-full rounded-md border bg-transparent px-3 text-sm"
-                >
-                  <option value="globalgap-ifa">GLOBALG.A.P. IFA v6</option>
-                  <option value="smeta-7">SMETA 7.0</option>
-                  <option value="both">Both</option>
-                </select>
+                <input type="hidden" name="interests" value={interests} />
+                <Select value={interests} onValueChange={setInterests}>
+                  <SelectTrigger id="interests" className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="globalgap-ifa">GLOBALG.A.P. IFA v6</SelectItem>
+                    <SelectItem value="smeta-7">SMETA 7.0</SelectItem>
+                    <SelectItem value="both">Both</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="message">What should we cover?</Label>
@@ -104,7 +123,7 @@ export default function DemoPage() {
                   <AlertDescription>{error}</AlertDescription>
                 </Alert>
               ) : null}
-              <Button type="submit" disabled={pending}>
+              <Button type="submit" disabled={pending} className="w-full">
                 {pending ? "Sending…" : "Request a demo"}
               </Button>
             </form>
@@ -113,15 +132,20 @@ export default function DemoPage() {
       )}
 
       {CAL ? (
-        <p className="text-sm text-muted-foreground">
+        <p className="mt-6 text-sm text-muted-foreground">
           Prefer a calendar link?{" "}
-          <a href={CAL} className="underline" target="_blank" rel="noreferrer">
+          <a
+            href={CAL}
+            className="text-foreground underline-offset-4 hover:underline"
+            target="_blank"
+            rel="noreferrer"
+          >
             Pick a time
           </a>
           .
         </p>
       ) : null}
-    </PageShell>
+    </AuthShell>
   );
 }
 
@@ -130,16 +154,24 @@ function Field({
   name,
   type = "text",
   required,
+  autoComplete,
 }: {
   label: string;
   name: string;
   type?: string;
   required?: boolean;
+  autoComplete?: string;
 }) {
   return (
     <div className="space-y-2">
       <Label htmlFor={name}>{label}</Label>
-      <Input id={name} name={name} type={type} required={required} />
+      <Input
+        id={name}
+        name={name}
+        type={type}
+        required={required}
+        autoComplete={autoComplete}
+      />
     </div>
   );
 }

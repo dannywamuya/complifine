@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { api, ApiError } from "@/lib/api";
-import { PageShell } from "@/components/page-shell";
+import { AuthShell } from "@/components/marketing/auth-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,10 +17,10 @@ export default function SignupPage() {
   const [error, setError] = useState<string | null>(null);
 
   return (
-    <PageShell className="max-w-md space-y-6 pt-10">
-      <Card>
+    <AuthShell>
+      <Card className="border border-white/10 bg-card/80 ring-0">
         <CardHeader>
-          <CardTitle>Create a producer account</CardTitle>
+          <CardTitle className="text-xl">Create a producer account</CardTitle>
           <CardDescription>
             This creates your organisation. You can add sites and certification scope next.
           </CardDescription>
@@ -55,23 +55,30 @@ export default function SignupPage() {
           >
             <div className="space-y-2">
               <Label htmlFor="name">Your name</Label>
-              <Input id="name" name="name" required />
+              <Input id="name" name="name" autoComplete="name" required />
             </div>
             <div className="space-y-2">
               <Label htmlFor="company">Company</Label>
-              <Input id="company" name="company" required />
+              <Input id="company" name="company" autoComplete="organization" required />
             </div>
             <div className="space-y-2">
               <Label htmlFor="country">Country</Label>
-              <Input id="country" name="country" defaultValue="KE" />
+              <Input id="country" name="country" defaultValue="KE" autoComplete="country" />
             </div>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <Input id="email" name="email" type="email" required />
+              <Input id="email" name="email" type="email" autoComplete="email" required />
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Password (8+ characters)</Label>
-              <Input id="password" name="password" type="password" minLength={8} required />
+              <Input
+                id="password"
+                name="password"
+                type="password"
+                minLength={8}
+                autoComplete="new-password"
+                required
+              />
             </div>
             {error ? (
               <Alert variant="destructive">
@@ -85,12 +92,12 @@ export default function SignupPage() {
           </form>
           <p className="mt-4 text-sm text-muted-foreground">
             Already registered?{" "}
-            <Link href="/login" className="underline">
+            <Link href="/login" className="text-foreground underline-offset-4 hover:underline">
               Sign in
             </Link>
           </p>
         </CardContent>
       </Card>
-    </PageShell>
+    </AuthShell>
   );
 }

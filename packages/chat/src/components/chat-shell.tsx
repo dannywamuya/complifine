@@ -1,7 +1,7 @@
 "use client";
 
 import { BookOpen, Download, FileCode2, PanelLeft } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { farmContextNote } from "../ask-context.ts";
 import { cn } from "../cn.ts";
 import { extractArtifacts } from "../markdown-stream.ts";
@@ -42,6 +42,11 @@ export interface ChatShellProps {
   siteOptions?: SelectOption[];
   defaultSiteId?: string;
   profileHref?: string;
+  /** When true, the host owns conversation history (producer app sidebar). */
+  hideHistory?: boolean;
+  /** Open this conversation on mount / when the id changes. */
+  conversationId?: string | null;
+  onConversationId?: (id: string | null) => void;
   onFeedback?: (messageId: string, vote: "up" | "down" | null) => void;
 }
 
@@ -89,6 +94,9 @@ export function ChatShell({
   siteOptions,
   defaultSiteId,
   profileHref,
+  hideHistory = false,
+  conversationId,
+  onConversationId,
   onFeedback,
 }: ChatShellProps) {
   const embedded = variant === "embedded";
@@ -109,7 +117,34 @@ export function ChatShell({
   const [modelId, setModelId] = useState(models?.[0]?.id);
   const [sourcesOpen, setSourcesOpen] = useState(false);
 
-  const drawerSidebar = embedded || mobile;
+  const drawerSidebar = !hideHistory && (embedded || mobile);
+  const showHostedHistory = hideHistory;
+
+  const onConversationIdRef = useRef(onConversationId);
+  onConversationIdRef.current = onConversationId;
+  const conversationPropRef = useRef<string | null | undefined>(undefined);
+  const skipIdNotify = useRef(true);
+
+  useEffect(() => {
+    if (skipIdNotify.current) {
+      skipIdNotify.current = false;
+      return;
+    }
+    onConversationIdRef.current?.(chat.activeId);
+  }, [chat.activeId]);
+
+  useEffect(() => {
+    const next = conversationId ?? null;
+    const previous = conversationPropRef.current;
+    conversationPropRef.current = next;
+    if (next) {
+      if (next !== chat.activeId) void chat.openConversation(next);
+      return;
+    }
+    if (previous) chat.newChat();
+    // chat methods are stable enough; avoid retriggering on every send.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [conversationId]);
 
   useEffect(() => {
     const mq = window.matchMedia("(max-width: 767px)");
@@ -190,7 +225,7 @@ export function ChatShell({
     return hits + citations;
   }, [chat.lastAssistant]);
 
-  const showSidebar = !drawerSidebar || chat.sidebarOpen;
+  const showSidebar = !showHostedHistory && (!drawerSidebar || chat.sidebarOpen);
 
   return (
     <div
@@ -236,7 +271,7 @@ export function ChatShell({
       <div className="relative flex min-h-0 min-w-0 flex-1 flex-col" style={{ paddingBottom: "var(--cf-kb, 0px)" }}>
         <header className="shrink-0 border-b border-(--cf-border)">
           <div className={cn(COLUMN, "flex flex-row items-center gap-2 py-1.5")}>
-            {drawerSidebar || chat.sidebarCollapsed ? (
+            {!showHostedHistory && (drawerSidebar || chat.sidebarCollapsed) ? (
               <IconButton
                 label="Open conversations"
                 onClick={() => (drawerSidebar ? chat.setSidebarOpen(true) : chat.setSidebarCollapsed(false))}

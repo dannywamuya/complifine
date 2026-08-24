@@ -4,7 +4,7 @@ import { Suspense, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { api, ApiError } from "@/lib/api";
-import { PageShell } from "@/components/page-shell";
+import { AuthShell } from "@/components/marketing/auth-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -27,11 +27,11 @@ function LoginForm() {
   const next = safeNext(params.get("next"));
 
   return (
-    <PageShell className="max-w-md space-y-6 pt-10">
-      <Card>
+    <AuthShell>
+      <Card className="border border-white/10 bg-card/80 ring-0">
         <CardHeader>
-          <CardTitle>Sign in</CardTitle>
-          <CardDescription>Producer accounts use this app. Operators use the console on port 3001.</CardDescription>
+          <CardTitle className="text-xl">Sign in</CardTitle>
+          <CardDescription>Producer accounts use this app.</CardDescription>
         </CardHeader>
         <CardContent>
           <form
@@ -60,11 +60,17 @@ function LoginForm() {
           >
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <Input id="email" name="email" type="email" required />
+              <Input id="email" name="email" type="email" autoComplete="email" required />
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
-              <Input id="password" name="password" type="password" required />
+              <Input
+                id="password"
+                name="password"
+                type="password"
+                autoComplete="current-password"
+                required
+              />
             </div>
             {error ? (
               <Alert variant="destructive">
@@ -78,18 +84,19 @@ function LoginForm() {
           </form>
           <p className="mt-4 text-sm text-muted-foreground">
             No account?{" "}
-            <Link href="/signup" className="underline">
+            <Link href="/signup" className="text-foreground underline-offset-4 hover:underline">
               Create one
             </Link>
           </p>
         </CardContent>
       </Card>
-    </PageShell>
+    </AuthShell>
   );
 }
 
 function safeNext(value: string | null): string {
   if (!value || !value.startsWith("/") || value.startsWith("//")) return "/app";
+  if (value === "/app/ask" || value.startsWith("/app/search")) return "/app";
   if (value.startsWith("/app")) return value;
   return "/app";
 }

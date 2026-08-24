@@ -116,7 +116,7 @@ export default async function AppCriterionPage({
 
       {first ? (
         <Button asChild>
-          <Link href="/app/ask">Ask about {first.criterion}</Link>
+          <Link href="/app">Ask about {first.criterion}</Link>
         </Button>
       ) : null}
     </div>
