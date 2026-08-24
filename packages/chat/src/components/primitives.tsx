@@ -14,7 +14,7 @@ export function IconButton({
       aria-label={label}
       title={label}
       className={cn(
-        "inline-flex size-9 shrink-0 items-center justify-center rounded-xl text-(--cf-fg-muted) transition-colors hover:bg-(--cf-bg-muted) hover:text-(--cf-fg) disabled:opacity-40",
+        "inline-flex size-9 shrink-0 items-center justify-center rounded-full text-(--cf-fg-muted) transition-colors hover:bg-(--cf-bg-muted) hover:text-(--cf-fg) disabled:opacity-40",
         className,
       )}
       {...props}

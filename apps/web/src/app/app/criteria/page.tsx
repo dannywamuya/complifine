@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { Search } from "lucide-react";
 import { api } from "@/lib/api";
 import { EDITIONS } from "@/lib/editions";
 import { LevelBadge } from "@/components/level-badge";
@@ -24,7 +25,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface Listing {
   total: number;
@@ -59,115 +59,120 @@ export default function AppCriteriaPage() {
   }, [version, level, submitted]);
 
   return (
-    <div className="mx-auto flex max-w-5xl flex-col gap-6">
-      <div>
-        <p className="text-sm text-muted-foreground">Published knowledge</p>
-        <h1 className="font-heading text-3xl font-medium tracking-tight">Criteria</h1>
-        <p className="mt-1 text-muted-foreground">
+    <div className="mx-auto flex w-full max-w-4xl flex-col gap-8">
+      <header className="space-y-2">
+        <p className="text-lg text-muted-foreground">Published knowledge</p>
+        <h1 className="font-heading text-3xl font-medium tracking-tight text-balance sm:text-4xl">
+          Criteria
+        </h1>
+        <p className="max-w-lg text-base leading-relaxed text-muted-foreground">
           Principles and criteria from the ingested editions. Open a row to read the official wording.
         </p>
-      </div>
+      </header>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Filter</CardTitle>
-          <CardDescription>
-            {data ? `${data.total} in this edition` : "Loading the published checklist…"}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form
-            className="flex flex-wrap items-center gap-2"
-            onSubmit={(event) => {
-              event.preventDefault();
-              setSubmitted(q.trim());
-            }}
-          >
-            <Input
-              value={q}
-              onChange={(event) => setQ(event.target.value)}
-              placeholder="Number or principle"
-              className="w-full min-w-0 sm:max-w-64"
-            />
-            <Select value={level} onValueChange={setLevel}>
-              <SelectTrigger className="w-40">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All levels</SelectItem>
-                <SelectItem value="major_must">Major Must</SelectItem>
-                <SelectItem value="minor_must">Minor Must</SelectItem>
-                <SelectItem value="recommendation">Recommendation</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={version} onValueChange={setVersion}>
-              <SelectTrigger className="w-48">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {EDITIONS.map((edition) => (
-                  <SelectItem key={edition.value} value={edition.value}>
-                    {edition.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Button type="submit" variant="outline">
-              Search
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+      <form
+        className="flex flex-col gap-3 rounded-[1.75rem] border border-zinc-100 bg-white p-3 shadow-[0_8px_28px_rgb(0_0_0/0.06)] sm:flex-row sm:items-center"
+        onSubmit={(event) => {
+          event.preventDefault();
+          setSubmitted(q.trim());
+        }}
+      >
+        <label className="relative min-w-0 flex-1">
+          <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+          <span className="sr-only">Number or principle</span>
+          <Input
+            value={q}
+            onChange={(event) => setQ(event.target.value)}
+            placeholder="Number or principle"
+            className="h-10 rounded-full border-0 bg-zinc-100 pl-9 shadow-none focus-visible:bg-white"
+          />
+        </label>
+        <Select value={level} onValueChange={setLevel}>
+          <SelectTrigger className="h-10 w-full rounded-full sm:w-40" size="sm">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All levels</SelectItem>
+            <SelectItem value="major_must">Major Must</SelectItem>
+            <SelectItem value="minor_must">Minor Must</SelectItem>
+            <SelectItem value="recommendation">Recommendation</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={version} onValueChange={setVersion}>
+          <SelectTrigger className="h-10 w-full rounded-full sm:w-48" size="sm">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {EDITIONS.map((edition) => (
+              <SelectItem key={edition.value} value={edition.value}>
+                {edition.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Button type="submit" className="h-10 rounded-full px-4">
+          Search
+        </Button>
+      </form>
 
       {loading || !data ? (
-        <Skeleton className="h-96" />
+        <div className="space-y-3">
+          <Skeleton className="h-4 w-40" />
+          <Skeleton className="h-72 rounded-2xl" />
+        </div>
       ) : (
-        <Card className="overflow-hidden py-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[22%]">ID</TableHead>
-                <TableHead className="w-[18%]">Level</TableHead>
-                <TableHead>Principle</TableHead>
-                <TableHead className="w-14">Page</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {data.requirements.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={4} className="text-muted-foreground">
-                    No criteria match those filters.
-                  </TableCell>
+        <div className="space-y-3">
+          <p className="text-sm text-muted-foreground">
+            {data.total} in this edition
+            {submitted ? ` · matching “${submitted}”` : ""}
+          </p>
+          <div className="overflow-hidden rounded-2xl border border-zinc-100">
+            <Table>
+              <TableHeader>
+                <TableRow className="hover:bg-transparent">
+                  <TableHead className="w-[22%] bg-zinc-50/80">ID</TableHead>
+                  <TableHead className="w-[18%] bg-zinc-50/80">Level</TableHead>
+                  <TableHead className="bg-zinc-50/80">Principle</TableHead>
+                  <TableHead className="w-14 bg-zinc-50/80">Page</TableHead>
                 </TableRow>
-              ) : (
-                data.requirements.map((row) => (
-                  <TableRow
-                    key={row.id}
-                    className="cursor-pointer"
-                    onClick={() => router.push(`/app/criteria/${encodeURIComponent(row.criterion)}`)}
-                  >
-                    <TableCell>
-                      <Link
-                        className="font-mono text-sm font-medium underline-offset-4 hover:underline"
-                        href={`/app/criteria/${encodeURIComponent(row.criterion)}`}
-                        onClick={(event) => event.stopPropagation()}
-                      >
-                        {row.criterion}
-                      </Link>
-                    </TableCell>
-                    <TableCell>
-                      <LevelBadge level={row.level} />
-                    </TableCell>
-                    <TableCell className="min-w-0">{row.principle}</TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {row.page ? `p.${row.page}` : "—"}
+              </TableHeader>
+              <TableBody>
+                {data.requirements.length === 0 ? (
+                  <TableRow className="hover:bg-transparent">
+                    <TableCell colSpan={4} className="h-40 text-center text-muted-foreground">
+                      No criteria match those filters.
                     </TableCell>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </Card>
+                ) : (
+                  data.requirements.map((row) => (
+                    <TableRow
+                      key={row.id}
+                      className="cursor-pointer"
+                      onClick={() => router.push(`/app/criteria/${encodeURIComponent(row.criterion)}`)}
+                    >
+                      <TableCell>
+                        <Link
+                          className="font-mono text-sm font-medium text-primary underline-offset-4 hover:underline"
+                          href={`/app/criteria/${encodeURIComponent(row.criterion)}`}
+                          onClick={(event) => event.stopPropagation()}
+                        >
+                          {row.criterion}
+                        </Link>
+                      </TableCell>
+                      <TableCell>
+                        <LevelBadge level={row.level} />
+                      </TableCell>
+                      <TableCell className="min-w-0">{row.principle}</TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {row.page ? `p.${row.page}` : "—"}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </div>
       )}
     </div>
   );

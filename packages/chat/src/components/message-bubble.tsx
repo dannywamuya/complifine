@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  Check,
   ChevronLeft,
   ChevronRight,
   Copy,
@@ -10,12 +11,14 @@ import {
   ThumbsDown,
   ThumbsUp,
   Trash2,
+  X,
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
+import { cn } from "../cn.ts";
 import { formatTime } from "../dates.ts";
 import { looksStructured } from "../parse-answer.ts";
 import { toolLabel } from "../tools.ts";
-import type { ChatMessage } from "../types.ts";
+import type { ChatMessage, ToolChip } from "../types.ts";
 import { AnswerArticle } from "./answer-article.tsx";
 import { ConfirmDialog } from "./primitives.tsx";
 import { MarkdownView } from "./markdown-view.tsx";
@@ -103,7 +106,7 @@ function UserBubble({
 
   return (
     <div className="flex flex-col items-end gap-1">
-      <div className="max-w-[min(85%,36rem)] min-w-0 rounded-2xl rounded-br-md bg-(--cf-user-bg) px-4 py-2.5 text-[15px] leading-relaxed wrap-anywhere text-(--cf-user-fg)">
+      <div className="max-w-[min(85%,36rem)] min-w-0 rounded-3xl rounded-br-lg bg-(--cf-user-bg) px-4 py-2.5 text-[15px] leading-relaxed wrap-anywhere text-(--cf-user-fg)">
         {editing ? (
           <div className="space-y-2">
             <textarea
@@ -204,13 +207,7 @@ function AssistantTurn({
       {tools.length > 0 ? (
         <div className="flex flex-wrap gap-1.5" aria-label="Tool activity">
           {tools.map((tool, index) => (
-            <span
-              key={`${tool.name}-${index}`}
-              className="inline-flex items-center gap-1.5 rounded-full bg-(--cf-bg-muted) px-2.5 py-1 text-[11px] font-medium"
-            >
-              {tool.status === "running" ? <LoaderCircle className="size-3 animate-spin" /> : null}
-              {toolLabel(tool.name)}
-            </span>
+            <ToolChipBadge key={`${tool.name}-${index}`} tool={tool} />
           ))}
         </div>
       ) : streaming && !message.content ? (
@@ -285,6 +282,32 @@ function AssistantTurn({
         }}
       />
     </div>
+  );
+}
+
+function ToolChipBadge({ tool }: { tool: ToolChip }) {
+  const running = tool.status === "running";
+  const error = tool.status === "error";
+  return (
+    <span
+      className={cn(
+        "cf-tool-chip inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium",
+        running && "bg-(--cf-accent-soft) text-(--cf-accent)",
+        tool.status === "done" && "bg-(--cf-accent-soft) text-(--cf-fg)",
+        error && "bg-(--cf-danger-soft) text-(--cf-danger)",
+      )}
+      aria-busy={running || undefined}
+      aria-live={running ? "polite" : undefined}
+    >
+      {running ? (
+        <LoaderCircle className="size-3 animate-spin" aria-hidden />
+      ) : error ? (
+        <X className="size-3" aria-hidden />
+      ) : (
+        <Check className="size-3 text-(--cf-accent)" aria-hidden />
+      )}
+      {toolLabel(tool.name)}
+    </span>
   );
 }
 

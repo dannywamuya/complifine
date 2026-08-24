@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
-import { Loader2, Pencil, Plus, Search, Trash2 } from "lucide-react";
+import { BookOpen, Loader2, MessageSquare, Pencil, Plus, Search, Tractor, Trash2 } from "lucide-react";
 import { groupByDate } from "@complifine/chat";
 import { api } from "@/lib/api";
 import { BrandLogo } from "@/components/brand-logo";
@@ -16,12 +16,18 @@ import {
   SidebarGroupContent,
   SidebarGroupLabel,
   SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
   SidebarRail,
   useSidebar,
 } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 
 export const CONVERSATIONS_CHANGED = "cf-conversations-changed";
+
+const SIDEBAR_CLASS =
+  "border-0 **:data-[slot=sidebar-inner]:overflow-hidden **:data-[slot=sidebar-inner]:rounded-2xl **:data-[slot=sidebar-inner]:ring-0";
 
 interface ConversationRow {
   id: string;
@@ -39,7 +45,7 @@ export function AppSidebar() {
 
 function AppSidebarFallback() {
   return (
-    <Sidebar collapsible="icon" className="border-sidebar-border">
+    <Sidebar collapsible="icon" variant="floating" className={SIDEBAR_CLASS}>
       <SidebarHeader className="gap-2">
         <Link href="/app" className="flex h-10 items-center overflow-hidden px-2">
           <BrandLogo />
@@ -94,6 +100,30 @@ function AppSidebarInner() {
 
   const groups = useMemo(() => groupByDate(conversations), [conversations]);
   const collapsed = state === "collapsed";
+  const onChat = path === "/app";
+  const onCriteria = path.startsWith("/app/criteria");
+  const onFarm = path.startsWith("/app/farm");
+
+  useEffect(() => {
+    function onKey(event: KeyboardEvent) {
+      if (event.key !== "/") return;
+      if (event.metaKey || event.ctrlKey || event.altKey) return;
+      const target = event.target as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.tagName === "SELECT" ||
+          target.isContentEditable)
+      ) {
+        return;
+      }
+      event.preventDefault();
+      document.getElementById("cf-chat-search")?.focus();
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
 
   function goNew() {
     setOpenMobile(false);
@@ -131,8 +161,8 @@ function AppSidebarInner() {
   }
 
   return (
-    <Sidebar collapsible="icon" className="border-sidebar-border">
-      <SidebarHeader className="gap-2">
+    <Sidebar collapsible="icon" variant="floating" className={SIDEBAR_CLASS}>
+      <SidebarHeader className="gap-3 px-2 pt-2">
         <Link
           href="/app"
           aria-label="CompliFine"
@@ -143,7 +173,7 @@ function AppSidebarInner() {
         </Link>
         <Button
           size="sm"
-          className="w-full justify-start group-data-[collapsible=icon]:size-8 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0"
+          className="w-full justify-start rounded-xl group-data-[collapsible=icon]:size-8 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0"
           onClick={goNew}
         >
           <Plus className="size-4" />
@@ -151,17 +181,71 @@ function AppSidebarInner() {
         </Button>
       </SidebarHeader>
       <SidebarContent>
+        <SidebarGroup>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  isActive={onChat}
+                  tooltip="Chat"
+                  className="rounded-xl"
+                  onClick={() => setOpenMobile(false)}
+                >
+                  <Link href="/app">
+                    <MessageSquare />
+                    <span>Chat</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  isActive={onCriteria}
+                  tooltip="Criteria"
+                  className="rounded-xl"
+                  onClick={() => setOpenMobile(false)}
+                >
+                  <Link href="/app/criteria">
+                    <BookOpen />
+                    <span>Criteria</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  isActive={onFarm}
+                  tooltip="Farm"
+                  className="rounded-xl"
+                  onClick={() => setOpenMobile(false)}
+                >
+                  <Link href="/app/farm">
+                    <Tractor />
+                    <span>Farm</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
         <SidebarGroup className="group-data-[collapsible=icon]:hidden">
           <SidebarGroupLabel>Chats</SidebarGroupLabel>
           <SidebarGroupContent className="flex min-h-0 flex-1 flex-col gap-2">
             <div className="relative px-2">
               <Search className="pointer-events-none absolute top-1/2 left-4 size-3.5 -translate-y-1/2 text-sidebar-foreground/50" />
               <Input
+                id="cf-chat-search"
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder="Search chats"
-                className="h-8 border-sidebar-border bg-sidebar-accent pl-8 text-sidebar-foreground placeholder:text-sidebar-foreground/40"
+                className="h-9 rounded-xl border-sidebar-border bg-sidebar-accent pr-8 pl-8 text-sidebar-foreground placeholder:text-sidebar-foreground/40"
               />
+              {query ? null : (
+                <kbd className="pointer-events-none absolute top-1/2 right-4 -translate-y-1/2 rounded-md border border-sidebar-border bg-sidebar px-1.5 font-mono text-[10px] text-sidebar-foreground/40">
+                  /
+                </kbd>
+              )}
             </div>
             <nav className="min-h-0 flex-1 overflow-y-auto px-1" aria-label="Chat history">
               {loading ? (
@@ -204,7 +288,7 @@ function AppSidebarInner() {
                                   if (event.key === "Enter") goChat(item.id);
                                 }}
                                 className={cn(
-                                  "flex h-8 cursor-pointer items-center rounded-md px-2 text-sm",
+                                  "flex h-9 cursor-pointer items-center rounded-xl px-2.5 text-sm",
                                   active
                                     ? "bg-sidebar-accent font-medium text-sidebar-accent-foreground"
                                     : "text-sidebar-foreground/80 hover:bg-sidebar-accent",

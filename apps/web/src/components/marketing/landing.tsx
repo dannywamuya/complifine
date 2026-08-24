@@ -175,8 +175,8 @@ function Problem() {
       </FadeIn>
       <div className="mt-12 grid gap-4 md:grid-cols-3">
         {items.map((item, index) => (
-          <FadeIn key={item.title} delay={index * 0.08}>
-            <HoverCard>
+          <FadeIn key={item.title} delay={index * 0.08} className="h-full">
+            <HoverCard className="h-full">
               <item.icon className="size-5 text-primary" />
               <h3 className="mt-4 font-heading text-lg font-medium">{item.title}</h3>
               <p className="mt-2 text-sm leading-relaxed text-muted-foreground">

@@ -5,7 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { siblingsOf } from "../thread.ts";
 import { VIRTUALIZE_AFTER, type ChatMessage } from "../types.ts";
 import { copyText } from "./code-block.tsx";
-import { EmptyState } from "./empty-state.tsx";
+import { EmptyState, type EmptyFeature } from "./empty-state.tsx";
 import { JumpLatest } from "./jump-latest.tsx";
 import { MessageBubble } from "./message-bubble.tsx";
 
@@ -14,8 +14,8 @@ export function ThreadView({
   tree,
   emptyTitle,
   emptyBody,
-  suggestions,
-  onPick,
+  emptyGreeting,
+  emptyFeatures,
   onSelectBranch: _onSelectBranch,
   onCycleBranch,
   onEdit,
@@ -29,8 +29,8 @@ export function ThreadView({
   tree: ChatMessage[];
   emptyTitle: string;
   emptyBody: string;
-  suggestions: string[];
-  onPick: (value: string) => void;
+  emptyGreeting?: string;
+  emptyFeatures?: EmptyFeature[];
   onSelectBranch: (id: string) => void;
   onCycleBranch: (id: string, delta: number) => void;
   onEdit: (userId: string, next: string) => void;
@@ -80,8 +80,15 @@ export function ThreadView({
 
   if (path.length === 0) {
     return (
-      <div className="min-h-0 flex-1 overflow-y-auto">
-        <EmptyState title={emptyTitle} body={emptyBody} suggestions={suggestions} onPick={onPick} />
+      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
+        <div className="mx-auto flex w-full max-w-4xl flex-col px-4 pt-8 pb-6 sm:px-8 sm:pt-12 sm:pb-8">
+          <EmptyState
+            title={emptyTitle}
+            body={emptyBody}
+            greeting={emptyGreeting}
+            features={emptyFeatures}
+          />
+        </div>
       </div>
     );
   }
@@ -98,7 +105,7 @@ export function ThreadView({
         onScroll={onScroll}
       >
         {virtualize ? (
-          <div className="relative mx-auto w-full" style={{ height: virtualizer.getTotalSize() }}>
+          <div className="relative mx-auto w-full max-w-3xl px-4 sm:px-6" style={{ height: virtualizer.getTotalSize() }}>
             {virtualizer.getVirtualItems().map((item) => {
               const message = path[item.index]!;
               return (
@@ -125,7 +132,7 @@ export function ThreadView({
             })}
           </div>
         ) : (
-          <div className="flex w-full flex-col gap-8 py-8">
+          <div className="mx-auto flex w-full max-w-3xl flex-col gap-8 px-4 py-8 sm:px-6">
             {path.map((message) => (
               <Row
                 key={message.id}

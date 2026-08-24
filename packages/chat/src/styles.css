@@ -15,12 +15,12 @@
   --cf-accent-soft: color-mix(in srgb, #5170ff 14%, white);
   --cf-danger: oklch(0.55 0.18 25);
   --cf-danger-soft: oklch(0.95 0.03 25);
-  --cf-border: #e4e4e7;
+  --cf-border: #ececee;
   --cf-ring: #5170ff;
   --cf-user-bg: #000000;
   --cf-user-fg: #ffffff;
-  --cf-shadow: 0 18px 50px rgb(0 0 0 / 0.08);
-  --cf-radius: 1rem;
+  --cf-shadow: 0 8px 28px rgb(0 0 0 / 0.06);
+  --cf-radius: 1.25rem;
   --cf-composer-max: 12.5rem;
   --cf-sidebar: 17.5rem;
   --cf-focus: 0 0 0 2px var(--cf-bg), 0 0 0 4px var(--cf-ring);
@@ -94,6 +94,30 @@
   box-shadow: var(--cf-focus);
 }
 
+.cf-composer-input:focus-within {
+  outline: 2px solid var(--cf-ring);
+  outline-offset: 2px;
+}
+
+.cf-chat .cf-composer-input textarea,
+.cf-chat .cf-composer-input textarea:focus,
+.cf-chat .cf-composer-input textarea:focus-visible {
+  outline: none;
+  box-shadow: none;
+}
+
+.cf-composer-field {
+  overflow: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.cf-composer-field::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
 .cf-chat-shell {
   position: relative;
   display: flex;
@@ -102,6 +126,141 @@
   overflow: hidden;
   background: var(--cf-bg);
   color: var(--cf-fg);
+}
+
+@keyframes cf-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.cf-empty-greeting,
+.cf-empty-title,
+.cf-empty-body,
+.cf-empty-suggestions,
+.cf-feature-card {
+  animation: cf-fade-up 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.cf-empty-greeting {
+  animation-delay: 0.02s;
+}
+
+.cf-empty-title {
+  animation-delay: 0.08s;
+}
+
+.cf-empty-body {
+  animation-delay: 0.14s;
+}
+
+.cf-empty-suggestions {
+  animation-delay: 0.72s;
+}
+
+.cf-suggestion-scroller {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  padding-bottom: 0.125rem;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.cf-suggestion-scroller::-webkit-scrollbar {
+  display: none;
+}
+
+.cf-suggestion-fade {
+  pointer-events: none;
+  position: absolute;
+  top: 0;
+  bottom: 0.125rem;
+  width: 3.5rem;
+  transition: opacity 0.2s ease;
+}
+
+.cf-suggestion-fade-right {
+  right: 0;
+  background: linear-gradient(to left, var(--cf-bg), transparent);
+}
+
+.cf-suggestion-fade-left {
+  left: 0;
+  background: linear-gradient(to right, var(--cf-bg), transparent);
+}
+
+@keyframes cf-tool-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--cf-accent) 32%, transparent);
+  }
+  70% {
+    box-shadow: 0 0 0 6px color-mix(in srgb, var(--cf-accent) 0%, transparent);
+  }
+}
+
+.cf-tool-chip {
+  animation: cf-fade-up 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.cf-tool-chip[aria-busy="true"] {
+  animation:
+    cf-fade-up 0.3s cubic-bezier(0.16, 1, 0.3, 1) both,
+    cf-tool-pulse 1.5s ease-out 0.3s infinite;
+}
+
+.cf-feature-card {
+  display: flex;
+  min-height: 7.25rem;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--cf-border);
+  border-radius: 1.15rem;
+  padding: 0.875rem 1rem;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.04);
+}
+
+.cf-feature-card-1 {
+  animation-delay: 0.2s;
+  background:
+    radial-gradient(120% 90% at 0% 0%, color-mix(in srgb, var(--cf-accent) 22%, transparent), transparent 58%),
+    radial-gradient(80% 70% at 100% 100%, color-mix(in srgb, var(--cf-accent) 8%, white), var(--cf-bg-elevated));
+}
+
+.cf-feature-card-2 {
+  animation-delay: 0.32s;
+  background:
+    radial-gradient(120% 90% at 100% 0%, color-mix(in srgb, var(--cf-accent) 18%, transparent), transparent 58%),
+    radial-gradient(80% 70% at 0% 100%, color-mix(in srgb, var(--cf-accent) 7%, white), var(--cf-bg-elevated));
+}
+
+.cf-feature-card-3 {
+  animation-delay: 0.44s;
+  background:
+    radial-gradient(110% 90% at 50% -10%, color-mix(in srgb, var(--cf-accent) 20%, transparent), transparent 55%),
+    radial-gradient(80% 70% at 0% 100%, color-mix(in srgb, var(--cf-accent) 6%, white), var(--cf-bg-elevated));
+}
+
+.cf-feature-card-4 {
+  animation-delay: 0.56s;
+  background:
+    radial-gradient(120% 90% at 0% 100%, color-mix(in srgb, var(--cf-accent) 16%, transparent), transparent 58%),
+    radial-gradient(80% 70% at 100% 0%, color-mix(in srgb, var(--cf-accent) 8%, white), var(--cf-bg-elevated));
+}
+
+.cf-chat.dark .cf-feature-card-1,
+.cf-chat.dark .cf-feature-card-2,
+.cf-chat.dark .cf-feature-card-3,
+.cf-chat.dark .cf-feature-card-4 {
+  background:
+    radial-gradient(120% 90% at 20% 0%, color-mix(in srgb, var(--cf-accent) 28%, transparent), transparent 58%),
+    var(--cf-bg-muted);
 }
 
 .cf-chat-prose {

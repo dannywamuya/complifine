@@ -1,9 +1,10 @@
 "use client";
 
-import { ArrowUp, Paperclip, Square, X } from "lucide-react";
+import { ArrowUp, Paperclip, Sparkles, Square, X } from "lucide-react";
 import { useEffect, useRef, type ClipboardEvent, type DragEvent, type KeyboardEvent } from "react";
 import { CHAR_LIMIT, CHAR_WARN_AT, type Attachment, type ModelOption, type SelectOption } from "../types.ts";
 import { cn } from "../cn.ts";
+import { MenuSelect } from "./select.tsx";
 
 export function Composer({
   draft,
@@ -55,7 +56,10 @@ export function Composer({
     const el = textareaRef.current;
     if (!el) return;
     el.style.height = "auto";
-    el.style.height = `${Math.min(el.scrollHeight, 200)}px`;
+    el.style.overflowY = "hidden";
+    const full = el.scrollHeight;
+    el.style.height = `${Math.min(full, 200)}px`;
+    el.style.overflowY = full > 200 ? "auto" : "hidden";
   }, [draft]);
 
   function onKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
@@ -83,10 +87,11 @@ export function Composer({
 
   const over = draft.length > CHAR_LIMIT;
   const warn = draft.length >= CHAR_WARN_AT;
+  const canSend = draft.trim().length >= 2 && !over && !disabled;
 
   return (
     <div
-      className="w-full min-w-0 rounded-3xl border border-(--cf-border) bg-(--cf-bg-elevated) p-2 shadow-(--cf-shadow)"
+      className="w-full min-w-0 rounded-[1.75rem] bg-(--cf-bg-muted) p-2 sm:p-2.5"
       onDragOver={(event) => event.preventDefault()}
       onDrop={onDrop}
     >
@@ -95,7 +100,7 @@ export function Composer({
           {attachments.map((file) => (
             <li
               key={file.id}
-              className="relative flex items-center gap-2 rounded-xl border border-(--cf-border) bg-(--cf-bg) px-2 py-1.5 text-xs"
+              className="relative flex items-center gap-2 rounded-xl border border-(--cf-border) bg-(--cf-bg-elevated) px-2 py-1.5 text-xs"
             >
               {file.kind === "image" && file.dataUrl ? (
                 <img src={file.dataUrl} alt="" className="size-8 rounded-md object-cover" />
@@ -117,22 +122,90 @@ export function Composer({
         </ul>
       ) : null}
 
-      <textarea
-        ref={textareaRef}
-        value={draft}
-        onChange={(event) => onChange(event.target.value)}
-        onKeyDown={onKeyDown}
-        onPaste={onPaste}
-        rows={2}
-        placeholder={placeholder}
-        aria-label="Message"
-        title={enterSends ? "Enter to send · Shift+Enter for a new line" : "⌘/Ctrl+Enter to send · Enter for a new line"}
-        disabled={disabled}
-        className="max-h-50 min-h-14 w-full resize-none bg-transparent px-3 py-2 text-[15px] leading-relaxed outline-none placeholder:text-(--cf-fg-subtle)"
-      />
+      <div className="cf-composer-input flex items-end gap-2 rounded-2xl bg-(--cf-bg-elevated) px-3 py-2 sm:px-3.5">
+        <textarea
+          ref={textareaRef}
+          value={draft}
+          onChange={(event) => onChange(event.target.value)}
+          onKeyDown={onKeyDown}
+          onPaste={onPaste}
+          rows={1}
+          placeholder={placeholder}
+          aria-label="Message"
+          title={enterSends ? "Enter to send · Shift+Enter for a new line" : "⌘/Ctrl+Enter to send · Enter for a new line"}
+          disabled={disabled}
+          className="cf-composer-field max-h-50 min-h-11 w-full resize-none bg-transparent py-2.5 text-[15px] leading-relaxed outline-none placeholder:text-(--cf-fg-subtle)"
+        />
+        {pending ? (
+          <button
+            type="button"
+            onClick={onStop}
+            aria-label="Stop generating"
+            className="mb-0.5 inline-flex size-9 shrink-0 items-center justify-center rounded-full bg-(--cf-bg-muted) text-(--cf-fg)"
+          >
+            <Square className="size-3 fill-current" />
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={onSend}
+            disabled={!canSend}
+            aria-label="Send"
+            className={cn(
+              "mb-0.5 inline-flex size-9 shrink-0 items-center justify-center rounded-full transition-colors",
+              canSend
+                ? "bg-(--cf-accent) text-(--cf-accent-fg)"
+                : "bg-(--cf-bg-muted) text-(--cf-fg-muted)",
+            )}
+          >
+            <ArrowUp className="size-4" />
+          </button>
+        )}
+      </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-2 px-1 pb-0.5">
+      <div className="flex flex-wrap items-center justify-between gap-2 px-1.5 pt-2 pb-0.5">
         <div className="flex min-w-0 flex-wrap items-center gap-1">
+          {versionOptions && onVersion ? (
+            <span className="inline-flex min-w-0 items-center gap-1.5">
+              <Sparkles className="size-3.5 shrink-0 text-(--cf-accent)" aria-hidden />
+              <MenuSelect
+                label="Standard version"
+                value={version ?? "all"}
+                options={versionOptions}
+                onChange={onVersion}
+                disabled={pending}
+                className="h-8 max-w-52 px-1 text-sm text-(--cf-fg) hover:bg-(--cf-bg-elevated) data-[state=open]:bg-(--cf-bg-elevated)"
+              />
+            </span>
+          ) : null}
+          {kindOptions && onKind ? (
+            <MenuSelect
+              label="Search kind"
+              value={kind ?? "requirements"}
+              options={kindOptions}
+              onChange={onKind}
+              disabled={pending}
+              className="h-8 px-1 text-sm text-(--cf-fg)"
+            />
+          ) : null}
+          {models && models.length > 0 && onModel ? (
+            <MenuSelect
+              label="Model"
+              value={modelId ?? models[0]!.id}
+              options={models.map((model) => ({ value: model.id, label: model.label }))}
+              onChange={onModel}
+              disabled={pending}
+              className="h-8 px-1 text-sm text-(--cf-fg)"
+            />
+          ) : null}
+        </div>
+
+        <div className="flex items-center gap-2">
+          {warn ? (
+            <span className={cn("text-[11px] tabular-nums", over ? "text-(--cf-danger)" : "text-(--cf-fg-subtle)")}>
+              {draft.length}/{CHAR_LIMIT}
+            </span>
+          ) : null}
           <input
             ref={fileRef}
             type="file"
@@ -146,101 +219,16 @@ export function Composer({
           <button
             type="button"
             aria-label="Attach files"
-            className="inline-flex size-8 items-center justify-center rounded-xl text-(--cf-fg-muted) hover:bg-(--cf-bg-muted)"
+            className="inline-flex h-9 items-center gap-2 rounded-full border border-(--cf-border) bg-(--cf-bg-elevated) px-3.5 text-sm text-(--cf-fg) shadow-[0_1px_2px_rgb(0_0_0/0.04)]"
             onClick={() => fileRef.current?.click()}
           >
-            <Paperclip className="size-4" />
+            <Paperclip className="size-3.5 text-(--cf-fg-muted)" />
+            <span className="hidden sm:inline">Attach content</span>
+            <span className="sm:hidden">Attach</span>
           </button>
-          {versionOptions && onVersion ? (
-            <NativeSelect
-              label="Standard version"
-              value={version ?? "all"}
-              options={versionOptions}
-              onChange={onVersion}
-              disabled={pending}
-            />
-          ) : null}
-          {kindOptions && onKind ? (
-            <NativeSelect
-              label="Search kind"
-              value={kind ?? "requirements"}
-              options={kindOptions}
-              onChange={onKind}
-              disabled={pending}
-            />
-          ) : null}
-          {models && models.length > 0 && onModel ? (
-            <NativeSelect
-              label="Model"
-              value={modelId ?? models[0]!.id}
-              options={models.map((model) => ({ value: model.id, label: model.label }))}
-              onChange={onModel}
-              disabled={pending}
-            />
-          ) : null}
-        </div>
-
-        <div className="flex items-center gap-2">
-          {warn ? (
-            <span className={cn("text-[11px] tabular-nums", over ? "text-(--cf-danger)" : "text-(--cf-fg-subtle)")}>
-              {draft.length}/{CHAR_LIMIT}
-            </span>
-          ) : null}
-          {pending ? (
-            <button
-              type="button"
-              onClick={onStop}
-              className="inline-flex h-9 items-center gap-1.5 rounded-full bg-(--cf-bg-muted) px-3 text-sm font-medium"
-            >
-              <Square className="size-3 fill-current" />
-              Stop generating
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={onSend}
-              disabled={draft.trim().length < 2 || over || disabled}
-              className="inline-flex h-9 items-center gap-1.5 rounded-full bg-(--cf-accent) px-3.5 text-sm font-medium text-(--cf-accent-fg) disabled:opacity-40"
-            >
-              <ArrowUp className="size-4" />
-              Send
-            </button>
-          )}
         </div>
       </div>
     </div>
-  );
-}
-
-function NativeSelect({
-  label,
-  value,
-  options,
-  onChange,
-  disabled,
-}: {
-  label: string;
-  value: string;
-  options: SelectOption[];
-  onChange: (value: string) => void;
-  disabled?: boolean;
-}) {
-  return (
-    <label className="inline-flex items-center">
-      <span className="sr-only">{label}</span>
-      <select
-        value={value}
-        disabled={disabled}
-        onChange={(event) => onChange(event.target.value)}
-        className="h-8 max-w-44 truncate rounded-xl bg-transparent px-2 text-xs text-(--cf-fg-muted) outline-none"
-      >
-        {options.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </select>
-    </label>
   );
 }
 

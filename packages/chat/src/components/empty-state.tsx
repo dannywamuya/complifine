@@ -1,41 +1,106 @@
 "use client";
 
-import { Sparkles } from "lucide-react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { cn } from "../cn.ts";
+
+export type EmptyFeature = {
+  title: string;
+  body: string;
+  icon: ReactNode;
+};
 
 export function EmptyState({
+  greeting,
   title,
   body,
+  features,
+}: {
+  greeting?: string;
+  title: string;
+  body: string;
+  features?: EmptyFeature[];
+}) {
+  return (
+    <div className="flex w-full flex-col gap-10 sm:gap-12">
+      <div className="space-y-2">
+        {greeting ? <p className="cf-empty-greeting text-sm text-(--cf-fg-muted)">{greeting}</p> : null}
+        <h2 className="cf-empty-title font-heading text-3xl font-medium tracking-tight text-balance sm:text-[2.125rem]">
+          {title}
+        </h2>
+        {body ? <p className="cf-empty-body max-w-lg text-base leading-relaxed text-(--cf-fg-muted)">{body}</p> : null}
+      </div>
+      {features && features.length > 0 ? (
+        <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {features.map((feature, index) => (
+            <li key={feature.title} className={`cf-feature-card cf-feature-card-${(index % 4) + 1}`}>
+              <span className="mb-3 inline-flex size-8 items-center justify-center rounded-lg bg-(--cf-bg-elevated)/80 text-(--cf-accent) shadow-sm">
+                {feature.icon}
+              </span>
+              <p className="font-heading text-sm font-medium tracking-tight">{feature.title}</p>
+              <p className="mt-1 text-xs leading-relaxed text-(--cf-fg-muted)">{feature.body}</p>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+    </div>
+  );
+}
+
+export function SuggestionPills({
   suggestions,
   onPick,
 }: {
-  title: string;
-  body: string;
   suggestions: string[];
   onPick: (value: string) => void;
 }) {
+  const scrollerRef = useRef<HTMLDivElement | null>(null);
+  const [fadeRight, setFadeRight] = useState(false);
+  const [fadeLeft, setFadeLeft] = useState(false);
+
+  useEffect(() => {
+    const scroller = scrollerRef.current;
+    if (!scroller) return;
+    const node: HTMLDivElement = scroller;
+
+    function update() {
+      setFadeLeft(node.scrollLeft > 8);
+      setFadeRight(node.scrollWidth - node.scrollLeft - node.clientWidth > 8);
+    }
+
+    update();
+    node.addEventListener("scroll", update, { passive: true });
+    const observer = new ResizeObserver(update);
+    observer.observe(node);
+    return () => {
+      node.removeEventListener("scroll", update);
+      observer.disconnect();
+    };
+  }, [suggestions]);
+
+  if (suggestions.length === 0) return null;
+
   return (
-    <div className="mx-auto flex w-full flex-col justify-center gap-8 py-16">
-      <div className="space-y-3">
-        <div className="inline-flex size-10 items-center justify-center rounded-2xl bg-(--cf-accent) text-(--cf-accent-fg) shadow-sm">
-          <Sparkles className="size-4" aria-hidden />
-        </div>
-        <h2 className="font-heading text-3xl font-medium tracking-tight sm:text-4xl">{title}</h2>
-        <p className="max-w-lg text-base leading-relaxed text-(--cf-fg-muted)">{body}</p>
+    <div className="cf-empty-suggestions relative mb-3">
+      <div ref={scrollerRef} className="cf-suggestion-scroller">
+        {suggestions.map((suggestion) => (
+          <button
+            key={suggestion}
+            type="button"
+            onClick={() => onPick(suggestion)}
+            className="shrink-0 rounded-full border border-(--cf-border) bg-(--cf-bg-elevated) px-3.5 py-2 text-sm whitespace-nowrap text-(--cf-fg) shadow-[0_1px_2px_rgb(0_0_0/0.03)] transition-colors hover:border-[color-mix(in_srgb,var(--cf-accent)_35%,var(--cf-border))] hover:bg-[color-mix(in_srgb,var(--cf-accent)_6%,var(--cf-bg-elevated))]"
+          >
+            {suggestion}
+          </button>
+        ))}
       </div>
-      {suggestions.length > 0 ? (
-        <div className="grid gap-2 sm:grid-cols-2">
-          {suggestions.map((suggestion) => (
-            <button
-              key={suggestion}
-              type="button"
-              onClick={() => onPick(suggestion)}
-              className="rounded-2xl border border-(--cf-border) bg-(--cf-bg-elevated) px-4 py-3 text-left text-sm leading-snug text-(--cf-fg) shadow-sm transition-colors hover:border-[color-mix(in_oklch,var(--cf-accent)_35%,var(--cf-border))]"
-            >
-              {suggestion}
-            </button>
-          ))}
-        </div>
-      ) : null}
+      <div
+        className={cn("cf-suggestion-fade cf-suggestion-fade-left", fadeLeft ? "opacity-100" : "opacity-0")}
+        aria-hidden
+      />
+      <div
+        className={cn("cf-suggestion-fade cf-suggestion-fade-right", fadeRight ? "opacity-100" : "opacity-0")}
+        aria-hidden
+      />
     </div>
   );
 }

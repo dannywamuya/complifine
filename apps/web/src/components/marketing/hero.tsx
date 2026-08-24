@@ -23,7 +23,7 @@ export function Hero() {
   return (
     <section
       ref={ref}
-      className="relative overflow-hidden pt-16 pb-20 sm:pt-24 sm:pb-28"
+      className="relative overflow-hidden pt-14 pb-16 sm:pt-20 sm:pb-24"
       onPointerMove={onPointerMove}
       onPointerLeave={() => setSpot(null)}
     >
@@ -37,28 +37,25 @@ export function Hero() {
           />
         ) : null}
       </div>
-      <Container className="relative grid items-center gap-12 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.2fr)] lg:gap-10">
-        <div className="max-w-xl">
+      <Container className="relative grid items-center gap-10 lg:max-w-7xl lg:grid-cols-[2fr_3fr] lg:gap-10">
+        <div className="min-w-0 lg:pr-2">
           <p className="marketing-fade-up font-mono text-[11px] font-medium tracking-[0.18em] text-primary uppercase">
             Kenya · Fruit &amp; vegetables · Exporters
           </p>
           <h1
-            className="marketing-fade-up font-heading mt-4 text-4xl font-medium tracking-tight text-balance sm:text-5xl lg:text-[4.25rem] lg:leading-[1.05]"
+            className="marketing-fade-up font-heading mt-4 text-3xl font-medium tracking-tight text-balance sm:text-4xl lg:text-[2.75rem] lg:leading-[1.12]"
             style={{ animationDelay: "0.08s" }}
           >
-            Know what applies, what evidence you need, and what is still missing.
+            Know what applies on your farm.
           </h1>
           <p
-            className="marketing-fade-up mt-5 max-w-[65ch] text-base leading-relaxed text-muted-foreground sm:text-lg"
+            className="marketing-fade-up mt-4 max-w-[42ch] text-sm leading-relaxed text-muted-foreground sm:text-base"
             style={{ animationDelay: "0.16s" }}
           >
-            CompliFine is a compliance operating system for horticultural exporters.
-            It starts from the publisher&apos;s own documents — GLOBALG.A.P. IFA v6
-            and SMETA 7.0 — and answers in your words, with the criterion number on
-            every claim.
+            Cited answers from GLOBALG.A.P. IFA v6 and SMETA 7.0 — not a chatbot over PDFs.
           </p>
           <div
-            className="marketing-fade-up mt-8 flex flex-wrap gap-3"
+            className="marketing-fade-up mt-7 flex flex-wrap gap-3"
             style={{ animationDelay: "0.24s" }}
           >
             <Button asChild size="lg">
@@ -76,12 +73,6 @@ export function Hero() {
               <Link href="/signup">Create a producer account</Link>
             </Button>
           </div>
-          <p
-            className="marketing-fade-up mt-4 text-sm text-white/45"
-            style={{ animationDelay: "0.32s" }}
-          >
-            Not a chatbot over PDFs. Published knowledge, your farm, citations.
-          </p>
         </div>
         <ProductFrame />
       </Container>

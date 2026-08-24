@@ -12,14 +12,6 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  Card,
-  CardAction,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -70,6 +62,7 @@ export default function FarmPage() {
   const [result, setResult] = useState<Resolution | null>(null);
   const [pending, setPending] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
+  const [scopeCode, setScopeCode] = useState<string>(EDITIONS[0]?.value ?? "");
 
   const refresh = useCallback(async () => {
     const payload = await api<OrgPayload>("/org");
@@ -113,72 +106,81 @@ export default function FarmPage() {
 
   if (error && !data) {
     return (
-      <Alert>
-        <AlertTitle>Farm profile</AlertTitle>
-        <AlertDescription>{error}</AlertDescription>
-      </Alert>
+      <div className="mx-auto w-full max-w-4xl">
+        <Alert>
+          <AlertTitle>Farm profile</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      </div>
     );
   }
 
   if (!data) {
     return (
-      <div className="mx-auto flex max-w-5xl flex-col gap-4">
-        <Skeleton className="h-10 w-64" />
-        <Skeleton className="h-48" />
+      <div className="mx-auto flex w-full max-w-4xl flex-col gap-4">
+        <Skeleton className="h-8 w-48" />
+        <Skeleton className="h-10 w-80" />
+        <Skeleton className="h-48 rounded-2xl" />
       </div>
     );
   }
 
   if (!data.organization) {
     return (
-      <div className="mx-auto flex max-w-lg flex-col gap-6">
-        <div>
-          <p className="text-sm text-muted-foreground">Farm management</p>
-          <h1 className="font-heading text-3xl font-medium tracking-tight">Create your farm profile</h1>
-          <p className="mt-1 text-muted-foreground">
+      <div className="mx-auto flex w-full max-w-lg flex-col gap-8">
+        <header className="space-y-2">
+          <p className="text-lg text-muted-foreground">Farm management</p>
+          <h1 className="font-heading text-3xl font-medium tracking-tight text-balance sm:text-4xl">
+            Create your farm profile
+          </h1>
+          <p className="max-w-lg text-base leading-relaxed text-muted-foreground">
             The assistant uses this organisation to name your sites and keep answers in scope.
           </p>
+        </header>
+        <div className="rounded-2xl border border-zinc-100 bg-white p-6 shadow-[0_8px_28px_rgb(0_0_0/0.06)]">
+          <CreateOrgForm
+            onCreated={async () => {
+              await refresh();
+              toast.success("Farm profile created");
+            }}
+          />
         </div>
-        <Card>
-          <CardHeader>
-            <CardTitle>Organisation</CardTitle>
-            <CardDescription>Company name and country. Sedex ZC is optional.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <CreateOrgForm
-              onCreated={async () => {
-                await refresh();
-                toast.success("Farm profile created");
-              }}
-            />
-          </CardContent>
-        </Card>
       </div>
     );
   }
 
   return (
-    <div className="mx-auto flex max-w-5xl flex-col gap-6">
-      <div>
-        <p className="text-sm text-muted-foreground">Farm management</p>
-        <h1 className="font-heading text-3xl font-medium tracking-tight">{data.organization.name}</h1>
-        <p className="mt-1 text-muted-foreground">
+    <div className="mx-auto flex w-full max-w-4xl flex-col gap-8">
+      <header className="space-y-2">
+        <p className="text-lg text-muted-foreground">Farm management</p>
+        <h1 className="font-heading text-3xl font-medium tracking-tight text-balance sm:text-4xl">
+          {data.organization.name}
+        </h1>
+        <p className="max-w-2xl text-base leading-relaxed text-muted-foreground">
           {data.organization.country}
           {data.organization.sedexZc ? ` · Sedex ${data.organization.sedexZc}` : ""}
           {" · "}
           Sites, certification scope and scoping answers the assistant reads by name.
         </p>
-      </div>
+      </header>
 
-      <Tabs defaultValue="sites">
-        <TabsList variant="line">
-          <TabsTrigger value="sites">Sites</TabsTrigger>
-          <TabsTrigger value="scope">Scope</TabsTrigger>
-          <TabsTrigger value="applicability">Applicability</TabsTrigger>
-          <TabsTrigger value="organisation">Organisation</TabsTrigger>
+      <Tabs defaultValue="sites" className="gap-6">
+        <TabsList className="h-10 rounded-full bg-zinc-100 p-1">
+          <TabsTrigger value="sites" className="rounded-full px-4">
+            Sites
+          </TabsTrigger>
+          <TabsTrigger value="scope" className="rounded-full px-4">
+            Scope
+          </TabsTrigger>
+          <TabsTrigger value="applicability" className="rounded-full px-4">
+            Applicability
+          </TabsTrigger>
+          <TabsTrigger value="organisation" className="rounded-full px-4">
+            Organisation
+          </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="sites" className="mt-6 space-y-4">
+        <TabsContent value="sites" className="mt-0 space-y-4">
           <div className="flex items-center justify-between gap-3">
             <p className="text-sm text-muted-foreground">
               {data.sites.length === 0
@@ -196,12 +198,12 @@ export default function FarmPage() {
             />
           </div>
           {data.sites.length === 0 ? (
-            <Card>
-              <CardHeader>
-                <CardTitle>No sites yet</CardTitle>
-                <CardDescription>A named site is what lets you ask “what applies in Naivasha?”</CardDescription>
-              </CardHeader>
-            </Card>
+            <div className="rounded-2xl border border-dashed border-zinc-200 bg-zinc-50/60 px-6 py-12 text-center">
+              <p className="font-heading text-base font-medium tracking-tight">No sites yet</p>
+              <p className="mx-auto mt-1 max-w-sm text-sm leading-relaxed text-muted-foreground">
+                A named site is what lets you ask “what applies in Naivasha?”
+              </p>
+            </div>
           ) : (
             <div className="grid gap-3 sm:grid-cols-2">
               {data.sites.map((site) => {
@@ -213,22 +215,20 @@ export default function FarmPage() {
                     type="button"
                     onClick={() => setSiteId(site.id)}
                     className={cn(
-                      "rounded-xl text-left transition-colors",
-                      active && "ring-2 ring-ring",
+                      "rounded-2xl border p-4 text-left shadow-sm transition-colors",
+                      active
+                        ? "border-primary/20 bg-primary/5 ring-2 ring-primary/20"
+                        : "border-zinc-100 bg-white hover:border-zinc-200 hover:bg-zinc-50/80",
                     )}
                   >
-                    <Card size="sm" className="h-full">
-                      <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                          <Icon className="size-4 text-muted-foreground" />
-                          {site.name}
-                        </CardTitle>
-                        <CardDescription>
-                          {SITE_TYPE_LABELS[site.siteType] ?? site.siteType}
-                          {site.location ? ` · ${site.location}` : ""}
-                        </CardDescription>
-                      </CardHeader>
-                    </Card>
+                    <p className="flex items-center gap-2 font-heading text-sm font-medium tracking-tight">
+                      <Icon className="size-4 text-primary" />
+                      {site.name}
+                    </p>
+                    <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                      {SITE_TYPE_LABELS[site.siteType] ?? site.siteType}
+                      {site.location ? ` · ${site.location}` : ""}
+                    </p>
                   </button>
                 );
               })}
@@ -236,19 +236,19 @@ export default function FarmPage() {
           )}
         </TabsContent>
 
-        <TabsContent value="scope" className="mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Certification scope</CardTitle>
-              <CardDescription>Published versions this company is pursuing.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
+        <TabsContent value="scope" className="mt-0">
+          <div className="rounded-2xl border border-zinc-100 bg-white p-6 shadow-[0_8px_28px_rgb(0_0_0/0.04)]">
+            <div className="mb-5 space-y-1">
+              <h2 className="font-heading text-base font-medium tracking-tight">Certification scope</h2>
+              <p className="text-sm text-muted-foreground">Published versions this company is pursuing.</p>
+            </div>
+            <div className="space-y-4">
               <div className="flex flex-wrap gap-1.5">
                 {data.scopes.length === 0 ? (
                   <p className="text-sm text-muted-foreground">None selected yet.</p>
                 ) : (
                   data.scopes.map((scope) => (
-                    <Badge key={scope.id} variant="secondary">
+                    <Badge key={scope.id} variant="secondary" className="h-7 rounded-full px-3">
                       {scope.name}
                     </Badge>
                   ))
@@ -258,10 +258,10 @@ export default function FarmPage() {
                 className="flex flex-wrap items-end gap-2"
                 onSubmit={async (event) => {
                   event.preventDefault();
-                  const form = new FormData(event.currentTarget);
+                  if (!scopeCode) return;
                   await api("/org/scopes", {
                     method: "POST",
-                    body: JSON.stringify({ versionCode: String(form.get("versionCode") ?? "") }),
+                    body: JSON.stringify({ versionCode: scopeCode }),
                   });
                   await refresh();
                   toast.success("Scope updated");
@@ -269,27 +269,28 @@ export default function FarmPage() {
               >
                 <div className="space-y-1.5">
                   <Label htmlFor="versionCode">Add a version</Label>
-                  <select
-                    id="versionCode"
-                    name="versionCode"
-                    className="flex h-8 rounded-lg border border-input bg-background px-2.5 text-sm"
-                  >
-                    {EDITIONS.map((edition) => (
-                      <option key={edition.value} value={edition.value}>
-                        {edition.label}
-                      </option>
-                    ))}
-                  </select>
+                  <Select value={scopeCode} onValueChange={setScopeCode}>
+                    <SelectTrigger id="versionCode" className="w-56 rounded-full" size="sm">
+                      <SelectValue placeholder="Choose a version" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {EDITIONS.map((edition) => (
+                        <SelectItem key={edition.value} value={edition.value}>
+                          {edition.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
-                <Button type="submit" variant="outline" size="sm">
+                <Button type="submit" variant="outline" size="sm" className="rounded-full">
                   Add to scope
                 </Button>
               </form>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </TabsContent>
 
-        <TabsContent value="applicability" className="mt-6 space-y-4">
+        <TabsContent value="applicability" className="mt-0 space-y-4">
           {data.sites.length === 0 ? (
             <Alert>
               <AlertTitle>Add a site first</AlertTitle>
@@ -297,42 +298,42 @@ export default function FarmPage() {
             </Alert>
           ) : (
             <>
-              <Card>
-                <CardHeader>
-                  <CardTitle>Scoping questionnaire</CardTitle>
-                  <CardDescription>
-                    Saved against {selected?.name ?? "this site"}, then used when you ask what applies.
-                  </CardDescription>
-                  <CardAction>
-                    <div className="flex flex-wrap gap-2">
-                      <Select value={siteId} onValueChange={setSiteId}>
-                        <SelectTrigger className="w-44" size="sm">
-                          <SelectValue placeholder="Site" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {data.sites.map((site) => (
-                            <SelectItem key={site.id} value={site.id}>
-                              {site.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <Select value={version} onValueChange={setVersion}>
-                        <SelectTrigger className="w-48" size="sm">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {EDITIONS.map((edition) => (
-                            <SelectItem key={edition.value} value={edition.value}>
-                              {edition.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </CardAction>
-                </CardHeader>
-                <CardContent className="space-y-2">
+              <div className="rounded-2xl border border-zinc-100 bg-white p-6 shadow-[0_8px_28px_rgb(0_0_0/0.04)]">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="space-y-1">
+                    <h2 className="font-heading text-base font-medium tracking-tight">Scoping questionnaire</h2>
+                    <p className="text-sm text-muted-foreground">
+                      Saved against {selected?.name ?? "this site"}, then used when you ask what applies.
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <Select value={siteId} onValueChange={setSiteId}>
+                      <SelectTrigger className="w-44 rounded-full" size="sm">
+                        <SelectValue placeholder="Site" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {data.sites.map((site) => (
+                          <SelectItem key={site.id} value={site.id}>
+                            {site.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Select value={version} onValueChange={setVersion}>
+                      <SelectTrigger className="w-48 rounded-full" size="sm">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {EDITIONS.map((edition) => (
+                          <SelectItem key={edition.value} value={edition.value}>
+                            {edition.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div className="mt-5 space-y-2">
                   <div className="flex items-center justify-between text-xs text-muted-foreground">
                     <span>
                       {answered} of {questions.length} answered
@@ -340,51 +341,68 @@ export default function FarmPage() {
                     <span>{progress}%</span>
                   </div>
                   <Progress value={progress} />
-                </CardContent>
-              </Card>
+                </div>
+              </div>
 
               <div className="grid gap-3">
                 {questions.map((question) => (
-                  <Card key={question.id} size="sm">
-                    <CardHeader>
-                      <CardTitle>
-                        {question.number}. {question.question}
-                      </CardTitle>
-                      {question.affected ? (
-                        <CardDescription>{question.affected} criteria depend on this answer</CardDescription>
-                      ) : null}
-                    </CardHeader>
-                    <CardContent>
-                      <RadioGroup
-                        value={
-                          answers[question.id] === "yes" || answers[question.id] === "no"
-                            ? answers[question.id]
-                            : undefined
-                        }
-                        onValueChange={(value) =>
-                          setAnswers((current) => ({
-                            ...current,
-                            [question.id]: value as "yes" | "no",
-                          }))
-                        }
-                        className="flex gap-6"
-                      >
-                        {(["yes", "no"] as const).map((value) => (
-                          <div key={value} className="flex items-center gap-2">
-                            <RadioGroupItem value={value} id={`${question.id}-${value}`} />
-                            <Label htmlFor={`${question.id}-${value}`} className="font-normal capitalize">
+                  <div
+                    key={question.id}
+                    className="rounded-2xl border border-zinc-100 bg-white p-4 shadow-sm"
+                  >
+                    <p className="font-heading text-sm font-medium tracking-tight">
+                      {question.number}. {question.question}
+                    </p>
+                    {question.affected ? (
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {question.affected} criteria depend on this answer
+                      </p>
+                    ) : null}
+                    <RadioGroup
+                      value={
+                        answers[question.id] === "yes" || answers[question.id] === "no"
+                          ? answers[question.id]
+                          : undefined
+                      }
+                      onValueChange={(value) =>
+                        setAnswers((current) => ({
+                          ...current,
+                          [question.id]: value as "yes" | "no",
+                        }))
+                      }
+                      className="mt-3 flex gap-2"
+                    >
+                      {(["yes", "no"] as const).map((value) => {
+                        const selectedAnswer = answers[question.id] === value;
+                        return (
+                          <div key={value}>
+                            <RadioGroupItem
+                              value={value}
+                              id={`${question.id}-${value}`}
+                              className="peer sr-only"
+                            />
+                            <Label
+                              htmlFor={`${question.id}-${value}`}
+                              className={cn(
+                                "inline-flex h-8 cursor-pointer items-center rounded-full border px-3 text-sm font-normal capitalize transition-colors",
+                                selectedAnswer
+                                  ? "border-primary/20 bg-primary/10 text-primary"
+                                  : "border-zinc-200 bg-zinc-50 text-muted-foreground hover:bg-zinc-100",
+                              )}
+                            >
                               {value}
                             </Label>
                           </div>
-                        ))}
-                      </RadioGroup>
-                    </CardContent>
-                  </Card>
+                        );
+                      })}
+                    </RadioGroup>
+                  </div>
                 ))}
               </div>
 
               <Button
                 type="button"
+                className="rounded-full"
                 disabled={pending || !siteId}
                 onClick={async () => {
                   setPending(true);
@@ -415,16 +433,14 @@ export default function FarmPage() {
               </Button>
 
               {result ? (
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Resolved checklist</CardTitle>
-                    <CardDescription>{result.note}</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <p className="text-sm">
-                      <span className="font-medium">{result.applicable} applicable</span>
-                      <span className="text-muted-foreground"> · {result.excluded} excluded</span>
-                    </p>
+                <div className="rounded-2xl border border-zinc-100 bg-white p-6 shadow-[0_8px_28px_rgb(0_0_0/0.04)]">
+                  <h2 className="font-heading text-base font-medium tracking-tight">Resolved checklist</h2>
+                  <p className="mt-1 text-sm text-muted-foreground">{result.note}</p>
+                  <p className="mt-4 text-sm">
+                    <span className="font-medium">{result.applicable} applicable</span>
+                    <span className="text-muted-foreground"> · {result.excluded} excluded</span>
+                  </p>
+                  <div className="mt-3 space-y-2">
                     {result.exclusions.map((exclusion) => (
                       <p key={exclusion.criterion} className="flex flex-wrap items-baseline gap-2 text-sm">
                         <span className="font-mono">{exclusion.criterion}</span>
@@ -432,62 +448,68 @@ export default function FarmPage() {
                         <span className="text-muted-foreground">{exclusion.reason}</span>
                       </p>
                     ))}
-                  </CardContent>
-                </Card>
+                  </div>
+                </div>
               ) : null}
             </>
           )}
         </TabsContent>
 
-        <TabsContent value="organisation" className="mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Organisation</CardTitle>
-              <CardDescription>Country and optional Sedex ZC. Sedex is the platform, not a standard.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form
-                className="grid gap-4 sm:grid-cols-3"
-                onSubmit={async (event) => {
-                  event.preventDefault();
-                  const form = new FormData(event.currentTarget);
-                  setPending(true);
-                  try {
-                    await api("/org", {
-                      method: "POST",
-                      body: JSON.stringify({
-                        name: String(form.get("name") ?? ""),
-                        country: String(form.get("country") ?? ""),
-                        sedexZc: String(form.get("sedexZc") ?? ""),
-                      }),
-                    });
-                    await refresh();
-                    toast.success("Organisation saved");
-                  } catch (err) {
-                    toast.error((err as Error).message);
-                  } finally {
-                    setPending(false);
-                  }
-                }}
-              >
-                <div className="space-y-1.5">
-                  <Label htmlFor="org-name">Name</Label>
-                  <Input id="org-name" name="name" defaultValue={data.organization.name} />
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="org-country">Country</Label>
-                  <Input id="org-country" name="country" defaultValue={data.organization.country} />
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="org-sedex">Sedex ZC</Label>
-                  <Input id="org-sedex" name="sedexZc" placeholder="ZC…" defaultValue={data.organization.sedexZc ?? ""} />
-                </div>
-                <Button type="submit" disabled={pending} className="w-fit">
-                  Save organisation
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
+        <TabsContent value="organisation" className="mt-0">
+          <div className="rounded-2xl border border-zinc-100 bg-white p-6 shadow-[0_8px_28px_rgb(0_0_0/0.04)]">
+            <div className="mb-5 space-y-1">
+              <h2 className="font-heading text-base font-medium tracking-tight">Organisation</h2>
+              <p className="text-sm text-muted-foreground">
+                Country and optional Sedex ZC. Sedex is the platform, not a standard.
+              </p>
+            </div>
+            <form
+              className="grid gap-4 sm:grid-cols-3"
+              onSubmit={async (event) => {
+                event.preventDefault();
+                const form = new FormData(event.currentTarget);
+                setPending(true);
+                try {
+                  await api("/org", {
+                    method: "POST",
+                    body: JSON.stringify({
+                      name: String(form.get("name") ?? ""),
+                      country: String(form.get("country") ?? ""),
+                      sedexZc: String(form.get("sedexZc") ?? ""),
+                    }),
+                  });
+                  await refresh();
+                  toast.success("Organisation saved");
+                } catch (err) {
+                  toast.error((err as Error).message);
+                } finally {
+                  setPending(false);
+                }
+              }}
+            >
+              <div className="space-y-1.5">
+                <Label htmlFor="org-name">Name</Label>
+                <Input id="org-name" name="name" className="rounded-xl" defaultValue={data.organization.name} />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="org-country">Country</Label>
+                <Input id="org-country" name="country" className="rounded-xl" defaultValue={data.organization.country} />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="org-sedex">Sedex ZC</Label>
+                <Input
+                  id="org-sedex"
+                  name="sedexZc"
+                  placeholder="ZC…"
+                  className="rounded-xl"
+                  defaultValue={data.organization.sedexZc ?? ""}
+                />
+              </div>
+              <Button type="submit" disabled={pending} className="w-fit rounded-full">
+                Save organisation
+              </Button>
+            </form>
+          </div>
         </TabsContent>
       </Tabs>
     </div>
@@ -504,11 +526,18 @@ function AddSiteDialog({
   onCreated: (site: FarmSite) => Promise<void>;
 }) {
   const [pending, setPending] = useState(false);
+  const [siteType, setSiteType] = useState("farm");
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        if (next) setSiteType("farm");
+        onOpenChange(next);
+      }}
+    >
       <DialogTrigger asChild>
-        <Button size="sm">
+        <Button size="sm" className="rounded-full">
           <Plus />
           Add site
         </Button>
@@ -525,7 +554,7 @@ function AddSiteDialog({
                 method: "POST",
                 body: JSON.stringify({
                   name: String(form.get("name") ?? ""),
-                  siteType: String(form.get("siteType") ?? "farm"),
+                  siteType,
                   location: String(form.get("location") ?? "") || undefined,
                 }),
               });
@@ -549,17 +578,18 @@ function AddSiteDialog({
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="site-type">Type</Label>
-              <select
-                id="site-type"
-                name="siteType"
-                defaultValue="farm"
-                className="flex h-8 w-full rounded-lg border border-input bg-background px-2.5 text-sm"
-              >
-                <option value="farm">Farm</option>
-                <option value="packhouse">Packhouse</option>
-                <option value="collection_centre">Collection centre</option>
-                <option value="warehouse">Warehouse</option>
-              </select>
+              <Select value={siteType} onValueChange={setSiteType}>
+                <SelectTrigger id="site-type" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(SITE_TYPE_LABELS).map(([value, label]) => (
+                    <SelectItem key={value} value={value}>
+                      {label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="site-location">Location</Label>

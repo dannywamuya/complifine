@@ -88,6 +88,15 @@ function requireOrgId(context: ToolContext): string {
   return context.organizationId;
 }
 
+/**
+ * The AI SDK validates tool results as `ModelMessage` JSON. Drizzle timestamps
+ * are `Date` objects; leaving them in a result fails the next model step with
+ * "messages do not match the ModelMessage[] schema".
+ */
+function asJsonValue<T>(value: T): T {
+  return JSON.parse(JSON.stringify(value)) as T;
+}
+
 /** Wrap a tool body so every call is timed, logged and never throws at the model. */
 function instrument<A, R>(
   context: ToolContext,
@@ -97,7 +106,7 @@ function instrument<A, R>(
   return async (args: A) => {
     const started = performance.now();
     try {
-      const result = await execute(args);
+      const result = asJsonValue(await execute(args));
       await context.onCall?.({
         name,
         args,
@@ -644,7 +653,15 @@ export function buildTools(context: ToolContext) {
       inputSchema: z.object({}),
       execute: instrument(context, "listMySites", async () => {
         const orgId = requireOrgId(context);
-        return db.select().from(sites).where(eq(sites.organizationId, orgId));
+        return db
+          .select({
+            id: sites.id,
+            name: sites.name,
+            siteType: sites.siteType,
+            location: sites.location,
+          })
+          .from(sites)
+          .where(eq(sites.organizationId, orgId));
       }),
     }),
 
@@ -675,7 +692,15 @@ export function buildTools(context: ToolContext) {
           .from(siteScopingAnswers)
           .innerJoin(applicabilityQuestions, eq(applicabilityQuestions.id, siteScopingAnswers.questionId))
           .where(eq(siteScopingAnswers.siteId, site.id));
-        return { site, answers };
+        return {
+          site: {
+            id: site.id,
+            name: site.name,
+            siteType: site.siteType,
+            location: site.location,
+          },
+          answers,
+        };
       }),
     }),
 

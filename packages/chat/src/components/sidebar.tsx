@@ -126,11 +126,17 @@ export function ConversationSidebar({
               <Search className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-(--cf-fg-subtle)" />
               <span className="sr-only">Search conversations</span>
               <input
+                id="cf-chat-search"
                 value={query}
                 onChange={(event) => onQuery(event.target.value)}
                 placeholder="Search chats"
-                className="h-9 w-full rounded-xl border border-(--cf-border) bg-(--cf-bg) pr-3 pl-8 text-sm outline-none placeholder:text-(--cf-fg-subtle)"
+                className="h-9 w-full rounded-xl border border-(--cf-border) bg-(--cf-bg) pr-8 pl-8 text-sm outline-none placeholder:text-(--cf-fg-subtle)"
               />
+              {query ? null : (
+                <kbd className="pointer-events-none absolute top-1/2 right-2.5 -translate-y-1/2 rounded-md border border-(--cf-border) bg-(--cf-bg-elevated) px-1.5 font-mono text-[10px] text-(--cf-fg-subtle)">
+                  /
+                </kbd>
+              )}
             </label>
           </div>
 

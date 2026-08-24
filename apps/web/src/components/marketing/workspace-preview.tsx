@@ -57,38 +57,76 @@ export function WorkspacePreview({
   className,
   footer,
   citationsReady = true,
+  collapsedSidebar = false,
 }: {
   className?: string;
   footer?: boolean;
   citationsReady?: boolean;
+  collapsedSidebar?: boolean;
 }) {
   return (
     <div className={cn("flex min-h-0 bg-black text-white", className)}>
-      <aside className="hidden w-[13.5rem] shrink-0 flex-col border-r border-white/10 bg-black p-3 md:flex">
-        <div className="flex h-10 items-center px-2">
-          <BrandLogo className="h-6 max-w-36" priority={false} />
+      <aside
+        className={cn(
+          "hidden shrink-0 flex-col border-r border-white/10 bg-black md:flex",
+          collapsedSidebar ? "w-14 items-center gap-2 p-2" : "w-[13.5rem] p-3",
+        )}
+      >
+        <div
+          className={cn(
+            "flex items-center",
+            collapsedSidebar ? "h-10 justify-center" : "h-10 px-2",
+          )}
+        >
+          <BrandLogo
+            collapsed={collapsedSidebar}
+            className={collapsedSidebar ? "size-7" : "h-6 max-w-36"}
+            priority={false}
+          />
         </div>
-        <div className="mt-1 flex h-8 items-center gap-1.5 rounded-md bg-primary px-2.5 text-xs font-medium text-primary-foreground">
-          <Plus className="size-3.5" />
-          New chat
-        </div>
-        <p className="mt-5 px-2 text-[10px] font-medium tracking-[0.14em] text-white/40 uppercase">
-          Today
-        </p>
-        <ul className="mt-1 flex flex-col gap-0.5">
-          {PREVIEW_CHATS.map((chat) => (
-            <li
-              key={chat.title}
-              className={
-                chat.active
-                  ? "rounded-md bg-white/10 px-2 py-1.5 text-[13px] text-white"
-                  : "rounded-md px-2 py-1.5 text-[13px] text-white/55"
-              }
-            >
-              <span className="block truncate">{chat.title}</span>
-            </li>
-          ))}
-        </ul>
+        {collapsedSidebar ? (
+          <>
+            <div className="flex size-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
+              <Plus className="size-3.5" />
+            </div>
+            <ul className="mt-3 flex flex-col items-center gap-1.5">
+              {PREVIEW_CHATS.map((chat) => (
+                <li
+                  key={chat.title}
+                  className={cn(
+                    "size-2 rounded-full",
+                    chat.active ? "bg-white" : "bg-white/25",
+                  )}
+                  aria-label={chat.title}
+                />
+              ))}
+            </ul>
+          </>
+        ) : (
+          <>
+            <div className="mt-1 flex h-8 items-center gap-1.5 rounded-md bg-primary px-2.5 text-xs font-medium text-primary-foreground">
+              <Plus className="size-3.5" />
+              New chat
+            </div>
+            <p className="mt-5 px-2 text-[10px] font-medium tracking-[0.14em] text-white/40 uppercase">
+              Today
+            </p>
+            <ul className="mt-1 flex flex-col gap-0.5">
+              {PREVIEW_CHATS.map((chat) => (
+                <li
+                  key={chat.title}
+                  className={
+                    chat.active
+                      ? "rounded-md bg-white/10 px-2 py-1.5 text-[13px] text-white"
+                      : "rounded-md px-2 py-1.5 text-[13px] text-white/55"
+                  }
+                >
+                  <span className="block truncate">{chat.title}</span>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
       </aside>
       <div className="flex min-w-0 flex-1 flex-col bg-zinc-50 text-zinc-900">
         <header className="flex h-12 shrink-0 items-center gap-2 border-b border-zinc-200 px-3">
@@ -96,11 +134,9 @@ export function WorkspacePreview({
             <PanelLeft className="size-4" />
           </span>
           <Separator orientation="vertical" className="h-4 bg-zinc-200" />
-          <span className="rounded-md bg-zinc-200/80 px-2 py-1 text-xs font-medium">
-            Criteria
-          </span>
-          <span className="rounded-md px-2 py-1 text-xs text-zinc-500">
-            Farm profile
+          <p className="shrink-0 text-sm font-medium tracking-tight">Chat</p>
+          <span className="hidden min-w-0 truncate rounded-full bg-zinc-100 px-2.5 py-1 text-xs text-zinc-600 sm:inline">
+            Naivasha packhouse · IFA v6 Smart
           </span>
           <Avatar size="sm" className="ml-auto">
             <AvatarFallback className="bg-zinc-200 text-[10px] text-zinc-700">
@@ -111,9 +147,11 @@ export function WorkspacePreview({
         <div className="grid min-h-0 flex-1 lg:grid-cols-[1fr_15.5rem]">
           <div className="flex min-h-0 min-w-0 flex-col">
             <article className="min-w-0 flex-1 space-y-4 overflow-hidden px-4 py-4 sm:px-6">
-              <p className="font-mono text-[11px] tracking-wide text-zinc-500">
-                Naivasha packhouse · IFA v6 Smart
-              </p>
+              <div className="flex justify-end">
+                <p className="max-w-[min(85%,22rem)] rounded-2xl rounded-br-md bg-zinc-900 px-3.5 py-2 text-[13px] leading-snug text-white sm:text-sm">
+                  What hygiene rules apply in the packhouse?
+                </p>
+              </div>
               <section className="rounded-2xl border border-emerald-900/10 bg-emerald-50/70 px-4 py-3.5 sm:px-5">
                 <p className="text-[11px] font-medium tracking-[0.16em] text-emerald-900/60 uppercase">
                   At a glance

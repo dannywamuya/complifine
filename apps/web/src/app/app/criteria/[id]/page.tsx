@@ -3,8 +3,6 @@ import { api } from "@/lib/api";
 import { LevelBadge } from "@/components/level-badge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -44,7 +42,7 @@ export default async function AppCriterionPage({
   const first = data.requirements[0];
 
   return (
-    <div className="mx-auto flex max-w-3xl flex-col gap-8">
+    <div className="mx-auto flex w-full max-w-3xl flex-col gap-8">
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>
@@ -60,62 +58,60 @@ export default async function AppCriterionPage({
       </Breadcrumb>
 
       {data.requirements.map((row) => (
-        <article key={row.edition} className="space-y-4">
-          <div className="space-y-2">
-            <p className="text-sm text-muted-foreground">
+        <article key={row.edition} className="space-y-5">
+          <header className="space-y-2">
+            <p className="text-lg text-muted-foreground">
               {row.editionName}
               {row.sectionNumber ? ` · ${row.sectionNumber} ${row.section ?? ""}` : ""}
               {row.page ? ` · p.${row.page}` : ""}
             </p>
-            <h1 className="font-mono text-2xl font-medium tracking-tight">{row.criterion}</h1>
+            <h1 className="font-mono text-3xl font-medium tracking-tight">{row.criterion}</h1>
             <div className="flex flex-wrap gap-1.5">
               <LevelBadge level={row.level} />
-              {row.naExempt ? <Badge variant="secondary">NA exempt</Badge> : null}
+              {row.naExempt ? (
+                <Badge variant="secondary" className="rounded-full">
+                  NA exempt
+                </Badge>
+              ) : null}
             </div>
-          </div>
+          </header>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Principle</CardTitle>
-              <CardDescription>What the standard states at the principle level.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="leading-relaxed">{row.principle}</p>
-            </CardContent>
-          </Card>
+          <section className="rounded-2xl border border-zinc-100 bg-white p-6 shadow-[0_8px_28px_rgb(0_0_0/0.04)]">
+            <h2 className="font-heading text-base font-medium tracking-tight">Principle</h2>
+            <p className="mt-1 text-sm text-muted-foreground">What the standard states at the principle level.</p>
+            <p className="mt-4 leading-relaxed">{row.principle}</p>
+          </section>
 
           {row.criteria ? (
-            <Card>
-              <CardHeader>
-                <CardTitle>Criteria</CardTitle>
-                <CardDescription>The auditable wording.</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="leading-relaxed">{row.criteria}</p>
-              </CardContent>
-            </Card>
+            <section className="rounded-2xl border border-zinc-100 bg-white p-6 shadow-[0_8px_28px_rgb(0_0_0/0.04)]">
+              <h2 className="font-heading text-base font-medium tracking-tight">Criteria</h2>
+              <p className="mt-1 text-sm text-muted-foreground">The auditable wording.</p>
+              <p className="mt-4 leading-relaxed">{row.criteria}</p>
+            </section>
           ) : null}
 
           {row.document ? (
-            <>
-              <Separator />
-              <p className="text-sm text-muted-foreground">
-                Source:{" "}
-                {row.sourceUrl ? (
-                  <a href={row.sourceUrl} className="underline underline-offset-4" target="_blank" rel="noreferrer">
-                    {row.document}
-                  </a>
-                ) : (
-                  row.document
-                )}
-              </p>
-            </>
+            <p className="text-sm text-muted-foreground">
+              Source:{" "}
+              {row.sourceUrl ? (
+                <a
+                  href={row.sourceUrl}
+                  className="font-medium text-primary underline-offset-4 hover:underline"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  {row.document}
+                </a>
+              ) : (
+                row.document
+              )}
+            </p>
           ) : null}
         </article>
       ))}
 
       {first ? (
-        <Button asChild>
+        <Button asChild className="w-fit rounded-full">
           <Link href="/app">Ask about {first.criterion}</Link>
         </Button>
       ) : null}
