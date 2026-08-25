@@ -9,7 +9,7 @@
 
 import { describe, expect, test } from "bun:test";
 import { existsSync } from "node:fs";
-import { isAbsolute, resolve } from "node:path";
+import { isAbsolute, relative, resolve } from "node:path";
 import { AUTHORITY_LEVELS, DOCUMENT_TYPES } from "@complifine/core";
 import {
   MANIFEST,
@@ -180,13 +180,24 @@ describe("manifest URLs", () => {
 });
 
 describe("locally supplied documents", () => {
-  test("every declared local file exists on disk, except member-gated drop targets", () => {
+  function resolvedLocalPath(localPath: string): string {
+    return isAbsolute(localPath) ? localPath : resolve(REPO_ROOT, localPath);
+  }
+
+  /** Publisher bytes are not in git. Paths outside the repo (`../global gap/`)
+   *  or under gitignored `storage/` are operator drops, same as member-gated. */
+  function isOperatorDrop(absPath: string): boolean {
+    const rel = relative(REPO_ROOT, absPath);
+    if (rel === "" || rel.startsWith("..") || isAbsolute(rel)) return true;
+    return rel === "storage" || rel.startsWith(`storage/`);
+  }
+
+  test("every declared in-repo local file exists on disk, except operator drops", () => {
     for (const { document } of documents) {
       if (!document.localPath) continue;
       if ((document.channel ?? "local") === "member_gated") continue;
-      const path = isAbsolute(document.localPath)
-        ? document.localPath
-        : resolve(REPO_ROOT, document.localPath);
+      const path = resolvedLocalPath(document.localPath);
+      if (isOperatorDrop(path)) continue;
       expect({ slug: document.slug, exists: existsSync(path) }).toEqual({
         slug: document.slug,
         exists: true,
