@@ -115,6 +115,53 @@ describe("farm tenancy", () => {
       expect((loaded.body as { organization: { name: string } | null }).organization?.name).toBe(
         `New Farm ${suffix}`,
       );
+
+      const site = await json("/sites", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ name: `North field ${suffix}`, siteType: "farm" }),
+      });
+      expect(site.status).toBe(200);
+    } finally {
+      await database.$close();
+    }
+  });
+
+  test("an operator who creates a company can attach a site without a new login", async () => {
+    if (!(await databaseReachable())) return;
+
+    const database = createDatabase({ max: 1 });
+    const suffix = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const email = `operator-setup-${suffix}@farm.test`;
+    try {
+      await database.insert(users).values({
+        email,
+        name: "Setup Operator",
+        passwordHash: await hashPassword("password12"),
+        kind: "operator",
+      });
+
+      const login = await json("/auth/login", {
+        method: "POST",
+        body: JSON.stringify({ email, password: "password12" }),
+      });
+      expect(login.status).toBe(200);
+      const token = (login.body as { accessToken: string }).accessToken;
+
+      const created = await json("/org", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ name: `Operator Co ${suffix}`, country: "KE" }),
+      });
+      expect(created.status).toBe(200);
+
+      const site = await json("/sites", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ name: `Packhouse ${suffix}`, siteType: "packhouse" }),
+      });
+      expect(site.status).toBe(200);
+      expect((site.body as { name: string }).name).toBe(`Packhouse ${suffix}`);
     } finally {
       await database.$close();
     }

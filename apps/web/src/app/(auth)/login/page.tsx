@@ -79,6 +79,7 @@ function LoginForm() {
 function safeNext(value: string | null): string {
   if (!value || !value.startsWith("/") || value.startsWith("//")) return "/app";
   if (value === "/app/ask" || value.startsWith("/app/search")) return "/app";
+  if (value === "/app/farm" || value.startsWith("/app/farm/")) return "/app/company";
   if (value.startsWith("/app")) return value;
   return "/app";
 }

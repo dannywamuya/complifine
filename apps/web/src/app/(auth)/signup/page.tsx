@@ -20,7 +20,7 @@ export default function SignupPage() {
   return (
     <AuthShell
       title="Create a producer account"
-      description="This creates your organisation. You can add sites and certification scope next."
+      description="This creates your company. Next you will choose certifications and add a site."
       slide={1}
     >
       <form
@@ -41,7 +41,7 @@ export default function SignupPage() {
                 country: String(form.get("country") ?? "KE"),
               }),
             });
-            router.push("/app");
+            router.push("/app/setup");
             router.refresh();
           } catch (err) {
             setError(err instanceof ApiError ? err.message : (err as Error).message);
@@ -62,7 +62,7 @@ export default function SignupPage() {
           label="Company"
           name="company"
           autoComplete="organization"
-          placeholder="Your organisation"
+          placeholder="Your company"
           required
           icon={<Building2 className="size-4" />}
         />

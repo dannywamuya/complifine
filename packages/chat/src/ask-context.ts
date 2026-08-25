@@ -28,6 +28,6 @@ export function farmContextNote(input: {
     editions.length > 0
       ? `Cite only these published editions in the company's scope: ${editions.join("; ")}.`
       : "";
-  const farm = bits.length > 0 ? " Use farm tools for that company and site." : "";
-  return `${about}${about && scope ? " " : ""}${scope}${farm}`.trim();
+  const tools = bits.length > 0 ? " Use company and site tools for that company and site." : "";
+  return `${about}${about && scope ? " " : ""}${scope}${tools}`.trim();
 }

@@ -234,7 +234,7 @@ export const onboardingTours: Tour[] = [
         how: [
           "Actor is the operator or system that performed the action.",
           "Entity type plus action tell you what changed. Drill the API `/audit` if you need metadata.",
-          "This log is not the producer farm audit — that lives in the user app.",
+          "This log is not the producer audit — that lives in the user app.",
         ],
       }),
       page({

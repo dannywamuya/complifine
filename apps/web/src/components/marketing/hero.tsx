@@ -46,7 +46,7 @@ export function Hero() {
             className="marketing-fade-up font-heading mt-4 text-3xl font-medium tracking-tight text-balance sm:text-4xl lg:text-[2.75rem] lg:leading-[1.12]"
             style={{ animationDelay: "0.08s" }}
           >
-            Know what applies on your farm.
+            Know what applies at your sites.
           </h1>
           <p
             className="marketing-fade-up mt-4 max-w-[42ch] text-sm leading-relaxed text-muted-foreground sm:text-base"

@@ -2,13 +2,13 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
 	BookOpen,
+	Building2,
 	MessageSquare,
 	Pencil,
 	Search,
-	Tractor,
 	Trash2,
 } from 'lucide-react';
 import { groupByDate } from '@complifine/chat';
@@ -42,10 +42,10 @@ interface ConversationRow {
 	updatedAt: string;
 }
 
-export function AppSidebar() {
+export function AppSidebar({ setup = false }: { setup?: boolean }) {
 	return (
 		<Suspense fallback={<AppSidebarFallback />}>
-			<AppSidebarInner />
+			<AppSidebarInner setup={setup} />
 		</Suspense>
 	);
 }
@@ -67,11 +67,11 @@ function AppSidebarFallback() {
 	);
 }
 
-function AppSidebarInner() {
+function AppSidebarInner({ setup }: { setup: boolean }) {
 	const path = usePathname();
 	const params = useSearchParams();
 	const router = useRouter();
-	const { setOpenMobile, state } = useSidebar();
+	const { setOpenMobile, setOpen, state } = useSidebar();
 	const activeId = path === '/app' ? params.get('c') : null;
 
 	const [conversations, setConversations] = useState<ConversationRow[]>([]);
@@ -80,6 +80,7 @@ function AppSidebarInner() {
 	const [debounced, setDebounced] = useState('');
 	const [editing, setEditing] = useState<string | null>(null);
 	const [draft, setDraft] = useState('');
+	const wasSetup = useRef(setup);
 
 	useEffect(() => {
 		const timer = window.setTimeout(() => setDebounced(query.trim()), 250);
@@ -103,8 +104,19 @@ function AppSidebarInner() {
 	}, [debounced]);
 
 	useEffect(() => {
+		if (setup) {
+			setConversations([]);
+			setLoading(false);
+			setOpen(false);
+			wasSetup.current = true;
+			return;
+		}
+		if (wasSetup.current) {
+			wasSetup.current = false;
+			setOpen(true);
+		}
 		void refresh();
-	}, [refresh, path, params]);
+	}, [refresh, path, params, setup, setOpen]);
 
 	useEffect(() => {
 		const onChange = () => void refresh();
@@ -116,7 +128,7 @@ function AppSidebarInner() {
 	const collapsed = state === 'collapsed';
 	const onChat = path === '/app';
 	const onCriteria = path.startsWith('/app/criteria');
-	const onFarm = path.startsWith('/app/farm');
+	const onCompany = path.startsWith('/app/company');
 
 	useEffect(() => {
 		function onKey(event: KeyboardEvent) {
@@ -190,7 +202,9 @@ function AppSidebarInner() {
 				</Link>
 			</SidebarHeader>
 			<SidebarContent>
-				<SidebarGroup>
+				{setup ? null : (
+					<>
+				<SidebarGroup id='tour-sidebar'>
 					<SidebarGroupContent>
 						<SidebarMenu>
 							<SidebarMenuItem>
@@ -222,13 +236,13 @@ function AppSidebarInner() {
 							<SidebarMenuItem>
 								<SidebarMenuButton
 									asChild
-									isActive={onFarm}
-									tooltip='Farm'
+									isActive={onCompany}
+									tooltip='Company'
 									className='rounded-xl'
 									onClick={() => setOpenMobile(false)}>
-									<Link href='/app/farm'>
-										<Tractor />
-										<span>Farm</span>
+									<Link href='/app/company'>
+										<Building2 />
+										<span>Company</span>
 									</Link>
 								</SidebarMenuButton>
 							</SidebarMenuItem>
@@ -236,9 +250,9 @@ function AppSidebarInner() {
 					</SidebarGroupContent>
 				</SidebarGroup>
 				<SidebarGroup className='group-data-[collapsible=icon]:hidden'>
-					<SidebarGroupLabel>Chats</SidebarGroupLabel>
-					<SidebarGroupContent className='flex min-h-0 flex-1 flex-col gap-2'>
-						<div className='relative px-2'>
+					<div id='tour-chats'>
+						<SidebarGroupLabel>Chats</SidebarGroupLabel>
+						<div className='relative px-2 pb-2'>
 							<Search className='pointer-events-none absolute top-1/2 left-4 size-3.5 -translate-y-1/2 text-sidebar-foreground/50' />
 							<Input
 								id='cf-chat-search'
@@ -253,6 +267,8 @@ function AppSidebarInner() {
 								</kbd>
 							)}
 						</div>
+					</div>
+					<SidebarGroupContent className='flex min-h-0 flex-1 flex-col gap-2'>
 						<nav
 							className='min-h-0 flex-1 overflow-y-auto px-1'
 							aria-label='Chat history'>
@@ -345,6 +361,8 @@ function AppSidebarInner() {
 						</nav>
 					</SidebarGroupContent>
 				</SidebarGroup>
+					</>
+				)}
 			</SidebarContent>
 		</Sidebar>
 	);

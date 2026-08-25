@@ -162,7 +162,7 @@ export function WorkspacePreview({
                   What the standard says
                 </p>
                 <p className="text-[13px] leading-relaxed text-graphite-700 sm:text-[15px]">
-                  Procedures must match the site you scoped, not a generic farm
+                  Procedures must match the site you scoped, not a generic
                   checklist. Workers packing fruit need clean facilities next to
                   the packing area. Training against those procedures is recorded.
                 </p>

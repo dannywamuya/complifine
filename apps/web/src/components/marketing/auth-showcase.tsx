@@ -18,7 +18,7 @@ const CITATIONS = [
 
 const SLIDES = [
   {
-    heading: "Know what applies on your farm.",
+    heading: "Know what applies at your sites.",
     body: "Cited answers from GLOBALG.A.P. IFA v6 and SMETA 7.0 — not a chatbot over PDFs.",
   },
   {

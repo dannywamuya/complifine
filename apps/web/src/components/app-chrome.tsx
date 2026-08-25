@@ -4,6 +4,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { api, ApiError, startSessionKeepAlive } from '@/lib/api';
 import type { Me, OrgPayload } from '@/lib/farm';
+import { needsSetup, ORG_CHANGED } from '@/lib/farm';
 import {
 	SidebarInset,
 	SidebarProvider,
@@ -28,6 +29,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { ModeToggle } from '@/components/mode-toggle';
+import { OnboardingTrigger } from '@/components/onboarding-trigger';
 
 function initials(name: string): string {
 	return name
@@ -47,7 +49,8 @@ export function AppChrome({
 	const path = usePathname();
 	const router = useRouter();
 	const [me, setMe] = useState<Me | null | undefined>(undefined);
-	const [orgName, setOrgName] = useState<string | null>(null);
+	const [org, setOrg] = useState<OrgPayload | null | undefined>(undefined);
+	const orgName = org?.organization?.name ?? null;
 
 	useEffect(() => {
 		api<Me>('/auth/me')
@@ -64,9 +67,20 @@ export function AppChrome({
 
 	useEffect(() => {
 		if (!me) return;
-		api<OrgPayload>('/org')
-			.then((payload) => setOrgName(payload.organization?.name ?? null))
-			.catch(() => setOrgName(null));
+		const load = () =>
+			api<OrgPayload>('/org')
+				.then(setOrg)
+				.catch(() => setOrg(null));
+		const onChange = (event: Event) => {
+			if (event instanceof CustomEvent && event.detail) {
+				setOrg(event.detail as OrgPayload);
+				return;
+			}
+			void load();
+		};
+		void load();
+		window.addEventListener(ORG_CHANGED, onChange);
+		return () => window.removeEventListener(ORG_CHANGED, onChange);
 	}, [me]);
 
 	useEffect(() => {
@@ -76,9 +90,22 @@ export function AppChrome({
 
 	const chatHome = path === '/app';
 	const onCriteria = path.startsWith('/app/criteria');
-	const onFarm = path.startsWith('/app/farm');
+	const onCompany = path.startsWith('/app/company');
+	const onSetup = path.startsWith('/app/setup');
+	const setup = onSetup || needsSetup(org);
 
-	if (!me) {
+	useEffect(() => {
+		if (!me || org === undefined) return;
+		if (needsSetup(org) && !onSetup) {
+			router.replace('/app/setup');
+			return;
+		}
+		if (!needsSetup(org) && onSetup) {
+			router.replace('/app');
+		}
+	}, [me, org, onSetup, router]);
+
+	if (!me || org === undefined) {
 		return (
 			<AppChromeSkeleton path={path} sidebarOpen={defaultSidebarOpen} />
 		);
@@ -120,13 +147,13 @@ export function AppChrome({
 		<SidebarProvider
 			defaultOpen={defaultSidebarOpen}
 			className='min-h-svh overflow-x-hidden bg-muted'>
-			<AppSidebar />
+			<AppSidebar setup={setup} />
 			<SidebarInset className='min-h-svh min-w-0 overflow-hidden bg-card md:my-2 md:mr-2 md:ml-0 md:h-[calc(100svh-1rem)] md:min-h-0 md:rounded-2xl md:shadow-[0_1px_2px_rgb(0_0_0/0.04),0_12px_32px_rgb(0_0_0/0.05)]'>
 				<header className='flex h-14 shrink-0 items-center gap-2 border-b border-border bg-transparent px-3 sm:px-4'>
-					<SidebarTrigger className='rounded-xl' />
-					<Separator orientation='vertical' className='h-4' />
+					{setup ? null : <SidebarTrigger className='rounded-xl' />}
+					{setup ? null : <Separator orientation='vertical' className='h-4' />}
 					<p className='shrink-0 truncate text-sm font-medium tracking-tight'>
-						{onCriteria ? 'Catalog' : onFarm ? 'Farm profile' : 'Chat'}
+						{onSetup ? 'Set up' : onCriteria ? 'Catalog' : onCompany ? 'Company' : 'Chat'}
 					</p>
 					<div
 						id={APP_HEADER_EXTRA_ID}
@@ -137,6 +164,7 @@ export function AppChrome({
 							id={APP_HEADER_ACTIONS_ID}
 							className='flex items-center gap-0.5'
 						/>
+						{setup ? null : <OnboardingTrigger />}
 						<ModeToggle />
 						{userMenu}
 					</div>

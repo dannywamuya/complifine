@@ -8,7 +8,7 @@ const nextConfig: NextConfig = {
   output: "standalone",
   outputFileTracingRoot: workspaceRoot,
   reactStrictMode: true,
-  transpilePackages: ["@complifine/chat"],
+  transpilePackages: ["nextstepjs", "@complifine/chat"],
 };
 
 export default nextConfig;

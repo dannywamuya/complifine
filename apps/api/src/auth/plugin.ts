@@ -174,7 +174,11 @@ export function authModule(db: Database) {
 
           let orgId = claims.orgId ?? null;
           let role = claims.role ?? null;
-          if (!orgId && user.kind === "member") {
+          // JWT orgId is minted at login. Creating a company later (setup, or an
+          // operator using the producer app) writes a membership without rotating
+          // the access cookie. Look up the live membership whenever the token
+          // has no org — for any kind, not only members.
+          if (!orgId) {
             const membership = await membershipFor(db, user.id);
             orgId = membership?.organizationId ?? null;
             role = membership?.role ?? null;

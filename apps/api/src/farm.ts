@@ -1,5 +1,5 @@
 import { Elysia, status, t } from "elysia";
-import { and, desc, eq, type Database } from "@complifine/db";
+import { and, desc, eq, inArray, not, type Database } from "@complifine/db";
 import {
   applicabilityQuestions,
   controlEvidenceTypes,
@@ -92,23 +92,46 @@ export function farmRoutes(db: Database) {
       "/org/scopes",
       async ({ auth, body }) => {
         const user = requireOrg(auth);
-        const version = assertPublishedVersion(
-          (
-            await db
-              .select()
-              .from(standardVersions)
-              .where(eq(standardVersions.code, body.versionCode))
-          )[0],
-          !publishedOnly(user),
-          body.versionCode,
-        );
-        await db
-          .insert(organizationScopes)
-          .values({ organizationId: user.orgId, standardVersionId: version.id })
-          .onConflictDoNothing();
-        return { ok: true, versionCode: version.code };
+        const codes = [
+          ...(body.versionCode ? [body.versionCode] : []),
+          ...(body.versionCodes ?? []),
+        ];
+        const unique = [...new Set(codes.map((code) => code.trim()).filter(Boolean))];
+        if (unique.length === 0) throw status(400, { error: "Choose at least one published version" });
+        const versionIds: string[] = [];
+        const added: string[] = [];
+        for (const code of unique) {
+          const version = assertPublishedVersion(
+            (await db.select().from(standardVersions).where(eq(standardVersions.code, code)))[0],
+            !publishedOnly(user),
+            code,
+          );
+          await db
+            .insert(organizationScopes)
+            .values({ organizationId: user.orgId, standardVersionId: version.id })
+            .onConflictDoNothing();
+          versionIds.push(version.id);
+          added.push(version.code);
+        }
+        if (body.replace) {
+          await db
+            .delete(organizationScopes)
+            .where(
+              and(
+                eq(organizationScopes.organizationId, user.orgId),
+                not(inArray(organizationScopes.standardVersionId, versionIds)),
+              ),
+            );
+        }
+        return { ok: true, versionCodes: added };
       },
-      { body: t.Object({ versionCode: t.String() }) },
+      {
+        body: t.Object({
+          versionCode: t.Optional(t.String()),
+          versionCodes: t.Optional(t.Array(t.String())),
+          replace: t.Optional(t.Boolean()),
+        }),
+      },
     )
     .post(
       "/sites",

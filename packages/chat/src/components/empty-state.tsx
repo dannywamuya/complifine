@@ -30,7 +30,7 @@ export function EmptyState({
         {body ? <p className="cf-empty-body max-w-lg text-base leading-relaxed text-(--cf-fg-muted)">{body}</p> : null}
       </div>
       {features && features.length > 0 ? (
-        <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
           {features.map((feature, index) => (
             <li key={feature.title} className={`cf-feature-card cf-feature-card-${(index % 4) + 1}`}>
               <span className="mb-3 inline-flex size-8 items-center justify-center rounded-lg bg-(--cf-bg-elevated)/80 text-(--cf-accent-text) shadow-sm">

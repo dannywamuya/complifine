@@ -175,9 +175,9 @@ export function buildTools(context: ToolContext) {
     // -----------------------------------------------------------------------
     searchRequirements: tool({
       description:
-        "Search the Principles & Criteria for farm-practice requirements. " +
+        "Search the Principles & Criteria for operational requirements. " +
         "Use natural language; the search combines exact wording and meaning. " +
-        "This is the right first step for questions about what a producer must do on the farm. " +
+        "This is the right first step for questions about what a producer must do on site. " +
         "For questions about the certification process itself (audits, certificates, transfers), " +
         "use searchGeneralRegulations instead.",
       inputSchema: z.object({
@@ -543,7 +543,7 @@ export function buildTools(context: ToolContext) {
         "Search the General Regulations only: the rules of the certification system itself - " +
         "audit frequency, unannounced audits, sanctions, certificate validity, transfers " +
         "between certification bodies, producer group QMS rules. Use for questions about " +
-        "the certification PROCESS rather than about farm practice.",
+        "the certification PROCESS rather than about site practice.",
       inputSchema: z.object({
         query: z.string().min(2),
         limit: z.number().int().min(1).max(15).default(6),
@@ -634,7 +634,7 @@ export function buildTools(context: ToolContext) {
     getCompanyContext: tool({
       description:
         "The signed-in organisation: name, country, Sedex ZC, sites, and which standard versions they pursue. " +
-        "Call this before answering a question about 'our farm' or 'this company'.",
+        "Call this before answering a question about 'our sites', 'our packhouse', or 'this company'.",
       inputSchema: z.object({}),
       execute: instrument(context, "getCompanyContext", async () => {
         const orgId = requireOrgId(context);
@@ -674,7 +674,7 @@ export function buildTools(context: ToolContext) {
 
     // -----------------------------------------------------------------------
     listMySites: tool({
-      description: "List the organisation's farms, packhouses and other sites.",
+      description: "List the organisation's sites (farm, packhouse, collection centre, warehouse).",
       inputSchema: z.object({}),
       execute: instrument(context, "listMySites", async () => {
         const orgId = requireOrgId(context);
@@ -701,7 +701,7 @@ export function buildTools(context: ToolContext) {
       execute: instrument(context, "getSiteProfile", async (args) => {
         const orgId = requireOrgId(context);
         const siteId = args.siteId ?? context.siteId;
-        if (!siteId) throw new Error("No site selected. Ask which farm or packhouse, or call listMySites.");
+        if (!siteId) throw new Error("No site selected. Ask which site, or call listMySites.");
         const [site] = await db
           .select()
           .from(sites)
@@ -733,7 +733,7 @@ export function buildTools(context: ToolContext) {
     getMyApplicableRequirements: tool({
       description:
         "Resolve which criteria apply to a saved site using its stored scoping answers. " +
-        "Prefer this over filterChecklist when the producer already has a farm profile.",
+        "Prefer this over filterChecklist when the producer already has a company and site profile.",
       inputSchema: z.object({
         versionCode: versionCodeSchema,
         siteId: z.string().optional(),

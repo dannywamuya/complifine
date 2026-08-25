@@ -17,7 +17,7 @@ export function AppChromeSkeleton({
         )}
       >
         <Skeleton className={cn("h-8 rounded-md bg-sidebar-accent", sidebarOpen ? "w-32" : "w-8")} />
-        {sidebarOpen ? (
+        {path.startsWith("/app/setup") ? null : sidebarOpen ? (
           <>
             <div className="mt-4 space-y-2">
               <Skeleton className="h-8 w-full rounded-xl bg-sidebar-accent" />
@@ -50,7 +50,7 @@ export function AppChromeSkeleton({
           <Skeleton className="ml-auto size-8 rounded-full" />
         </div>
         <div className="min-h-0 flex-1 overflow-hidden p-6 sm:p-8">
-          {path.startsWith("/app/farm") ? (
+          {path.startsWith("/app/company") || path.startsWith("/app/setup") ? (
             <FarmPageSkeleton />
           ) : path.startsWith("/app/criteria/") ? (
             <CriterionDetailSkeleton />

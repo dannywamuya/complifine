@@ -14,7 +14,7 @@ describe("rewriteAskQuestion", () => {
     );
   });
 
-  test("appends farm context after the version note", () => {
+  test("appends company context after the version note", () => {
     expect(
       rewriteAskQuestion({
         question: "What applies at harvest?",
@@ -34,7 +34,7 @@ describe("farmContextNote", () => {
     expect(
       farmContextNote({ organizationName: "Acme Fresh", siteLabel: "Naivasha packhouse" }),
     ).toBe(
-      "This question is about company Acme Fresh, site Naivasha packhouse. Use farm tools for that company and site.",
+      "This question is about company Acme Fresh, site Naivasha packhouse. Use company and site tools for that company and site.",
     );
   });
 

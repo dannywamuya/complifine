@@ -198,7 +198,7 @@ const FEATURES = [
     span: "lg:col-span-2",
   },
   {
-    title: "Your farm, not a generic checklist",
+    title: "Your sites, not a generic checklist",
     body: "Sites, certification scope, and scoping answers live with the organisation. Ask what applies to the Naivasha packhouse; the agent reads that profile.",
     icon: MapPinned,
     span: "",
@@ -267,7 +267,7 @@ function Features() {
 const BENEFITS = [
   {
     title: "Stop re-reading the PDF before every audit.",
-    body: "Published knowledge is versioned once. You ask against it in the language of the farm.",
+    body: "Published knowledge is versioned once. You ask against it in the language of the site.",
   },
   {
     title: "Know what applies to this site, this edition, this season.",
@@ -279,7 +279,7 @@ const BENEFITS = [
   },
   {
     title: "One operating picture across GLOBALG.A.P. and SMETA.",
-    body: "SMETA 7.0 is coming online as a second standard. One farm, one evidence set later — evidence is not shipped today.",
+    body: "SMETA 7.0 is coming online as a second standard. One company, one evidence set later — evidence is not shipped today.",
   },
 ];
 
@@ -312,7 +312,7 @@ function Benefits() {
 const STEPS = [
   {
     title: "Register the operation",
-    body: "Create the organisation. Add farms, packhouses, collection centres. Pick IFA Smart or GFS — and SMETA 2-pillar or 4-pillar when in scope.",
+    body: "Create the company. Add sites — growing, packing, collection, storage. Pick IFA Smart or GFS — and SMETA 2-pillar or 4-pillar when in scope.",
   },
   {
     title: "Scope what applies",
@@ -324,7 +324,7 @@ const STEPS = [
   },
   {
     title: "Operate continuously",
-    body: "Today: keep the farm profile current and the knowledge cited. Next: evidence, self-assessment, findings, audit readiness.",
+    body: "Today: keep the company and sites current and the knowledge cited. Next: evidence, self-assessment, findings, audit readiness.",
     coming: true,
   },
 ];
@@ -534,7 +534,7 @@ const LAYERS = [
   },
   {
     icon: Building2,
-    title: "Farm context",
+    title: "Site context",
     body: "Which sites you run, which edition you are certified against, and how you answered the scoping questions.",
   },
   {

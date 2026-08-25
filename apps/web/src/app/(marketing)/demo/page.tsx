@@ -72,7 +72,7 @@ export default function DemoPage() {
             <Link href="/signup" className="text-foreground underline-offset-4 hover:underline">
               create an account
             </Link>{" "}
-            and set up your farm.
+            and set up your company.
           </AlertDescription>
         </Alert>
       ) : (

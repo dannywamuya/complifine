@@ -16,7 +16,7 @@ that name a criterion the tools never returned are flagged, not trusted.
 | Ingestion | Fetch official documents, parse the checklist XLSX and the PDFs, map Smart to GFS, run quality gates |
 | Knowledge base | Postgres + pgvector. 190 Smart criteria, 191 GFS, 16 scoping questions, publisher GUIDs as identity |
 | Retrieval | Identifier lookup, then IDF-weighted full text fused with embeddings by Reciprocal Rank Fusion |
-| Agent | Tools over the database, including the signed-in farm profile. The model chooses what to fetch; the database answers questions of fact |
+| Agent | Tools over the database, including the signed-in company and sites. The model chooses what to fetch; the database answers questions of fact |
 | API | Elysia on port 3311. JWT auth, OpenAPI at `/swagger` |
 | Web | Next.js on port 3000. Marketing site, Book a Demo, producer `/app` |
 | Console | Next.js on port 3001. Ingest, gates, review, demo inbox. Operator login |

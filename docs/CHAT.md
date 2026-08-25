@@ -15,7 +15,7 @@ a composer that survived a tab switch. One implementation, two thin wrappers.
 packages/chat/src
   types.ts, thread.ts, client.ts, store/use-chat.ts
   components/chat-shell.tsx   ← the product
-apps/web/src/components/chat-workspace.tsx      ChatShell + farm copy
+apps/web/src/components/chat-workspace.tsx      ChatShell + company copy
 apps/console/src/components/chat-workspace.tsx  ChatShell + #tour-search
 ```
 

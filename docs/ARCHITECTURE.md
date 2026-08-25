@@ -105,7 +105,7 @@ a comment on a chat transcript.
 | Operator console | 3001 | `bun run console` |
 
 The user app is a public marketing site plus a signed-in producer product under
-`/app` (ask, farm profile). The console is for ingesting, reviewing, publishing
+`/app` (ask, company and sites). The console is for ingesting, reviewing, publishing
 and reading demo requests. Both talk only to the API, via `/api` rewrites so
 JWT cookies stay same-origin.
 

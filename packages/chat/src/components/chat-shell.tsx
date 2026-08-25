@@ -89,7 +89,7 @@ export function ChatShell({
 	title = 'Ask the standard',
 	eyebrow,
 	titleId,
-	emptyTitle = 'Ask in the words you would use on the farm.',
+	emptyTitle = 'Ask in the words you would use on site.',
 	emptyBody = '',
 	emptyGreeting,
 	emptyFeatures,
@@ -348,6 +348,7 @@ export function ChatShell({
 										siteId={siteId}
 										onSite={chooseSite}
 										profileHref={profileHref}
+										tourTarget
 									/>,
 									extraTarget,
 								)
@@ -462,7 +463,6 @@ export function ChatShell({
 					/>
 
 					<div
-						id='cf-composer'
 						className={cn(
 							COLUMN,
 							'shrink-0 pt-4 pb-[max(1.25rem,env(safe-area-inset-bottom))]',
@@ -484,32 +484,34 @@ export function ChatShell({
 								/>
 							</div>
 						) : null}
-						<Composer
-							draft={chat.draft}
-							onChange={chat.setDraft}
-							onSend={() => chat.send()}
-							onStop={chat.stop}
-							pending={chat.streaming}
-							enterSends={chat.enterSends}
-							attachments={chat.attachments}
-							onRemoveAttachment={(id) =>
-								chat.setAttachments((files) =>
-									files.filter((file) => file.id !== id),
-								)
-							}
-							onFiles={(files) => void chat.addFiles(files)}
-							placeholder={placeholder}
-							version={chat.version}
-							versionOptions={versionOptions}
-							onVersion={chat.setVersion}
-							kind={chat.kind}
-							kindOptions={showKindFilter ? kindOptions : undefined}
-							onKind={chat.setKind}
-							models={models}
-							modelId={modelId}
-							onModel={setModelId}
-							disabled={chat.overLimit}
-						/>
+						<div id='cf-composer'>
+							<Composer
+								draft={chat.draft}
+								onChange={chat.setDraft}
+								onSend={() => chat.send()}
+								onStop={chat.stop}
+								pending={chat.streaming}
+								enterSends={chat.enterSends}
+								attachments={chat.attachments}
+								onRemoveAttachment={(id) =>
+									chat.setAttachments((files) =>
+										files.filter((file) => file.id !== id),
+									)
+								}
+								onFiles={(files) => void chat.addFiles(files)}
+								placeholder={placeholder}
+								version={chat.version}
+								versionOptions={versionOptions}
+								onVersion={chat.setVersion}
+								kind={chat.kind}
+								kindOptions={showKindFilter ? kindOptions : undefined}
+								onKind={chat.setKind}
+								models={models}
+								modelId={modelId}
+								onModel={setModelId}
+								disabled={chat.overLimit}
+							/>
+						</div>
 						<p className='mt-2 text-center text-[11px] text-(--cf-fg-subtle)'>
 							{footer}
 						</p>
@@ -628,6 +630,7 @@ function ContextChip({
 	onSite,
 	profileHref,
 	titleId,
+	tourTarget,
 }: {
 	organizationName?: string;
 	siteOptions?: SelectOption[];
@@ -635,6 +638,7 @@ function ContextChip({
 	onSite: (value: string) => void;
 	profileHref?: string;
 	titleId?: string;
+	tourTarget?: boolean;
 }) {
 	if (!organizationName && !siteOptions?.length) {
 		if (!profileHref) return <div id={titleId} className='min-w-0 flex-1' />;
@@ -642,7 +646,7 @@ function ContextChip({
 			<p
 				id={titleId}
 				className='min-w-0 flex-1 truncate text-xs text-(--cf-fg-muted)'>
-				No farm profile.{' '}
+				No company yet.{' '}
 				<a
 					href={profileHref}
 					className='font-medium text-(--cf-accent-text) underline-offset-2 hover:underline'>
@@ -654,7 +658,9 @@ function ContextChip({
 
 	return (
 		<div id={titleId} className='flex min-w-0 items-center'>
-			<div className='inline-flex min-w-0 max-w-full items-center rounded-full bg-(--cf-bg-muted)/70 py-0.5 pr-1 pl-3'>
+			<div
+				id={tourTarget ? 'tour-site' : undefined}
+				className='inline-flex min-w-0 max-w-full items-center rounded-full bg-(--cf-bg-muted)/70 py-0.5 pr-1 pl-3'>
 				{organizationName ? (
 					<span className='hidden min-w-0 truncate text-xs text-(--cf-fg-muted) sm:inline'>
 						{organizationName}

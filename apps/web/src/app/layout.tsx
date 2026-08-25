@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 		template: '%s · CompliFine',
 	},
 	description:
-		'Know what GLOBALG.A.P. IFA v6 and SMETA 7 require on your farm. Answers cite the published standard.',
+		'Know what GLOBALG.A.P. IFA v6 and SMETA 7 require at your sites. Answers cite the published standard.',
 	icons: {
 		icon: [
 			{ url: '/favicon.ico' },

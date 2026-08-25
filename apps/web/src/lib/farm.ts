@@ -41,3 +41,18 @@ export const SITE_TYPE_LABELS: Record<string, string> = {
   collection_centre: "Collection centre",
   warehouse: "Warehouse",
 };
+
+export const SITE_TYPE_HELP: Record<string, string> = {
+  farm: "Growing and harvest. Scoping answers here are about the fields.",
+  packhouse: "Packing, grading, or processing. Different rules often apply than at a growing site.",
+  collection_centre: "A hub that receives produce from growing sites.",
+  warehouse: "Storage before dispatch.",
+};
+
+/** True until the company has at least one certification and one site. */
+export function needsSetup(payload: OrgPayload | null | undefined): boolean {
+  if (!payload?.organization) return true;
+  return payload.scopes.length === 0 || payload.sites.length === 0;
+}
+
+export const ORG_CHANGED = "cf-org-changed";

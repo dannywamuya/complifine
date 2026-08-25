@@ -24,8 +24,8 @@ const EMPTY_FEATURES = [
     icon: <Quote className="size-4" aria-hidden />,
   },
   {
-    title: "Your farm",
-    body: "Sites and scope change what applies.",
+    title: "Your company",
+    body: "Sites and certifications change what applies.",
     icon: <MapPinned className="size-4" aria-hidden />,
   },
   {
@@ -106,7 +106,7 @@ function ChatWorkspaceInner() {
       scopeEditionLabels={scopes.map((scope) => scope.name)}
       siteOptions={org ? siteOptions : undefined}
       defaultSiteId={sites[0]?.id}
-      profileHref="/app/farm"
+      profileHref="/app/company"
       criterionHref={(id) => `/app/criteria/${encodeURIComponent(id)}`}
     />
   );

@@ -45,7 +45,7 @@ export function CatalogNav({
   }
 
   return (
-    <nav aria-label="Published catalog" className="space-y-5">
+    <nav id="tour-catalog-editions" aria-label="Published catalog" className="w-fit max-w-full space-y-5">
       {data.standards.map((standard) => (
         <div key={standard.code}>
           <p className="px-2 text-[11px] font-medium tracking-[0.14em] text-muted-foreground uppercase">

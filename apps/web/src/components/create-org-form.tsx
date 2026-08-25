@@ -3,14 +3,14 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
-import type { FarmOrg } from "@/lib/farm";
+import { ORG_CHANGED, type FarmOrg, type OrgPayload } from "@/lib/farm";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 export function CreateOrgForm({
   onCreated,
-  submitLabel = "Create farm profile",
+  submitLabel = "Save company",
 }: {
   onCreated: (org: FarmOrg) => Promise<void> | void;
   submitLabel?: string;
@@ -33,6 +33,11 @@ export function CreateOrgForm({
               sedexZc: String(form.get("sedexZc") ?? ""),
             }),
           });
+          await api("/auth/refresh", { method: "POST" }).catch(() => undefined);
+          const payload = await api<OrgPayload>("/org").catch(() => null);
+          if (payload) {
+            window.dispatchEvent(new CustomEvent(ORG_CHANGED, { detail: payload }));
+          }
           await onCreated(org);
         } catch (err) {
           toast.error((err as Error).message);

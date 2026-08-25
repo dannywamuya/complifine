@@ -127,7 +127,7 @@ export default function AppCriteriaPage() {
 
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-8">
-      <header className="space-y-2">
+      <header className="w-fit max-w-full space-y-2" id="tour-catalog">
         <p className="text-lg text-muted-foreground">Published knowledge</p>
         <h1 className="font-heading text-3xl font-medium tracking-tight text-balance sm:text-4xl">
           Catalog
@@ -164,7 +164,8 @@ export default function AppCriteriaPage() {
             ) : null}
 
             <form
-              className="flex flex-col gap-3 rounded-[1.75rem] border border-border bg-card p-3 shadow-[0_8px_28px_rgb(0_0_0/0.06)] sm:flex-row sm:items-center"
+              id="tour-catalog-search"
+              className="flex w-fit max-w-full flex-col gap-3 rounded-[1.75rem] border border-border bg-card p-3 shadow-[0_8px_28px_rgb(0_0_0/0.06)] sm:flex-row sm:items-center"
               onSubmit={(event) => {
                 event.preventDefault();
                 setSubmitted(q.trim());
