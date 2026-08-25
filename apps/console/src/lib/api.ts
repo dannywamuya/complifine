@@ -1,5 +1,5 @@
 /**
- * Browser calls go to `/api` (Next rewrite) so JWT cookies stay same-origin.
+ * Browser calls go to `/api` (Next route handler) so JWT cookies stay same-origin.
  * Server Components cannot fetch a relative URL — Node's fetch requires an
  * absolute origin, so they talk to the Elysia server directly.
  *

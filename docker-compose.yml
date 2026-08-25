@@ -63,7 +63,6 @@ services:
       context: .
       dockerfile: apps/web/Dockerfile
       args:
-        API_PROXY_TARGET: http://api:3311
         NEXT_PUBLIC_API_URL: /api
     restart: unless-stopped
     ports:
@@ -82,7 +81,6 @@ services:
       context: .
       dockerfile: apps/console/Dockerfile
       args:
-        API_PROXY_TARGET: http://api:3311
         NEXT_PUBLIC_API_URL: /api
     restart: unless-stopped
     ports:

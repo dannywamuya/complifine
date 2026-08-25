@@ -63,11 +63,11 @@ On Railway the GitHub repo **is** this folder. Leave **Root Directory empty**
 on every service. Do not set it to `complifine` or `apps/api` — that makes
 Docker copy only the API package, and Bun fails with `workspace:* not found`.
 
-| Service | Root Directory | Dockerfile path | Extra |
+| Service | Root Directory | Dockerfile path | Variables |
 | --- | --- | --- | --- |
-| api | *(empty)* | `apps/api/Dockerfile` | Config-as-code: `apps/api/railway.toml` |
-| web | *(empty)* | `apps/web/Dockerfile` | Config-as-code: `apps/web/railway.toml` |
-| console | *(empty)* | `apps/console/Dockerfile` | Config-as-code: `apps/console/railway.toml` |
+| api | *(empty)* | `apps/api/Dockerfile` | [apps/api/.env.example](apps/api/.env.example) |
+| web | *(empty)* | `apps/web/Dockerfile` | [apps/web/.env.example](apps/web/.env.example) |
+| console | *(empty)* | `apps/console/Dockerfile` | [apps/console/.env.example](apps/console/.env.example) |
 
 Map one Railway environment per branch: `main` → production, `dev` →
 development, `staging` → staging. GitHub Actions tests those branches; Railway
@@ -75,11 +75,18 @@ should **Wait for CI** on the API so a red check stops the deploy. Details in
 [the runbook](docs/RUNBOOK.md#ci--cd).
 
 Use **Bun**, never npm (`workspace:*` will fail). Give the API a volume at
-`/data/storage`. Set `PORT` (injected by Railway) and `DATABASE_URL`. For web
-and console, pass build-arg `API_PROXY_TARGET` as the private API URL
-(`http://${{api.RAILWAY_PRIVATE_DOMAIN}}:${{api.PORT}}`) — Next rewrites `/api`
-to that origin at **build** time. Also set the same value at runtime for Server
-Components. Browser calls stay on `/api`.
+`/data/storage`. Set `PORT` (injected by Railway) and `DATABASE_URL`.
+
+On **web**, copy [apps/web/.env.example](apps/web/.env.example). The one
+required runtime variable is:
+
+`API_PROXY_TARGET=http://${{api.RAILWAY_PRIVATE_DOMAIN}}:${{api.PORT}}`
+
+On **console** (admin), copy [apps/console/.env.example](apps/console/.env.example)
+— same `API_PROXY_TARGET`, no calendar URL, no producer secrets.
+
+Use the API service's exact name in place of `api`. Browser calls stay on
+`/api`. Do not put `DATABASE_URL` or `JWT_SECRET` on web or console.
 
 Do not run `docker compose up` and `bun run db:up` at the same time; both bind
 Postgres on **5434**.

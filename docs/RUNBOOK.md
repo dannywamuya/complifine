@@ -190,10 +190,14 @@ The API listens on `PORT` when that variable is set (Railway, Fly, Compose),
 otherwise `API_PORT` (default 3311), on `0.0.0.0`. Set `STORAGE_ROOT=/data/storage`
 and mount a volume there.
 
-Web and console proxy `/api` using `API_PROXY_TARGET`. That value is read at
-**Next build** for rewrites and at **runtime** for Server Components. Compose
-defaults it to `http://api:3311`. On Railway, use the API service private
-domain and port as a Docker build argument and as a runtime variable.
+Web and console proxy `/api` using `API_PROXY_TARGET` at **runtime**. Compose
+defaults it to `http://api:3311`. On Railway, set it on the web and console
+services to the API service's private domain and port:
+
+`http://${{api.RAILWAY_PRIVATE_DOMAIN}}:${{api.PORT}}`
+
+(use the API service's exact name). A rebuild is not required when that URL
+changes. `http://api:3311` is Docker Compose DNS, not Railway.
 
 `nixpacks` is not used; do not let a host run `npm install` at an app
 `package.json`.
@@ -202,7 +206,7 @@ domain and port as a Docker build argument and as a runtime variable.
 
 Producer register/login is `/signup` and `/login` on :3000. The console is
 operator-only. JWT cookies (`cf_access`, `cf_refresh`) are set by the API and
-sent through the Next `/api` rewrite so they stay same-origin.
+sent through the Next `/api` proxy so they stay same-origin.
 
 `bun run db:seed` (also part of bootstrap) creates or updates the operator.
 
