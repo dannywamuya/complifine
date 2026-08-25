@@ -17,8 +17,29 @@ import {
   or,
   type Database,
 } from "@complifine/db";
-import { conversationMessages, conversations } from "@complifine/db";
+import { conversationMessages, conversations, sites } from "@complifine/db";
 import { readAuth, requireUser, type AuthUser } from "./auth/plugin.ts";
+
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+/** Drop leftover / foreign site ids so chat insert does not fail the site FK. */
+export async function ownedSiteId(
+  db: Database,
+  siteId: string | null | undefined,
+  organizationId: string | null | undefined,
+): Promise<string | null> {
+  const id = siteId?.trim() ?? "";
+  if (!UUID_RE.test(id)) return null;
+  const [row] = organizationId
+    ? await db
+        .select({ id: sites.id })
+        .from(sites)
+        .where(and(eq(sites.id, id), eq(sites.organizationId, organizationId)))
+        .limit(1)
+    : await db.select({ id: sites.id }).from(sites).where(eq(sites.id, id)).limit(1);
+  return row?.id ?? null;
+}
 
 const attachment = t.Object({
   id: t.String(),
@@ -91,6 +112,7 @@ export async function insertTurn(
   const userMessageId = input.userMessageId ?? crypto.randomUUID();
   const assistantMessageId = input.assistantMessageId ?? crypto.randomUUID();
   const title = input.question.trim().slice(0, 80) || "New chat";
+  const siteId = await ownedSiteId(db, input.siteId, input.organizationId);
 
   await db
     .insert(conversations)
@@ -98,7 +120,7 @@ export async function insertTurn(
       id: input.conversationId,
       userId: input.userId ?? null,
       organizationId: input.organizationId ?? null,
-      siteId: input.siteId ?? null,
+      siteId,
       title,
       activeLeafId: assistantMessageId,
     })

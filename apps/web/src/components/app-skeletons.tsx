@@ -1,26 +1,47 @@
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
-export function AppChromeSkeleton({ path = "/app" }: { path?: string }) {
+export function AppChromeSkeleton({
+  path = "/app",
+  sidebarOpen = true,
+}: {
+  path?: string;
+  sidebarOpen?: boolean;
+}) {
   return (
     <div className="flex min-h-svh bg-muted p-2">
-      <aside className="hidden w-60 shrink-0 flex-col rounded-2xl bg-graphite-950 p-3 sm:flex">
-        <Skeleton className="h-8 w-32 rounded-md bg-white/15" />
-        <div className="mt-4 space-y-2">
-          <Skeleton className="h-8 w-full rounded-xl bg-white/10" />
-          <Skeleton className="h-8 w-full rounded-xl bg-white/10" />
-          <Skeleton className="h-8 w-full rounded-xl bg-white/10" />
-        </div>
-        <Skeleton className="mt-6 h-8 w-full rounded-xl bg-white/10" />
-        <div className="mt-4 space-y-2">
-          {Array.from({ length: 6 }, (_, index) => (
-            <Skeleton
-              key={index}
-              className="h-8 rounded-xl bg-white/10"
-              style={{ width: `${72 - index * 6}%` }}
-            />
-          ))}
-        </div>
+      <aside
+        className={cn(
+          "hidden shrink-0 flex-col rounded-2xl bg-sidebar p-3 sm:flex",
+          sidebarOpen ? "w-60" : "w-12 items-center",
+        )}
+      >
+        <Skeleton className={cn("h-8 rounded-md bg-sidebar-accent", sidebarOpen ? "w-32" : "w-8")} />
+        {sidebarOpen ? (
+          <>
+            <div className="mt-4 space-y-2">
+              <Skeleton className="h-8 w-full rounded-xl bg-sidebar-accent" />
+              <Skeleton className="h-8 w-full rounded-xl bg-sidebar-accent" />
+              <Skeleton className="h-8 w-full rounded-xl bg-sidebar-accent" />
+            </div>
+            <Skeleton className="mt-6 h-8 w-full rounded-xl bg-sidebar-accent" />
+            <div className="mt-4 space-y-2">
+              {Array.from({ length: 6 }, (_, index) => (
+                <Skeleton
+                  key={index}
+                  className="h-8 rounded-xl bg-sidebar-accent"
+                  style={{ width: `${72 - index * 6}%` }}
+                />
+              ))}
+            </div>
+          </>
+        ) : (
+          <div className="mt-4 space-y-2">
+            {Array.from({ length: 4 }, (_, index) => (
+              <Skeleton key={index} className="size-8 rounded-xl bg-sidebar-accent" />
+            ))}
+          </div>
+        )}
       </aside>
       <div className="ml-0 flex min-w-0 flex-1 flex-col overflow-hidden rounded-2xl bg-card shadow-sm sm:ml-2">
         <div className="flex h-14 shrink-0 items-center gap-2 border-b border-border px-4">

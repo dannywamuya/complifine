@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type ReactNode } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { api, startSessionKeepAlive } from "@/lib/api";
+import { api, ApiError, startSessionKeepAlive } from "@/lib/api";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -34,7 +34,8 @@ export function ConsoleChrome({ children }: { children: ReactNode }) {
         }
         setMe(user);
       })
-      .catch(() => {
+      .catch((err) => {
+        if (err instanceof ApiError && err.status !== 401) return;
         router.replace("/login");
       });
   }, [path, router]);

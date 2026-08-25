@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type ReactNode } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import { api, startSessionKeepAlive } from '@/lib/api';
+import { api, ApiError, startSessionKeepAlive } from '@/lib/api';
 import type { Me, OrgPayload } from '@/lib/farm';
 import {
 	SidebarInset,
@@ -27,6 +27,7 @@ import {
 	DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { ModeToggle } from '@/components/mode-toggle';
 
 function initials(name: string): string {
 	return name
@@ -36,7 +37,13 @@ function initials(name: string): string {
 		.join('');
 }
 
-export function AppChrome({ children }: { children: ReactNode }) {
+export function AppChrome({
+	children,
+	defaultSidebarOpen = true,
+}: {
+	children: ReactNode;
+	defaultSidebarOpen?: boolean;
+}) {
 	const path = usePathname();
 	const router = useRouter();
 	const [me, setMe] = useState<Me | null | undefined>(undefined);
@@ -45,7 +52,8 @@ export function AppChrome({ children }: { children: ReactNode }) {
 	useEffect(() => {
 		api<Me>('/auth/me')
 			.then(setMe)
-			.catch(() => {
+			.catch((err) => {
+				if (!(err instanceof ApiError) || err.status !== 401) return;
 				const next =
 					path === '/app/ask' || path.startsWith('/app/search')
 						? '/app'
@@ -71,7 +79,9 @@ export function AppChrome({ children }: { children: ReactNode }) {
 	const onFarm = path.startsWith('/app/farm');
 
 	if (!me) {
-		return <AppChromeSkeleton path={path} />;
+		return (
+			<AppChromeSkeleton path={path} sidebarOpen={defaultSidebarOpen} />
+		);
 	}
 
 	const userMenu = (
@@ -107,10 +117,12 @@ export function AppChrome({ children }: { children: ReactNode }) {
 	);
 
 	return (
-		<SidebarProvider className='min-h-svh overflow-x-hidden bg-muted'>
+		<SidebarProvider
+			defaultOpen={defaultSidebarOpen}
+			className='min-h-svh overflow-x-hidden bg-muted'>
 			<AppSidebar />
 			<SidebarInset className='min-h-svh min-w-0 overflow-hidden bg-card md:my-2 md:mr-2 md:ml-0 md:h-[calc(100svh-1rem)] md:min-h-0 md:rounded-2xl md:shadow-[0_1px_2px_rgb(0_0_0/0.04),0_12px_32px_rgb(0_0_0/0.05)]'>
-				<header className='cf-chat flex h-14 shrink-0 items-center gap-2 border-b border-border bg-transparent! px-3 sm:px-4'>
+				<header className='flex h-14 shrink-0 items-center gap-2 border-b border-border bg-transparent px-3 sm:px-4'>
 					<SidebarTrigger className='rounded-xl' />
 					<Separator orientation='vertical' className='h-4' />
 					<p className='shrink-0 truncate text-sm font-medium tracking-tight'>
@@ -125,6 +137,7 @@ export function AppChrome({ children }: { children: ReactNode }) {
 							id={APP_HEADER_ACTIONS_ID}
 							className='flex items-center gap-0.5'
 						/>
+						<ModeToggle />
 						{userMenu}
 					</div>
 				</header>

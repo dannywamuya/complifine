@@ -117,6 +117,10 @@ export function ChatShell({
 }: ChatShellProps) {
 	const embedded = variant === 'embedded';
 	const [siteId, setSiteId] = useState(() => defaultSiteId || readStoredSite());
+	const knownSiteId =
+		siteId && siteOptions?.some((option) => option.value === siteId)
+			? siteId
+			: undefined;
 	const siteLabel = siteOptions?.find(
 		(option) => option.value === siteId,
 	)?.label;
@@ -127,7 +131,7 @@ export function ChatShell({
 		defaultMode,
 		defaultVersion,
 		defaultKind,
-		siteId: siteId || undefined,
+		siteId: knownSiteId,
 		contextNote,
 		onFeedback,
 	});
@@ -173,11 +177,16 @@ export function ChatShell({
 	}, []);
 
 	useEffect(() => {
-		if (defaultSiteId && !siteId) setSiteId(defaultSiteId);
-	}, [defaultSiteId, siteId]);
-
-	useEffect(() => {
-		if (!siteOptions?.length) return;
+		if (siteOptions === undefined) return;
+		if (siteOptions.length === 0) {
+			if (siteId) setSiteId('');
+			try {
+				window.localStorage.removeItem(SITE_KEY);
+			} catch {
+				/* ignore quota */
+			}
+			return;
+		}
 		if (siteId && siteOptions.some((option) => option.value === siteId)) return;
 		const stored = readStoredSite();
 		const next =
@@ -187,7 +196,13 @@ export function ChatShell({
 			defaultSiteId ??
 			siteOptions[0]?.value ??
 			'';
-		if (next) setSiteId(next);
+		setSiteId(next);
+		try {
+			if (next) window.localStorage.setItem(SITE_KEY, next);
+			else window.localStorage.removeItem(SITE_KEY);
+		} catch {
+			/* ignore quota */
+		}
 	}, [siteOptions, siteId, defaultSiteId]);
 
 	function chooseSite(next: string) {
@@ -271,7 +286,7 @@ export function ChatShell({
 		<div
 			className={cn(
 				'cf-chat cf-chat-shell',
-				chat.resolvedTheme === 'dark' && 'dark',
+				!embedded && chat.resolvedTheme === 'dark' && 'dark',
 				className,
 			)}
 			data-theme={chat.resolvedTheme}>

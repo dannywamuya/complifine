@@ -23,7 +23,7 @@
 		"db:studio": "cd packages/db && bunx drizzle-kit studio",
 		"kb": "bun packages/ingestion/src/cli.ts",
 		"ai": "bun packages/ai/src/cli.ts",
-		"dev": "bun run api & bun run web & bun run console",
+		"dev": "bun scripts/dev.ts",
 		"api": "bun --watch --env-file .env apps/api/src/index.ts",
 		"web": "cd apps/web && bun run dev",
 		"console": "cd apps/console && bun run dev",

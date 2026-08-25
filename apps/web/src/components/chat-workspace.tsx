@@ -96,7 +96,7 @@ function ChatWorkspaceInner() {
         ...EDITIONS.map((item) => ({ value: item.value, label: item.label })),
       ]}
       organizationName={org?.organization?.name}
-      siteOptions={siteOptions}
+      siteOptions={org ? siteOptions : undefined}
       defaultSiteId={sites[0]?.id}
       profileHref="/app/farm"
       criterionHref={(id) => `/app/criteria/${encodeURIComponent(id)}`}

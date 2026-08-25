@@ -141,13 +141,13 @@
 	--chart-4: var(--color-iron-grey-500);
 	--chart-5: var(--color-graphite-400);
 	--radius: 0.625rem;
-	--sidebar: var(--color-graphite-950);
-	--sidebar-foreground: var(--color-grey-olive-50);
+	--sidebar: var(--color-grey-olive-50);
+	--sidebar-foreground: var(--color-graphite-950);
 	--sidebar-primary: #9ae19d;
 	--sidebar-primary-foreground: var(--color-graphite-950);
-	--sidebar-accent: var(--color-graphite-800);
-	--sidebar-accent-foreground: var(--color-grey-olive-50);
-	--sidebar-border: var(--color-graphite-800);
+	--sidebar-accent: var(--color-grey-olive-100);
+	--sidebar-accent-foreground: var(--color-graphite-950);
+	--sidebar-border: var(--color-grey-olive-200);
 	--sidebar-ring: #9ae19d;
 }
 
@@ -203,6 +203,7 @@
 	--cf-user-fg: var(--color-grey-olive-50);
 }
 
+.dark .cf-chat,
 .cf-chat.dark {
 	--cf-bg: var(--color-graphite-950);
 	--cf-bg-elevated: var(--color-graphite-900);

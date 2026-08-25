@@ -57,7 +57,8 @@ function AppSidebarFallback() {
 				<Link
 					href='/app'
 					className='flex h-10 items-center overflow-hidden px-2'>
-					<BrandLogo />
+					<BrandLogo tone='light' className='dark:hidden' />
+					<BrandLogo tone='dark' className='hidden dark:block' />
 				</Link>
 			</SidebarHeader>
 			<SidebarContent />
@@ -178,7 +179,14 @@ function AppSidebarInner() {
 					aria-label='CompliFine'
 					onClick={() => setOpenMobile(false)}
 					className='flex h-10 items-center overflow-hidden px-2 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0'>
-					<BrandLogo collapsed={collapsed} />
+					<BrandLogo
+						collapsed={collapsed}
+						tone='light'
+						className={collapsed ? undefined : 'dark:hidden'}
+					/>
+					{collapsed ? null : (
+						<BrandLogo tone='dark' className='hidden dark:block' />
+					)}
 				</Link>
 			</SidebarHeader>
 			<SidebarContent>

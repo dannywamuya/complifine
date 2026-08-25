@@ -56,6 +56,7 @@
   font-family: var(--font-sans, ui-sans-serif, system-ui, sans-serif);
 }
 
+.dark .cf-chat,
 .cf-chat.dark {
   --cf-bg: #000000;
   --cf-bg-elevated: #0a0a0a;
@@ -256,6 +257,10 @@
     radial-gradient(80% 70% at 100% 0%, color-mix(in srgb, var(--cf-accent) 8%, white), var(--cf-bg-elevated));
 }
 
+.dark .cf-chat .cf-feature-card-1,
+.dark .cf-chat .cf-feature-card-2,
+.dark .cf-chat .cf-feature-card-3,
+.dark .cf-chat .cf-feature-card-4,
 .cf-chat.dark .cf-feature-card-1,
 .cf-chat.dark .cf-feature-card-2,
 .cf-chat.dark .cf-feature-card-3,
@@ -385,9 +390,13 @@
 .cf-chat .hljs-comment { color: var(--cf-fg-subtle); font-style: italic; }
 .cf-chat .hljs-title,
 .cf-chat .hljs-section { color: oklch(0.4 0.12 250); }
+.dark .cf-chat .hljs-keyword,
 .cf-chat.dark .hljs-keyword { color: oklch(0.78 0.12 300); }
+.dark .cf-chat .hljs-string,
 .cf-chat.dark .hljs-string { color: oklch(0.8 0.1 155); }
+.dark .cf-chat .hljs-number,
 .cf-chat.dark .hljs-number { color: oklch(0.8 0.1 50); }
+.dark .cf-chat .hljs-title,
 .cf-chat.dark .hljs-title { color: oklch(0.78 0.1 230); }
 
 .cf-chat-citation {

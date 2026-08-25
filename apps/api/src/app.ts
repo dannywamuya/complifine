@@ -53,7 +53,7 @@ import {
 } from "@complifine/ai";
 import { recordReview, runGates, transitionVersion } from "@complifine/ingestion";
 import { adminRoutes } from "./admin.ts";
-import { conversationRoutes, finishAssistant, insertTurn } from "./conversations.ts";
+import { conversationRoutes, finishAssistant, insertTurn, ownedSiteId } from "./conversations.ts";
 import { knowledgeGraph, listStandards, lookupRequirementIds, parseCodeList } from "./catalog.ts";
 import { httpError } from "./errors.ts";
 import { authModule } from "./auth/plugin.ts";
@@ -113,6 +113,8 @@ export function createApp(database = createDatabase()) {
           set.status = 422;
           return { error: message };
         }
+        const cause = error instanceof Error ? error.cause : undefined;
+        console.error("[api]", code, message, cause ?? error);
         set.status = 500;
         return { error: message };
       })
@@ -800,6 +802,7 @@ export function createApp(database = createDatabase()) {
           }
 
           const choice = await embedderForQuery(db);
+          const siteId = await ownedSiteId(db, body.siteId, auth?.orgId);
           const result = await ask(body.question, {
             db,
             embedder: choice.embedder,
@@ -808,7 +811,7 @@ export function createApp(database = createDatabase()) {
             persist: true,
             userId: auth?.id,
             organizationId: auth?.orgId ?? undefined,
-            siteId: body.siteId,
+            siteId: siteId ?? undefined,
           });
 
           return {
@@ -851,6 +854,7 @@ export function createApp(database = createDatabase()) {
           const choice = await embedderForQuery(db);
           const encoder = new TextEncoder();
           const conversationId = body.conversationId ?? crypto.randomUUID();
+          const siteId = await ownedSiteId(db, body.siteId, auth?.orgId);
 
           const stream = new ReadableStream({
             async start(controller) {
@@ -879,7 +883,7 @@ export function createApp(database = createDatabase()) {
                     conversationId,
                     userId: auth.id,
                     organizationId: auth.orgId,
-                    siteId: body.siteId,
+                    siteId,
                     parentId: body.parentId ?? null,
                     question: body.userContent ?? body.question,
                     attachments: body.attachments,
@@ -907,7 +911,7 @@ export function createApp(database = createDatabase()) {
                   abortSignal: request.signal,
                   userId: auth?.id,
                   organizationId: auth?.orgId ?? undefined,
-                  siteId: body.siteId,
+                  siteId: siteId ?? undefined,
                 })) {
                   if (event.type === "start" && turn) {
                     send({
