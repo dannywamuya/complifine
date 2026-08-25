@@ -9,6 +9,7 @@ import { CONVERSATIONS_CHANGED } from "@/components/app-sidebar";
 import { APP_HEADER_ACTIONS_ID, APP_HEADER_EXTRA_ID } from "@/components/app-header";
 import { EDITIONS } from "@/lib/editions";
 import { SITE_TYPE_LABELS, type OrgPayload } from "@/lib/farm";
+import { ChatPageSkeleton } from "@/components/app-skeletons";
 
 const SUGGESTIONS = [
   "When can workers go back into a field after spraying?",
@@ -42,7 +43,7 @@ const EMPTY_FEATURES = [
 
 export function ChatWorkspace() {
   return (
-    <Suspense>
+    <Suspense fallback={<ChatPageSkeleton />}>
       <ChatWorkspaceInner />
     </Suspense>
   );

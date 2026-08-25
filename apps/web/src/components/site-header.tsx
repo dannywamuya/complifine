@@ -30,17 +30,19 @@ export function SiteHeader() {
 	const [scrolled, setScrolled] = useState(false);
 	const [open, setOpen] = useState(false);
 
+	const hideChrome = shouldHideSiteHeader(path);
+
 	useEffect(() => {
-		if (path.startsWith('/app') || path.startsWith('/preview')) return;
+		if (hideChrome) return;
 		api<Me>('/auth/me')
 			.then(setMe)
 			.catch(() => setMe(null));
-	}, [path]);
+	}, [path, hideChrome]);
 
 	useEffect(() => {
-		if (!me || path.startsWith('/app')) return;
+		if (!me || hideChrome) return;
 		return startSessionKeepAlive();
-	}, [me, path]);
+	}, [me, hideChrome]);
 
 	useEffect(() => {
 		const onScroll = () => setScrolled(window.scrollY > 8);
@@ -49,7 +51,7 @@ export function SiteHeader() {
 		return () => window.removeEventListener('scroll', onScroll);
 	}, []);
 
-	if (path.startsWith('/app') || path.startsWith('/preview')) return null;
+	if (hideChrome) return null;
 
 	const home = path === '/';
 	const anchors = ANCHORS.map((item) => ({
@@ -115,6 +117,15 @@ export function SiteHeader() {
 				</Sheet>
 			</div>
 		</header>
+	);
+}
+
+function shouldHideSiteHeader(path: string) {
+	return (
+		path.startsWith('/app') ||
+		path.startsWith('/preview') ||
+		path === '/login' ||
+		path === '/signup'
 	);
 }
 

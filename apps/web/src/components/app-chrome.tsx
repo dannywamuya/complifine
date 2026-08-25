@@ -11,12 +11,12 @@ import {
 } from '@/components/ui/sidebar';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
 import { AppSidebar } from '@/components/app-sidebar';
 import {
 	APP_HEADER_ACTIONS_ID,
 	APP_HEADER_EXTRA_ID,
 } from '@/components/app-header';
+import { AppChromeSkeleton } from '@/components/app-skeletons';
 import { Toaster } from '@/components/ui/sonner';
 import {
 	DropdownMenu,
@@ -71,18 +71,7 @@ export function AppChrome({ children }: { children: ReactNode }) {
 	const onFarm = path.startsWith('/app/farm');
 
 	if (!me) {
-		return (
-			<div className='flex min-h-svh bg-[#f4f4f5] p-2'>
-				<div className='hidden w-60 shrink-0 rounded-2xl bg-black sm:block' />
-				<div className='ml-0 flex min-w-0 flex-1 flex-col gap-3 rounded-2xl bg-white p-8 shadow-sm sm:ml-2'>
-					<Skeleton className='h-8 w-48' />
-					<Skeleton className='h-24 w-full max-w-xl' />
-					<p className='text-sm text-muted-foreground'>
-						Checking your session…
-					</p>
-				</div>
-			</div>
-		);
+		return <AppChromeSkeleton path={path} />;
 	}
 
 	const userMenu = (

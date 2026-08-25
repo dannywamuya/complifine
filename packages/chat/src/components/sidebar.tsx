@@ -1,6 +1,6 @@
 "use client";
 
-import { Loader2, PanelLeft, Pencil, Plus, Search, Trash2 } from "lucide-react";
+import { PanelLeft, Pencil, Search, Trash2 } from "lucide-react";
 import { useMemo, useState, type KeyboardEvent } from "react";
 import { groupByDate } from "../dates.ts";
 import type { ConversationSummary } from "../types.ts";
@@ -17,7 +17,6 @@ export function ConversationSidebar({
   query,
   onQuery,
   onOpen,
-  onNew,
   onRename,
   onDelete,
   onLoadMore,
@@ -103,20 +102,6 @@ export function ConversationSidebar({
         <IconButton label={collapsed ? "Expand sidebar" : "Collapse sidebar"} onClick={onToggleCollapsed}>
           <PanelLeft className="size-4" />
         </IconButton>
-        {!collapsed || mobile ? (
-          <button
-            type="button"
-            onClick={onNew}
-            className="inline-flex h-9 flex-1 items-center justify-center gap-1.5 rounded-xl bg-(--cf-fg) px-3 text-sm font-medium text-(--cf-bg)"
-          >
-            <Plus className="size-4" />
-            New chat
-          </button>
-        ) : (
-          <IconButton label="New chat" onClick={onNew}>
-            <Plus className="size-4" />
-          </IconButton>
-        )}
       </div>
 
       {(!collapsed || mobile) && (
@@ -142,10 +127,15 @@ export function ConversationSidebar({
 
           <nav className="min-h-0 flex-1 overflow-y-auto px-1.5 pb-2" aria-label="Chat history">
             {loading ? (
-              <p className="flex items-center gap-2 px-2 py-3 text-sm text-(--cf-fg-muted)">
-                <Loader2 className="size-3.5 animate-spin" />
-                Loading…
-              </p>
+              <div className="space-y-2 px-2 py-2">
+                {Array.from({ length: 6 }, (_, index) => (
+                  <div
+                    key={index}
+                    className="h-8 animate-pulse rounded-xl bg-(--cf-bg-muted)"
+                    style={{ width: `${88 - index * 7}%` }}
+                  />
+                ))}
+              </div>
             ) : conversations.length === 0 ? (
               <p className="px-3 py-4 text-sm text-(--cf-fg-muted)">No conversations yet.</p>
             ) : (

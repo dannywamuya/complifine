@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { api, ApiError } from "@/lib/api";
-import { AuthShell } from "@/components/marketing/auth-shell";
+import { MarketingFormShell } from "@/components/marketing/auth-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -50,7 +50,7 @@ export default function DemoPage() {
   }
 
   return (
-    <AuthShell className="max-w-xl">
+    <MarketingFormShell className="max-w-xl">
       <div className="mb-8">
         <p className="font-mono text-[11px] font-medium tracking-[0.18em] text-primary uppercase">
           Talk to us
@@ -145,7 +145,7 @@ export default function DemoPage() {
           .
         </p>
       ) : null}
-    </AuthShell>
+    </MarketingFormShell>
   );
 }
 

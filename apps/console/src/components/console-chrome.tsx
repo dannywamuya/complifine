@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { api, startSessionKeepAlive } from "@/lib/api";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { Skeleton } from "@/components/ui/skeleton";
 import { AppSidebar } from "@/components/app-sidebar";
 import { CertScopeFilter, CertScopeProvider } from "@/components/cert-scope";
 import { OnboardingTrigger } from "@/components/onboarding-trigger";
@@ -48,7 +49,29 @@ export function ConsoleChrome({ children }: { children: ReactNode }) {
   }
 
   if (!me) {
-    return <p className="p-6 text-sm text-muted-foreground">Checking operator session…</p>;
+    return (
+      <div className="flex min-h-svh">
+        <div className="hidden w-64 shrink-0 border-r bg-sidebar p-3 md:block">
+          <Skeleton className="h-10 w-40" />
+          <div className="mt-6 space-y-2">
+            {Array.from({ length: 8 }, (_, index) => (
+              <Skeleton key={index} className="h-8 w-full" />
+            ))}
+          </div>
+        </div>
+        <div className="flex min-w-0 flex-1 flex-col">
+          <div className="flex h-12 items-center gap-2 border-b px-3">
+            <Skeleton className="size-7 rounded-md" />
+            <Skeleton className="ml-auto h-4 w-28" />
+          </div>
+          <div className="flex-1 space-y-4 p-6">
+            <Skeleton className="h-8 w-48" />
+            <Skeleton className="h-4 w-72 max-w-full" />
+            <Skeleton className="h-64 w-full rounded-xl" />
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (

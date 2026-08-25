@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowUp, BookOpen, PanelLeft, Plus } from "lucide-react";
+import { ArrowUp, BookOpen, PanelLeft } from "lucide-react";
 import { BrandLogo } from "@/components/brand-logo";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
@@ -85,30 +85,21 @@ export function WorkspacePreview({
           />
         </div>
         {collapsedSidebar ? (
-          <>
-            <div className="flex size-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
-              <Plus className="size-3.5" />
-            </div>
-            <ul className="mt-3 flex flex-col items-center gap-1.5">
-              {PREVIEW_CHATS.map((chat) => (
-                <li
-                  key={chat.title}
-                  className={cn(
-                    "size-2 rounded-full",
-                    chat.active ? "bg-white" : "bg-white/25",
-                  )}
-                  aria-label={chat.title}
-                />
-              ))}
-            </ul>
-          </>
+          <ul className="mt-3 flex flex-col items-center gap-1.5">
+            {PREVIEW_CHATS.map((chat) => (
+              <li
+                key={chat.title}
+                className={cn(
+                  "size-2 rounded-full",
+                  chat.active ? "bg-white" : "bg-white/25",
+                )}
+                aria-label={chat.title}
+              />
+            ))}
+          </ul>
         ) : (
           <>
-            <div className="mt-1 flex h-8 items-center gap-1.5 rounded-md bg-primary px-2.5 text-xs font-medium text-primary-foreground">
-              <Plus className="size-3.5" />
-              New chat
-            </div>
-            <p className="mt-5 px-2 text-[10px] font-medium tracking-[0.14em] text-white/40 uppercase">
+            <p className="mt-4 px-2 text-[10px] font-medium tracking-[0.14em] text-white/40 uppercase">
               Today
             </p>
             <ul className="mt-1 flex flex-col gap-0.5">

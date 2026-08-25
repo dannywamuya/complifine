@@ -31,7 +31,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Skeleton } from "@/components/ui/skeleton";
+import { FarmPageSkeleton } from "@/components/app-skeletons";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 
@@ -116,13 +116,7 @@ export default function FarmPage() {
   }
 
   if (!data) {
-    return (
-      <div className="mx-auto flex w-full max-w-4xl flex-col gap-4">
-        <Skeleton className="h-8 w-48" />
-        <Skeleton className="h-10 w-80" />
-        <Skeleton className="h-48 rounded-2xl" />
-      </div>
-    );
+    return <FarmPageSkeleton />;
   }
 
   if (!data.organization) {

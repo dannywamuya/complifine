@@ -4,6 +4,7 @@ import { BookOpen } from "lucide-react";
 import { LevelBadge } from "@/components/level-badge";
 import type { Citation, SearchHit } from "@/lib/chat";
 import { EDITIONS } from "@/lib/editions";
+import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
 export function SourcesPanel({
@@ -35,9 +36,9 @@ export function SourcesPanel({
       <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-4">
         {loading && hits.length === 0 ? (
           <div className="space-y-2 px-1">
-            <div className="h-16 animate-pulse rounded-xl bg-zinc-200/60" />
-            <div className="h-16 animate-pulse rounded-xl bg-zinc-200/60" />
-            <div className="h-16 animate-pulse rounded-xl bg-zinc-200/60" />
+            <Skeleton className="h-16 rounded-xl" />
+            <Skeleton className="h-16 rounded-xl" />
+            <Skeleton className="h-16 rounded-xl" />
           </div>
         ) : null}
         {empty ? (

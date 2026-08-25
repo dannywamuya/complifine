@@ -24,7 +24,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Skeleton } from "@/components/ui/skeleton";
+import { CriteriaTableSkeleton } from "@/components/app-skeletons";
 
 interface Listing {
   total: number;
@@ -116,10 +116,7 @@ export default function AppCriteriaPage() {
       </form>
 
       {loading || !data ? (
-        <div className="space-y-3">
-          <Skeleton className="h-4 w-40" />
-          <Skeleton className="h-72 rounded-2xl" />
-        </div>
+        <CriteriaTableSkeleton />
       ) : (
         <div className="space-y-3">
           <p className="text-sm text-muted-foreground">

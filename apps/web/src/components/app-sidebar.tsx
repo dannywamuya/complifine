@@ -3,11 +3,10 @@
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
-import { BookOpen, Loader2, MessageSquare, Pencil, Plus, Search, Tractor, Trash2 } from "lucide-react";
+import { BookOpen, MessageSquare, Pencil, Search, Tractor, Trash2 } from "lucide-react";
 import { groupByDate } from "@complifine/chat";
 import { api } from "@/lib/api";
 import { BrandLogo } from "@/components/brand-logo";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Sidebar,
@@ -19,6 +18,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSkeleton,
   SidebarRail,
   useSidebar,
 } from "@/components/ui/sidebar";
@@ -125,11 +125,6 @@ function AppSidebarInner() {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  function goNew() {
-    setOpenMobile(false);
-    router.push("/app");
-  }
-
   function goChat(id: string) {
     setOpenMobile(false);
     router.push(`/app?c=${encodeURIComponent(id)}`);
@@ -171,14 +166,6 @@ function AppSidebarInner() {
         >
           <BrandLogo collapsed={collapsed} />
         </Link>
-        <Button
-          size="sm"
-          className="w-full justify-start rounded-xl group-data-[collapsible=icon]:size-8 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0"
-          onClick={goNew}
-        >
-          <Plus className="size-4" />
-          <span className="group-data-[collapsible=icon]:hidden">New chat</span>
-        </Button>
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
@@ -249,10 +236,11 @@ function AppSidebarInner() {
             </div>
             <nav className="min-h-0 flex-1 overflow-y-auto px-1" aria-label="Chat history">
               {loading ? (
-                <p className="flex items-center gap-2 px-2 py-3 text-xs text-sidebar-foreground/60">
-                  <Loader2 className="size-3.5 animate-spin" />
-                  Loading…
-                </p>
+                <div className="space-y-1 px-1 py-2">
+                  {Array.from({ length: 6 }, (_, index) => (
+                    <SidebarMenuSkeleton key={index} />
+                  ))}
+                </div>
               ) : conversations.length === 0 ? (
                 <p className="px-3 py-4 text-xs text-sidebar-foreground/60">No conversations yet.</p>
               ) : (
