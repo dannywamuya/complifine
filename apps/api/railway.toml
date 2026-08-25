@@ -1,8 +1,12 @@
-# API service on Railway. Point the service's Config-as-code path at this file,
-# or paste the pre-deploy command into the dashboard (same effect).
+# API service on Railway.
 #
-# Pre-deploy runs in a throwaway container with the new image and env vars,
-# before traffic switches. A failed migrate keeps the previous API live.
+# Root Directory MUST be empty (this git repo is already the Bun workspace).
+# Do not set it to "complifine" or "apps/api" — workspace packages live in
+# packages/ at the repo root, and Docker cannot COPY outside the build context.
+
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "apps/api/Dockerfile"
 
 [deploy]
 healthcheckPath = "/health"

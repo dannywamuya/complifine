@@ -176,8 +176,9 @@ not every deploy.
 ## Docker deploy
 
 Production images live next to each app (`apps/api/Dockerfile`,
-`apps/web/Dockerfile`, `apps/console/Dockerfile`). Always build from
-`complifine/` so Bun can resolve `workspace:*`.
+`apps/web/Dockerfile`, `apps/console/Dockerfile`). Always build from the
+**git repo root** so Bun can resolve `workspace:*`. On Railway that means
+Root Directory is empty, Dockerfile path is `apps/<app>/Dockerfile`.
 
 ```bash
 docker compose up --build

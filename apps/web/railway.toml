@@ -1,0 +1,5 @@
+# Web service on Railway. Root Directory empty; see apps/api/railway.toml.
+
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "apps/web/Dockerfile"

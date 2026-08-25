@@ -1,14 +1,24 @@
 # syntax=docker/dockerfile:1
-# Build from the workspace root (complifine/), not this folder:
+# Build context MUST be the git repo root (the folder with workspaces in
+# package.json). Docker cannot COPY files outside the context.
+#
 #   docker build -f apps/api/Dockerfile .
 #
-# Railway: Root Directory = complifine, Dockerfile path = apps/api/Dockerfile
-# npm cannot install this repo (workspace:*). Images use Bun only.
+# Railway (repo is already this folder — do not set Root Directory to
+# "complifine" or "apps/api"):
+#   Root Directory     = empty
+#   Dockerfile path    = apps/api/Dockerfile
+#   Docker build context = empty (same as root)
 
 FROM oven/bun:1.2.0
 WORKDIR /app
 
-COPY . .
+COPY package.json bun.lock bunfig.toml tsconfig.json tsconfig.base.json ./
+COPY packages ./packages
+COPY apps ./apps
+COPY infra ./infra
+COPY scripts ./scripts
+
 RUN bun install --frozen-lockfile \
   && chmod +x apps/api/docker-entrypoint.sh \
   && mkdir -p /data/storage

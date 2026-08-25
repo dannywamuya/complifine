@@ -59,13 +59,15 @@ Then migrate/seed/ingest as needed (`docker compose exec api bun run db:seed`,
 `docker compose exec api bun run kb all`, `docker compose exec api bun run ai index`).
 The API image runs migrations on start (`RUN_MIGRATIONS=true`).
 
-On Railway (or any host that builds from a Dockerfile):
+On Railway the GitHub repo **is** this folder. Leave **Root Directory empty**
+on every service. Do not set it to `complifine` or `apps/api` — that makes
+Docker copy only the API package, and Bun fails with `workspace:* not found`.
 
 | Service | Root Directory | Dockerfile path | Extra |
 | --- | --- | --- | --- |
-| api | `complifine` | `apps/api/Dockerfile` | Config-as-code: `apps/api/railway.toml` (pre-deploy migrate) |
-| web | `complifine` | `apps/web/Dockerfile` | |
-| console | `complifine` | `apps/console/Dockerfile` | |
+| api | *(empty)* | `apps/api/Dockerfile` | Config-as-code: `apps/api/railway.toml` |
+| web | *(empty)* | `apps/web/Dockerfile` | Config-as-code: `apps/web/railway.toml` |
+| console | *(empty)* | `apps/console/Dockerfile` | Config-as-code: `apps/console/railway.toml` |
 
 Map one Railway environment per branch: `main` → production, `dev` →
 development, `staging` → staging. GitHub Actions tests those branches; Railway

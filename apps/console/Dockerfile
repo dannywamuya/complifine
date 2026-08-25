@@ -1,14 +1,16 @@
 # syntax=docker/dockerfile:1
-# Build from the workspace root (complifine/), not this folder:
+# Build context MUST be the git repo root (see apps/api/Dockerfile).
+#
 #   docker build -f apps/console/Dockerfile --build-arg API_PROXY_TARGET=http://api:3311 .
 #
-# Railway: Root Directory = complifine, Dockerfile path = apps/console/Dockerfile
-# Set build-time API_PROXY_TARGET to the private API URL (rewrites are baked in).
+# Railway: Root Directory empty, Dockerfile path apps/console/Dockerfile.
 
 FROM oven/bun:1.2.0 AS builder
 WORKDIR /app
 
-COPY . .
+COPY package.json bun.lock bunfig.toml tsconfig.json tsconfig.base.json ./
+COPY packages ./packages
+COPY apps ./apps
 
 ARG API_PROXY_TARGET=http://api:3311
 ARG NEXT_PUBLIC_API_URL=/api
