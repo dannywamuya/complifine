@@ -30,10 +30,12 @@ Postgres 16+ with `vector` and `pg_trgm`. Skip embeddings with `--skip-index`.
 ## Migrations
 
 Always apply schema with `bun run db:migrate`, not `drizzle-kit migrate`.
+Drizzle's stock migrator wraps every pending journal file in one transaction.
 Postgres will not let a newly added enum value be used until that `ALTER TYPE
-… ADD VALUE` has been committed, and Drizzle wraps every pending journal file
-in one transaction. The runner therefore commits `0003_multi_cert_operations.sql`
-(new `document_type` / `applicability_source` labels) before applying the rest.
+… ADD VALUE` has been committed, and a fresh database does not have
+`document_type` until `0000` runs. The runner therefore applies each file in
+its own transaction so `0000` creates the types, `0003` extends them, and
+`0004` can use `base_code`.
 
 Then seed: `bun run db:seed`.
 
@@ -152,9 +154,9 @@ Deploy and migrate are Railway's job, after CI is green:
    ```
 
    Use `bun run db:migrate`, not `drizzle-kit migrate`. The runner applies
-   extension prerequisites and commits enum `ADD VALUE` files before Drizzle's
-   migrator. Pre-deploy has `DATABASE_URL` and the private network; GitHub
-   Actions does not.
+   extension prerequisites, then each journal file in its own transaction so
+   enum `ADD VALUE` commits before later files use the labels. Pre-deploy has
+   `DATABASE_URL` and the private network; GitHub Actions does not.
 
 5. Set `RUN_MIGRATIONS=false` on the Railway API service so a replica restart
    does not migrate again. Local `docker compose` still migrates on API start.
