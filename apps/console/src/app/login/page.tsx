@@ -15,7 +15,7 @@ export default function ConsoleLoginPage() {
   const [error, setError] = useState<string | null>(null);
 
   return (
-    <div className="flex min-h-svh items-center justify-center p-6">
+    <div className="flex min-h-svh items-center justify-center bg-background p-6">
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle>Operator console</CardTitle>

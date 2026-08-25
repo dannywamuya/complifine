@@ -28,7 +28,12 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
+  useSidebar,
 } from "@/components/ui/sidebar";
+import { BrandLogo } from "@/components/brand-logo";
+
+const SIDEBAR_CLASS =
+  "border-0 **:data-[slot=sidebar-inner]:overflow-hidden **:data-[slot=sidebar-inner]:rounded-2xl **:data-[slot=sidebar-inner]:ring-0";
 
 const LINKS = [
   { href: "/", label: "Overview", icon: LayoutDashboard },
@@ -48,27 +53,20 @@ const LINKS = [
 
 export function AppSidebar() {
   const path = usePathname();
+  const { state } = useSidebar();
+  const collapsed = state === "collapsed";
 
   return (
-    <Sidebar collapsible="icon">
-      <SidebarHeader>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton size="lg" asChild tooltip="CompliFine console">
-              <Link href="/">
-                <span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-sidebar-accent font-heading text-[10px] font-medium">
-                  CF
-                </span>
-                <span className="flex min-w-0 flex-col leading-tight">
-                  <span className="truncate font-heading text-sm">CompliFine</span>
-                  <span className="truncate font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
-                    Console
-                  </span>
-                </span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
+    <Sidebar collapsible="icon" variant="floating" className={SIDEBAR_CLASS}>
+      <SidebarHeader className="gap-3 px-2 pt-2">
+        <Link
+          href="/"
+          aria-label="CompliFine console"
+          className="flex h-10 items-center overflow-hidden px-2 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0"
+        >
+          <BrandLogo collapsed={collapsed} tone="light" className={collapsed ? undefined : "dark:hidden"} />
+          {collapsed ? null : <BrandLogo tone="dark" className="hidden dark:block" />}
+        </Link>
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup id="tour-sidebar">
