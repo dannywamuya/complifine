@@ -131,7 +131,7 @@ export default function FarmPage() {
             The assistant uses this organisation to name your sites and keep answers in scope.
           </p>
         </header>
-        <div className="rounded-2xl border border-zinc-100 bg-white p-6 shadow-[0_8px_28px_rgb(0_0_0/0.06)]">
+        <div className="rounded-2xl border border-border bg-card p-6 shadow-[0_8px_28px_rgb(0_0_0/0.06)]">
           <CreateOrgForm
             onCreated={async () => {
               await refresh();
@@ -159,7 +159,7 @@ export default function FarmPage() {
       </header>
 
       <Tabs defaultValue="sites" className="gap-6">
-        <TabsList className="h-10 rounded-full bg-zinc-100 p-1">
+        <TabsList className="h-10 rounded-full bg-muted p-1">
           <TabsTrigger value="sites" className="rounded-full px-4">
             Sites
           </TabsTrigger>
@@ -192,7 +192,7 @@ export default function FarmPage() {
             />
           </div>
           {data.sites.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-zinc-200 bg-zinc-50/60 px-6 py-12 text-center">
+            <div className="rounded-2xl border border-dashed border-border bg-muted/60 px-6 py-12 text-center">
               <p className="font-heading text-base font-medium tracking-tight">No sites yet</p>
               <p className="mx-auto mt-1 max-w-sm text-sm leading-relaxed text-muted-foreground">
                 A named site is what lets you ask “what applies in Naivasha?”
@@ -212,7 +212,7 @@ export default function FarmPage() {
                       "rounded-2xl border p-4 text-left shadow-sm transition-colors",
                       active
                         ? "border-primary/20 bg-primary/5 ring-2 ring-primary/20"
-                        : "border-zinc-100 bg-white hover:border-zinc-200 hover:bg-zinc-50/80",
+                        : "border-border bg-card hover:border-grey-olive-300 hover:bg-muted/80",
                     )}
                   >
                     <p className="flex items-center gap-2 font-heading text-sm font-medium tracking-tight">
@@ -231,7 +231,7 @@ export default function FarmPage() {
         </TabsContent>
 
         <TabsContent value="scope" className="mt-0">
-          <div className="rounded-2xl border border-zinc-100 bg-white p-6 shadow-[0_8px_28px_rgb(0_0_0/0.04)]">
+          <div className="rounded-2xl border border-border bg-card p-6 shadow-[0_8px_28px_rgb(0_0_0/0.04)]">
             <div className="mb-5 space-y-1">
               <h2 className="font-heading text-base font-medium tracking-tight">Certification scope</h2>
               <p className="text-sm text-muted-foreground">Published versions this company is pursuing.</p>
@@ -292,7 +292,7 @@ export default function FarmPage() {
             </Alert>
           ) : (
             <>
-              <div className="rounded-2xl border border-zinc-100 bg-white p-6 shadow-[0_8px_28px_rgb(0_0_0/0.04)]">
+              <div className="rounded-2xl border border-border bg-card p-6 shadow-[0_8px_28px_rgb(0_0_0/0.04)]">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                   <div className="space-y-1">
                     <h2 className="font-heading text-base font-medium tracking-tight">Scoping questionnaire</h2>
@@ -342,7 +342,7 @@ export default function FarmPage() {
                 {questions.map((question) => (
                   <div
                     key={question.id}
-                    className="rounded-2xl border border-zinc-100 bg-white p-4 shadow-sm"
+                    className="rounded-2xl border border-border bg-card p-4 shadow-sm"
                   >
                     <p className="font-heading text-sm font-medium tracking-tight">
                       {question.number}. {question.question}
@@ -381,7 +381,7 @@ export default function FarmPage() {
                                 "inline-flex h-8 cursor-pointer items-center rounded-full border px-3 text-sm font-normal capitalize transition-colors",
                                 selectedAnswer
                                   ? "border-primary/20 bg-primary/10 text-primary"
-                                  : "border-zinc-200 bg-zinc-50 text-muted-foreground hover:bg-zinc-100",
+                                  : "border-border bg-muted text-muted-foreground hover:bg-secondary",
                               )}
                             >
                               {value}
@@ -427,7 +427,7 @@ export default function FarmPage() {
               </Button>
 
               {result ? (
-                <div className="rounded-2xl border border-zinc-100 bg-white p-6 shadow-[0_8px_28px_rgb(0_0_0/0.04)]">
+                <div className="rounded-2xl border border-border bg-card p-6 shadow-[0_8px_28px_rgb(0_0_0/0.04)]">
                   <h2 className="font-heading text-base font-medium tracking-tight">Resolved checklist</h2>
                   <p className="mt-1 text-sm text-muted-foreground">{result.note}</p>
                   <p className="mt-4 text-sm">
@@ -450,7 +450,7 @@ export default function FarmPage() {
         </TabsContent>
 
         <TabsContent value="organisation" className="mt-0">
-          <div className="rounded-2xl border border-zinc-100 bg-white p-6 shadow-[0_8px_28px_rgb(0_0_0/0.04)]">
+          <div className="rounded-2xl border border-border bg-card p-6 shadow-[0_8px_28px_rgb(0_0_0/0.04)]">
             <div className="mb-5 space-y-1">
               <h2 className="font-heading text-base font-medium tracking-tight">Organisation</h2>
               <p className="text-sm text-muted-foreground">

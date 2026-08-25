@@ -17,7 +17,7 @@ export function AnswerArticle({
 
   if (!summary && !detail && !practical) {
     return (
-      <div className="text-base leading-relaxed text-zinc-800">
+      <div className="text-base leading-relaxed text-graphite-800">
         {caret}
       </div>
     );
@@ -26,11 +26,11 @@ export function AnswerArticle({
   return (
     <div className="space-y-6">
       {summary ? (
-        <section className="rounded-2xl border border-emerald-900/10 bg-emerald-50/70 px-5 py-4">
-          <p className="text-[11px] font-medium tracking-[0.16em] text-emerald-900/60 uppercase">
+        <section className="rounded-2xl border border-celadon-900/10 bg-celadon-50/70 px-5 py-4">
+          <p className="text-[11px] font-medium tracking-[0.16em] text-celadon-800 uppercase">
             At a glance
           </p>
-          <div className="mt-2 text-lg leading-snug text-zinc-900">
+          <div className="mt-2 text-lg leading-snug text-graphite-900">
             <Prose text={summary} />
             {!detail && !practical ? caret : null}
           </div>
@@ -42,7 +42,7 @@ export function AnswerArticle({
           <p className="text-[11px] font-medium tracking-[0.16em] text-muted-foreground uppercase">
             What the standard says
           </p>
-          <div className="text-[15px] leading-relaxed text-zinc-800">
+          <div className="text-[15px] leading-relaxed text-graphite-800">
             <Prose text={detail} />
             {!practical ? caret : null}
           </div>
@@ -50,11 +50,11 @@ export function AnswerArticle({
       ) : null}
 
       {practical ? (
-        <section className="rounded-2xl bg-white/80 px-5 py-4 ring-1 ring-zinc-950/5">
+        <section className="rounded-2xl bg-grey-olive-50/80 px-5 py-4 ring-1 ring-graphite-950/5">
           <p className="text-[11px] font-medium tracking-[0.16em] text-muted-foreground uppercase">
             What this means
           </p>
-          <div className="mt-2 text-[15px] leading-relaxed text-zinc-800">
+          <div className="mt-2 text-[15px] leading-relaxed text-graphite-800">
             <Prose text={practical} />
             {caret}
           </div>
@@ -67,7 +67,7 @@ export function AnswerArticle({
 function Caret() {
   return (
     <span
-      className="ml-0.5 inline-block h-[1.05em] w-0.5 translate-y-0.5 animate-pulse bg-emerald-800 align-text-bottom"
+      className="ml-0.5 inline-block h-[1.05em] w-0.5 translate-y-0.5 animate-pulse bg-fern-800 align-text-bottom"
       aria-hidden
     />
   );
@@ -91,7 +91,7 @@ function Prose({ text }: { text: string }) {
         }
         if (block.type === "heading") {
           return (
-            <p key={index} className="pt-1 font-medium text-zinc-900">
+            <p key={index} className="pt-1 font-medium text-graphite-900">
               <Inline text={block.text} />
             </p>
           );
@@ -157,7 +157,7 @@ function Inline({ text }: { text: string }) {
         const bold = /^\*\*(.+)\*\*$/.exec(part);
         if (bold) {
           return (
-            <strong key={index} className="font-medium text-zinc-900">
+            <strong key={index} className="font-medium text-graphite-900">
               {bold[1]}
             </strong>
           );
@@ -172,8 +172,8 @@ function CitationChip({ raw }: { raw: string }) {
   const match = CRITERION.exec(raw);
   const href = match ? `/app/criteria/${encodeURIComponent(canonicalize(match[0]))}` : null;
   const className = cn(
-    "mx-0.5 inline-flex translate-y-px items-center rounded-full bg-zinc-900/[0.06] px-1.5 py-0.5 font-mono text-[11px] text-zinc-700",
-    href && "transition-colors hover:bg-emerald-900/10 hover:text-emerald-950",
+    "mx-0.5 inline-flex translate-y-px items-center rounded-full bg-celadon-100 px-1.5 py-0.5 font-mono text-[11px] text-celadon-800",
+    href && "transition-colors hover:bg-celadon-200 hover:text-celadon-950",
   );
 
   if (href) {

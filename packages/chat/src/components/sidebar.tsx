@@ -172,7 +172,7 @@ export function ConversationSidebar({
                               className={cn(
                                 "flex h-9 cursor-pointer items-center rounded-xl px-2.5 text-sm",
                                 active
-                                  ? "bg-(--cf-accent-soft) font-medium text-(--cf-accent)"
+                                  ? "bg-(--cf-accent-soft) font-medium text-(--cf-accent-text)"
                                   : "hover:bg-(--cf-bg-muted)",
                               )}
                             >

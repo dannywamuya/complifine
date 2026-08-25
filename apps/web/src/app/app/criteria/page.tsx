@@ -71,7 +71,7 @@ export default function AppCriteriaPage() {
       </header>
 
       <form
-        className="flex flex-col gap-3 rounded-[1.75rem] border border-zinc-100 bg-white p-3 shadow-[0_8px_28px_rgb(0_0_0/0.06)] sm:flex-row sm:items-center"
+        className="flex flex-col gap-3 rounded-[1.75rem] border border-border bg-card p-3 shadow-[0_8px_28px_rgb(0_0_0/0.06)] sm:flex-row sm:items-center"
         onSubmit={(event) => {
           event.preventDefault();
           setSubmitted(q.trim());
@@ -84,7 +84,7 @@ export default function AppCriteriaPage() {
             value={q}
             onChange={(event) => setQ(event.target.value)}
             placeholder="Number or principle"
-            className="h-10 rounded-full border-0 bg-zinc-100 pl-9 shadow-none focus-visible:bg-white"
+            className="h-10 rounded-full border-0 bg-muted pl-9 shadow-none focus-visible:bg-card"
           />
         </label>
         <Select value={level} onValueChange={setLevel}>
@@ -123,14 +123,14 @@ export default function AppCriteriaPage() {
             {data.total} in this edition
             {submitted ? ` · matching “${submitted}”` : ""}
           </p>
-          <div className="overflow-hidden rounded-2xl border border-zinc-100">
+          <div className="overflow-hidden rounded-2xl border border-border">
             <Table>
               <TableHeader>
                 <TableRow className="hover:bg-transparent">
-                  <TableHead className="w-[22%] bg-zinc-50/80">ID</TableHead>
-                  <TableHead className="w-[18%] bg-zinc-50/80">Level</TableHead>
-                  <TableHead className="bg-zinc-50/80">Principle</TableHead>
-                  <TableHead className="w-14 bg-zinc-50/80">Page</TableHead>
+                  <TableHead className="w-[22%] bg-muted/80">ID</TableHead>
+                  <TableHead className="w-[18%] bg-muted/80">Level</TableHead>
+                  <TableHead className="bg-muted/80">Principle</TableHead>
+                  <TableHead className="w-14 bg-muted/80">Page</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

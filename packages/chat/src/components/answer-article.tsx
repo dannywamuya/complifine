@@ -30,7 +30,7 @@ export function AnswerArticle({
 		<div className='space-y-3'>
 			{summary ? (
 				<section className='rounded-2xl border border-[color-mix(in_oklch,var(--cf-accent)_22%,transparent)] bg-(--cf-accent-soft) px-5 py-4'>
-					<p className='text-[11px] font-medium tracking-[0.16em] text-(--cf-accent) uppercase'>
+					<p className='text-[11px] font-medium tracking-[0.16em] text-(--cf-accent-text) uppercase'>
 						At a glance
 					</p>
 					<div className='mt-2 text-[1.05rem] leading-snug'>

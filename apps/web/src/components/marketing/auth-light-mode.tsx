@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 
-/** Keep the document in light tokens so the split-screen form stays white. */
+/** Keep the document in light tokens so the split-screen form stays grey-olive. */
 export function AuthLightMode() {
   useEffect(() => {
     const root = document.documentElement;

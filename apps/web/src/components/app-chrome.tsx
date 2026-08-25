@@ -107,10 +107,10 @@ export function AppChrome({ children }: { children: ReactNode }) {
 	);
 
 	return (
-		<SidebarProvider className='min-h-svh overflow-x-hidden bg-[#f4f4f5]'>
+		<SidebarProvider className='min-h-svh overflow-x-hidden bg-muted'>
 			<AppSidebar />
-			<SidebarInset className='min-h-svh min-w-0 overflow-hidden bg-white md:my-2 md:mr-2 md:ml-0 md:h-[calc(100svh-1rem)] md:min-h-0 md:rounded-2xl md:shadow-[0_1px_2px_rgb(0_0_0/0.04),0_12px_32px_rgb(0_0_0/0.05)]'>
-				<header className='cf-chat flex h-14 shrink-0 items-center gap-2 border-b border-zinc-100 bg-transparent! px-3 sm:px-4'>
+			<SidebarInset className='min-h-svh min-w-0 overflow-hidden bg-card md:my-2 md:mr-2 md:ml-0 md:h-[calc(100svh-1rem)] md:min-h-0 md:rounded-2xl md:shadow-[0_1px_2px_rgb(0_0_0/0.04),0_12px_32px_rgb(0_0_0/0.05)]'>
+				<header className='cf-chat flex h-14 shrink-0 items-center gap-2 border-b border-border bg-transparent! px-3 sm:px-4'>
 					<SidebarTrigger className='rounded-xl' />
 					<Separator orientation='vertical' className='h-4' />
 					<p className='shrink-0 truncate text-sm font-medium tracking-tight'>

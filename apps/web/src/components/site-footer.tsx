@@ -10,7 +10,7 @@ const LINKS = [
 
 export function SiteFooter() {
 	return (
-		<footer className='mt-auto border-t border-white/10 bg-black'>
+		<footer className='mt-auto border-t border-white/10 bg-graphite-950'>
 			<Container className='flex flex-col gap-8 py-12 sm:py-16'>
 				<div className='grid gap-10 md:grid-cols-[1.4fr_auto]'>
 					<div className='max-w-xl space-y-4'>

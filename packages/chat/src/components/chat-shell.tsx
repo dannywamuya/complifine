@@ -376,7 +376,7 @@ export function ChatShell({
 							{!embedded ? (
 								<div id={titleId} className='min-w-0 flex-1'>
 									{eyebrow ? (
-										<p className='text-[11px] font-medium tracking-[0.16em] text-(--cf-accent) uppercase'>
+										<p className='text-[11px] font-medium tracking-[0.16em] text-(--cf-accent-text) uppercase'>
 											{eyebrow}
 										</p>
 									) : null}
@@ -575,7 +575,7 @@ function ChatToolButtons({
 					label={sourcesOpen ? 'Hide sources' : 'Show sources'}
 					onClick={onSources}
 					className={
-						sourcesOpen || sourceCount > 0 ? 'text-(--cf-accent)' : undefined
+						sourcesOpen || sourceCount > 0 ? 'text-(--cf-accent-text)' : undefined
 					}>
 					<span className='relative inline-flex'>
 						<BookOpen className='size-4' />
@@ -593,7 +593,7 @@ function ChatToolButtons({
 			<IconButton
 				label={artifactOpen ? 'Hide artifacts' : 'Show artifacts'}
 				onClick={onArtifacts}
-				className={artifactCount > 0 ? 'text-(--cf-accent)' : undefined}>
+				className={artifactCount > 0 ? 'text-(--cf-accent-text)' : undefined}>
 				<FileCode2 className='size-4' />
 			</IconButton>
 		</>
@@ -624,7 +624,7 @@ function ContextChip({
 				No farm profile.{' '}
 				<a
 					href={profileHref}
-					className='font-medium text-(--cf-accent) underline-offset-2 hover:underline'>
+					className='font-medium text-(--cf-accent-text) underline-offset-2 hover:underline'>
 					Create one
 				</a>
 			</p>

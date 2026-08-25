@@ -404,7 +404,7 @@ function StepRow({
           "relative z-10 flex size-8 items-center justify-center rounded-full border font-mono text-xs",
           inView
             ? "border-primary bg-primary text-primary-foreground"
-            : "border-white/15 bg-black text-white/50",
+            : "border-white/15 bg-graphite-950 text-white/50",
         )}
       >
         {index + 1}

@@ -24,7 +24,7 @@ export function AuthPasswordField({
 
   return (
     <div className="space-y-2">
-      <Label htmlFor={name} className="text-sm font-semibold text-zinc-800">
+      <Label htmlFor={name} className="text-sm font-semibold text-graphite-800">
         {label}
       </Label>
       <div className="relative">
@@ -37,14 +37,14 @@ export function AuthPasswordField({
           autoComplete={autoComplete}
           placeholder={placeholder}
           className={cn(
-            "h-11 rounded-xl border-zinc-200 bg-white px-3.5 pr-11 text-sm text-zinc-950 shadow-none md:text-sm dark:border-zinc-200 dark:bg-white dark:text-zinc-950",
-            "placeholder:text-zinc-400",
+            "h-11 rounded-xl border-grey-olive-200 bg-grey-olive-50 px-3.5 pr-11 text-sm text-graphite-950 shadow-none md:text-sm dark:border-grey-olive-200 dark:bg-grey-olive-50 dark:text-graphite-950",
+            "placeholder:text-iron-grey-400",
           )}
         />
         <button
           type="button"
           onClick={() => setVisible((value) => !value)}
-          className="absolute inset-y-0 right-2 flex items-center rounded-md px-1.5 text-zinc-400 hover:text-zinc-700"
+          className="absolute inset-y-0 right-2 flex items-center rounded-md px-1.5 text-iron-grey-400 hover:text-graphite-700"
           aria-label={visible ? "Hide password" : "Show password"}
         >
           {visible ? <EyeOff className="size-4" /> : <Eye className="size-4" />}

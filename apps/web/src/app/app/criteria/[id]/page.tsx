@@ -76,14 +76,14 @@ export default async function AppCriterionPage({
             </div>
           </header>
 
-          <section className="rounded-2xl border border-zinc-100 bg-white p-6 shadow-[0_8px_28px_rgb(0_0_0/0.04)]">
+          <section className="rounded-2xl border border-border bg-card p-6 shadow-[0_8px_28px_rgb(0_0_0/0.04)]">
             <h2 className="font-heading text-base font-medium tracking-tight">Principle</h2>
             <p className="mt-1 text-sm text-muted-foreground">What the standard states at the principle level.</p>
             <p className="mt-4 leading-relaxed">{row.principle}</p>
           </section>
 
           {row.criteria ? (
-            <section className="rounded-2xl border border-zinc-100 bg-white p-6 shadow-[0_8px_28px_rgb(0_0_0/0.04)]">
+            <section className="rounded-2xl border border-border bg-card p-6 shadow-[0_8px_28px_rgb(0_0_0/0.04)]">
               <h2 className="font-heading text-base font-medium tracking-tight">Criteria</h2>
               <p className="mt-1 text-sm text-muted-foreground">The auditable wording.</p>
               <p className="mt-4 leading-relaxed">{row.criteria}</p>

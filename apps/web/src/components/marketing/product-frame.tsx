@@ -25,7 +25,7 @@ export function ProductFrame() {
 				className='pointer-events-none absolute -inset-8 rounded-[2rem] bg-primary/15 blur-3xl'
 				aria-hidden
 			/>
-			<div className='relative overflow-hidden rounded-xl border border-white/10 bg-[#0a0a0a] shadow-[0_40px_80px_-32px_rgb(0_0_0_/_0.85)]'>
+			<div className='relative overflow-hidden rounded-xl border border-white/10 bg-graphite-900 shadow-[0_40px_80px_-32px_rgb(0_0_0_/_0.85)]'>
 				<BrowserChrome />
 				<div className='relative h-[20rem] sm:h-[24rem] lg:h-[29rem]'>
 					<WorkspacePreview
@@ -34,7 +34,7 @@ export function ProductFrame() {
 						citationsReady={reduced || citationsReady}
 					/>
 					<div
-						className='pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/70 to-transparent'
+						className='pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-graphite-950/70 to-transparent'
 						aria-hidden
 					/>
 				</div>
@@ -45,7 +45,7 @@ export function ProductFrame() {
 
 function BrowserChrome() {
 	return (
-		<div className='flex items-center gap-3 border-b border-white/10 bg-black px-3 py-2.5'>
+		<div className='flex items-center gap-3 border-b border-white/10 bg-graphite-950 px-3 py-2.5'>
 			<div className='flex gap-1.5' aria-hidden>
 				<span className='size-2.5 rounded-full bg-white/15' />
 				<span className='size-2.5 rounded-full bg-white/15' />

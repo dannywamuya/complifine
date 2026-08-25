@@ -33,7 +33,7 @@ export function EmptyState({
         <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {features.map((feature, index) => (
             <li key={feature.title} className={`cf-feature-card cf-feature-card-${(index % 4) + 1}`}>
-              <span className="mb-3 inline-flex size-8 items-center justify-center rounded-lg bg-(--cf-bg-elevated)/80 text-(--cf-accent) shadow-sm">
+              <span className="mb-3 inline-flex size-8 items-center justify-center rounded-lg bg-(--cf-bg-elevated)/80 text-(--cf-accent-text) shadow-sm">
                 {feature.icon}
               </span>
               <p className="font-heading text-sm font-medium tracking-tight">{feature.title}</p>

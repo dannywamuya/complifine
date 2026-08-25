@@ -52,10 +52,10 @@ export function MenuSelect({
               <SelectPrimitive.Item
                 key={option.value}
                 value={option.value}
-                className="relative flex cursor-default items-center rounded-lg py-1.5 pr-8 pl-2 text-sm outline-none select-none data-disabled:pointer-events-none data-disabled:opacity-50 data-[highlighted]:bg-(--cf-accent-soft) data-[highlighted]:text-(--cf-accent)"
+                className="relative flex cursor-default items-center rounded-lg py-1.5 pr-8 pl-2 text-sm outline-none select-none data-disabled:pointer-events-none data-disabled:opacity-50 data-[highlighted]:bg-(--cf-accent-soft) data-[highlighted]:text-(--cf-accent-text)"
               >
                 <SelectPrimitive.ItemText>{option.label}</SelectPrimitive.ItemText>
-                <SelectPrimitive.ItemIndicator className="absolute right-2 inline-flex size-4 items-center justify-center text-(--cf-accent)">
+                <SelectPrimitive.ItemIndicator className="absolute right-2 inline-flex size-4 items-center justify-center text-(--cf-accent-text)">
                   <Check className="size-3.5" aria-hidden />
                 </SelectPrimitive.ItemIndicator>
               </SelectPrimitive.Item>

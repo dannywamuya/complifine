@@ -292,7 +292,7 @@ function ToolChipBadge({ tool }: { tool: ToolChip }) {
     <span
       className={cn(
         "cf-tool-chip inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium",
-        running && "bg-(--cf-accent-soft) text-(--cf-accent)",
+        running && "bg-(--cf-accent-soft) text-(--cf-accent-text)",
         tool.status === "done" && "bg-(--cf-accent-soft) text-(--cf-fg)",
         error && "bg-(--cf-danger-soft) text-(--cf-danger)",
       )}
@@ -304,7 +304,7 @@ function ToolChipBadge({ tool }: { tool: ToolChip }) {
       ) : error ? (
         <X className="size-3" aria-hidden />
       ) : (
-        <Check className="size-3 text-(--cf-accent)" aria-hidden />
+        <Check className="size-3 text-(--cf-accent-text)" aria-hidden />
       )}
       {toolLabel(tool.name)}
     </span>
@@ -333,7 +333,7 @@ function Action({
       aria-pressed={pressed}
       title={label}
       onClick={onClick}
-      className="inline-flex size-8 items-center justify-center rounded-lg text-(--cf-fg-muted) hover:bg-(--cf-bg-muted) hover:text-(--cf-fg) data-[on=true]:text-(--cf-accent)"
+      className="inline-flex size-8 items-center justify-center rounded-lg text-(--cf-fg-muted) hover:bg-(--cf-bg-muted) hover:text-(--cf-fg) data-[on=true]:text-(--cf-accent-text)"
       data-on={pressed ? "true" : undefined}
     >
       <Icon className="size-3.5" />

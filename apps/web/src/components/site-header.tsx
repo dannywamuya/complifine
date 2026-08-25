@@ -62,8 +62,8 @@ export function SiteHeader() {
 	return (
 		<header
 			className={cn(
-				'sticky top-0 z-50 min-w-0 border-b border-white/10 bg-black/80 text-white transition-[backdrop-filter,background-color] duration-500',
-				scrolled ? 'bg-black/75 backdrop-blur-md' : 'bg-black',
+				'sticky top-0 z-50 min-w-0 border-b border-white/10 bg-graphite-950/80 text-grey-olive-50 transition-[backdrop-filter,background-color] duration-500',
+				scrolled ? 'bg-graphite-950/75 backdrop-blur-md' : 'bg-graphite-950',
 			)}>
 			<div className='mx-auto flex h-16 min-w-0 max-w-6xl items-center gap-4 px-4 sm:px-6'>
 				<Link href='/' className='shrink-0' aria-label='CompliFine home'>
@@ -94,7 +94,7 @@ export function SiteHeader() {
 							<Menu />
 						</Button>
 					</SheetTrigger>
-					<SheetContent side='right' className='bg-black text-white'>
+					<SheetContent side='right' className='bg-graphite-950 text-grey-olive-50'>
 						<SheetHeader>
 							<SheetTitle className='sr-only'>Menu</SheetTitle>
 							<BrandLogo className='h-6' />

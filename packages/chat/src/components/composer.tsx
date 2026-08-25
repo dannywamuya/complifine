@@ -167,7 +167,7 @@ export function Composer({
         <div className="flex min-w-0 flex-wrap items-center gap-1">
           {versionOptions && onVersion ? (
             <span className="inline-flex min-w-0 items-center gap-1.5">
-              <Sparkles className="size-3.5 shrink-0 text-(--cf-accent)" aria-hidden />
+              <Sparkles className="size-3.5 shrink-0 text-(--cf-accent-text)" aria-hidden />
               <MenuSelect
                 label="Standard version"
                 value={version ?? "all"}

@@ -12,6 +12,7 @@
   --cf-fg-subtle: #71717a;
   --cf-accent: #5170ff;
   --cf-accent-fg: #ffffff;
+  --cf-accent-text: var(--cf-accent);
   --cf-accent-soft: color-mix(in srgb, #5170ff 14%, white);
   --cf-danger: oklch(0.55 0.18 25);
   --cf-danger-soft: oklch(0.95 0.03 25);
@@ -64,6 +65,7 @@
   --cf-fg-subtle: #71717a;
   --cf-accent: #5170ff;
   --cf-accent-fg: #ffffff;
+  --cf-accent-text: var(--cf-accent);
   --cf-accent-soft: color-mix(in srgb, #5170ff 28%, black);
   --cf-danger: oklch(0.72 0.16 25);
   --cf-danger-soft: oklch(0.28 0.06 25);
@@ -303,7 +305,7 @@
 }
 
 .cf-chat-prose a {
-  color: var(--cf-accent);
+  color: var(--cf-accent-text);
   text-underline-offset: 3px;
 }
 
@@ -397,12 +399,13 @@
   padding: 0.05em 0.5em;
   font-family: var(--font-mono, ui-monospace, monospace);
   font-size: 0.72em;
-  color: var(--cf-accent);
+  color: var(--cf-accent-text);
   text-decoration: none;
 }
 
 .cf-chat-citation:hover {
   background: color-mix(in oklch, var(--cf-accent) 22%, transparent);
+  color: var(--cf-accent-text);
 }
 
 .cf-chat details > summary {

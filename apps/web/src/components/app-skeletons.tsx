@@ -3,8 +3,8 @@ import { cn } from "@/lib/utils";
 
 export function AppChromeSkeleton({ path = "/app" }: { path?: string }) {
   return (
-    <div className="flex min-h-svh bg-[#f4f4f5] p-2">
-      <aside className="hidden w-60 shrink-0 flex-col rounded-2xl bg-black p-3 sm:flex">
+    <div className="flex min-h-svh bg-muted p-2">
+      <aside className="hidden w-60 shrink-0 flex-col rounded-2xl bg-graphite-950 p-3 sm:flex">
         <Skeleton className="h-8 w-32 rounded-md bg-white/15" />
         <div className="mt-4 space-y-2">
           <Skeleton className="h-8 w-full rounded-xl bg-white/10" />
@@ -22,8 +22,8 @@ export function AppChromeSkeleton({ path = "/app" }: { path?: string }) {
           ))}
         </div>
       </aside>
-      <div className="ml-0 flex min-w-0 flex-1 flex-col overflow-hidden rounded-2xl bg-white shadow-sm sm:ml-2">
-        <div className="flex h-14 shrink-0 items-center gap-2 border-b border-zinc-100 px-4">
+      <div className="ml-0 flex min-w-0 flex-1 flex-col overflow-hidden rounded-2xl bg-card shadow-sm sm:ml-2">
+        <div className="flex h-14 shrink-0 items-center gap-2 border-b border-border px-4">
           <Skeleton className="size-7 rounded-xl" />
           <Skeleton className="h-4 w-16" />
           <Skeleton className="ml-auto size-8 rounded-full" />
@@ -79,8 +79,8 @@ export function CriteriaTableSkeleton({ className }: { className?: string }) {
   return (
     <div className={cn("space-y-3", className)}>
       <Skeleton className="h-4 w-32" />
-      <div className="overflow-hidden rounded-2xl border border-zinc-100">
-        <div className="grid grid-cols-[22%_18%_1fr_3.5rem] gap-3 bg-zinc-50/80 px-4 py-3">
+      <div className="overflow-hidden rounded-2xl border border-border">
+        <div className="grid grid-cols-[22%_18%_1fr_3.5rem] gap-3 bg-muted/80 px-4 py-3">
           <Skeleton className="h-3 w-8" />
           <Skeleton className="h-3 w-12" />
           <Skeleton className="h-3 w-16" />
@@ -89,7 +89,7 @@ export function CriteriaTableSkeleton({ className }: { className?: string }) {
         {Array.from({ length: 8 }, (_, index) => (
           <div
             key={index}
-            className="grid grid-cols-[22%_18%_1fr_3.5rem] items-center gap-3 border-t border-zinc-100 px-4 py-3.5"
+            className="grid grid-cols-[22%_18%_1fr_3.5rem] items-center gap-3 border-t border-border px-4 py-3.5"
           >
             <Skeleton className="h-4 w-24" />
             <Skeleton className="h-5 w-20 rounded-full" />

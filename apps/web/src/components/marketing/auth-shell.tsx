@@ -20,7 +20,7 @@ export function AuthShell({
 }) {
   return (
     <div className="grid min-h-0 flex-1 lg:grid-cols-2">
-      <div className="relative flex min-h-0 flex-col overflow-y-auto bg-white text-zinc-950">
+      <div className="relative flex min-h-0 flex-col overflow-y-auto bg-grey-olive-50 text-graphite-950">
         <div className="flex items-center justify-between px-6 py-6 sm:px-10">
           <Link href="/" className="shrink-0" aria-label="CompliFine home">
             <BrandLogo tone="light" />
@@ -28,11 +28,11 @@ export function AuthShell({
         </div>
         <div className="flex flex-1 flex-col justify-center px-6 pb-12 sm:px-10">
           <div className="mx-auto w-full max-w-[24rem]">
-            <h1 className="font-heading text-center text-[1.65rem] font-medium tracking-tight text-zinc-950 sm:text-3xl">
+            <h1 className="font-heading text-center text-[1.65rem] font-medium tracking-tight text-graphite-950 sm:text-3xl">
               {title}
             </h1>
             {description ? (
-              <p className="mt-2 text-center text-sm leading-relaxed text-zinc-500">
+              <p className="mt-2 text-center text-sm leading-relaxed text-iron-grey-500">
                 {description}
               </p>
             ) : null}
@@ -66,7 +66,7 @@ export function AuthField({
 }) {
   return (
     <div className="space-y-2">
-      <Label htmlFor={name} className="text-sm font-semibold text-zinc-800">
+      <Label htmlFor={name} className="text-sm font-semibold text-graphite-800">
         {label}
       </Label>
       <div className="relative">
@@ -79,13 +79,13 @@ export function AuthField({
           placeholder={placeholder}
           defaultValue={defaultValue}
           className={cn(
-            "h-11 rounded-xl border-zinc-200 bg-white px-3.5 text-sm text-zinc-950 shadow-none md:text-sm dark:border-zinc-200 dark:bg-white dark:text-zinc-950",
-            "placeholder:text-zinc-400",
+            "h-11 rounded-xl border-grey-olive-200 bg-grey-olive-50 px-3.5 text-sm text-graphite-950 shadow-none md:text-sm dark:border-grey-olive-200 dark:bg-grey-olive-50 dark:text-graphite-950",
+            "placeholder:text-iron-grey-400",
             icon && "pr-11",
           )}
         />
         {icon ? (
-          <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-zinc-400">
+          <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-iron-grey-400">
             {icon}
           </span>
         ) : null}
@@ -124,7 +124,7 @@ export function AuthFooterLink({
   label: string;
 }) {
   return (
-    <p className="mt-6 text-center text-sm text-zinc-500">
+    <p className="mt-6 text-center text-sm text-iron-grey-500">
       {prompt}{" "}
       <Link href={href} className="font-semibold text-primary underline-offset-4 hover:underline">
         {label}
