@@ -78,6 +78,19 @@ function unsetBlanks(): void {
 
 unsetBlanks();
 
+/**
+ * PaaS platforms (Railway, Fly, Render, Docker) inject `PORT`. Honour it so
+ * the API binds where the proxy expects, without every host mapping `API_PORT`.
+ */
+function applyPlatformPort(): void {
+  const port = process.env.PORT?.trim();
+  if (port && /^\d+$/.test(port)) {
+    process.env.API_PORT = port;
+  }
+}
+
+applyPlatformPort();
+
 const baseSchema = z.object({
   DATABASE_URL: z
     .string()
@@ -154,4 +167,5 @@ export function resetEnvCache(): void {
   cachedBase = null;
   cachedAi = null;
   unsetBlanks();
+  applyPlatformPort();
 }

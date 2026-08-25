@@ -1,0 +1,103 @@
+name: complifine-stack
+
+# Full Docker deploy (Postgres + API + web + console).
+# From this directory: docker compose up --build
+#
+# Local Bun development still uses `bun run db:up` (infra/docker-compose.yml)
+# plus `bun run api|web|console`. Do not run both stacks at once — they both
+# bind 5434 / 3311 / 3000 / 3001.
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg17
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: complifine
+      POSTGRES_PASSWORD: complifine
+      POSTGRES_DB: complifine
+      POSTGRES_INITDB_ARGS: "--locale=C --encoding=UTF8"
+    ports:
+      - "5434:5432"
+    volumes:
+      - complifine-pgdata:/var/lib/postgresql/data
+      - ./infra/initdb:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U complifine -d complifine"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+    command:
+      - postgres
+      - -c
+      - shared_buffers=256MB
+      - -c
+      - maintenance_work_mem=256MB
+      - -c
+      - work_mem=32MB
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "3311:3311"
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgres://complifine:complifine@postgres:5432/complifine
+      PORT: "3311"
+      NODE_ENV: production
+      STORAGE_ROOT: /data/storage
+      RUN_MIGRATIONS: "true"
+      COOKIE_SECURE: "false"
+    volumes:
+      - complifine-storage:/data/storage
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        API_PROXY_TARGET: http://api:3311
+        NEXT_PUBLIC_API_URL: /api
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      PORT: "3000"
+      HOSTNAME: 0.0.0.0
+      NODE_ENV: production
+      API_PROXY_TARGET: http://api:3311
+      NEXT_PUBLIC_API_URL: /api
+    depends_on:
+      - api
+
+  console:
+    build:
+      context: .
+      dockerfile: apps/console/Dockerfile
+      args:
+        API_PROXY_TARGET: http://api:3311
+        NEXT_PUBLIC_API_URL: /api
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    environment:
+      PORT: "3001"
+      HOSTNAME: 0.0.0.0
+      NODE_ENV: production
+      API_PROXY_TARGET: http://api:3311
+      NEXT_PUBLIC_API_URL: /api
+    depends_on:
+      - api
+
+volumes:
+  complifine-pgdata:
+    name: complifine-pgdata
+  complifine-storage:
+    name: complifine-storage

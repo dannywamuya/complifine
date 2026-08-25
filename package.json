@@ -27,6 +27,8 @@
 		"api": "bun --watch --env-file .env apps/api/src/index.ts",
 		"web": "cd apps/web && bun run dev",
 		"console": "cd apps/console && bun run dev",
+		"docker:up": "docker compose up --build",
+		"docker:down": "docker compose down",
 		"bootstrap": "bun run scripts/bootstrap.ts",
 		"test": "bun test",
 		"test:watch": "bun test --watch",

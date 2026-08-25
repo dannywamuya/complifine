@@ -1,9 +1,20 @@
 name: CI
 
+# Tests run here on every push to a deployable branch (and on PRs into them).
+# Schema migrations do not run in Actions — GitHub cannot reach Railway's
+# private Postgres. They run once per API deploy as a Railway pre-deploy
+# command (see apps/api/railway.toml and docs/RUNBOOK.md).
+
 on:
   push:
-    branches: [main]
+    branches: [main, dev, staging]
   pull_request:
+    branches: [main, dev, staging]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   test:

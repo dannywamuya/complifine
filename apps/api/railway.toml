@@ -1,0 +1,10 @@
+# API service on Railway. Point the service's Config-as-code path at this file,
+# or paste the pre-deploy command into the dashboard (same effect).
+#
+# Pre-deploy runs in a throwaway container with the new image and env vars,
+# before traffic switches. A failed migrate keeps the previous API live.
+
+[deploy]
+healthcheckPath = "/health"
+healthcheckTimeout = 30
+preDeployCommand = "sh -c 'bun packages/db/src/migrate.ts'"

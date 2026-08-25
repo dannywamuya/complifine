@@ -1,5 +1,0 @@
-# Bun workspace. npm cannot resolve "workspace:*" dependencies.
-providers = ["bun"]
-
-[phases.install]
-cmds = ["bun install --frozen-lockfile"]

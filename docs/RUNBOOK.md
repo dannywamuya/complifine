@@ -130,12 +130,41 @@ bun run ai eval retrieval
 
 Hash embeddings can stay. Queries prefer the OpenAI model once its rows exist.
 
-## CI
+## CI / CD
 
-`.github/workflows/ci.yml` runs `bun test` and `bun run typecheck`. It does
-not start Postgres and does not call OpenAI. Retrieval eval against the real
-index is an operator command, not a PR gate, because it needs the ingested
-corpus.
+Push to `main`, `dev`, or `staging` runs GitHub Actions (`.github/workflows/ci.yml`):
+`bun test` and `bun run typecheck`. That workflow does not start Postgres and
+does not call OpenAI. Retrieval eval against the real index is an operator
+command, not a PR gate.
+
+Deploy and migrate are Railway's job, after CI is green:
+
+1. One Railway **environment** per branch (`production` ← `main`, `staging` ←
+   `staging`, `development` ← `dev`). Each environment has its own Postgres,
+   API, web, and console.
+2. Each environment **watches that branch**. A push builds the Dockerfiles.
+3. On the API service, enable **Wait for CI** so a failing test blocks the
+   deploy. The check name is **Test and typecheck**.
+4. API **Pre-deploy command** (already in `apps/api/railway.toml`):
+
+   ```text
+   sh -c 'bun packages/db/src/migrate.ts'
+   ```
+
+   Use `bun run db:migrate`, not `drizzle-kit migrate`. The runner applies
+   extension prerequisites and commits enum `ADD VALUE` files before Drizzle's
+   migrator. Pre-deploy has `DATABASE_URL` and the private network; GitHub
+   Actions does not.
+
+5. Set `RUN_MIGRATIONS=false` on the Railway API service so a replica restart
+   does not migrate again. Local `docker compose` still migrates on API start.
+
+Do not migrate from GitHub Actions unless you expose a public `DATABASE_URL`
+and accept that Actions and Railway can race. Pre-deploy is the gate that
+keeps the old API up until schema is applied.
+
+Seed, ingest, and embed are still one-off (`db:seed`, `kb all`, `ai index`),
+not every deploy.
 
 ## Ports
 
@@ -143,6 +172,28 @@ corpus.
 | 3311 | API (`/swagger`, `/auth`, `/demo-requests`) |
 | 3000 | Marketing site + producer app (`/app`) |
 | 3001 | Operator console (sign in as `OPERATOR_EMAIL`) |
+
+## Docker deploy
+
+Production images live next to each app (`apps/api/Dockerfile`,
+`apps/web/Dockerfile`, `apps/console/Dockerfile`). Always build from
+`complifine/` so Bun can resolve `workspace:*`.
+
+```bash
+docker compose up --build
+```
+
+The API listens on `PORT` when that variable is set (Railway, Fly, Compose),
+otherwise `API_PORT` (default 3311), on `0.0.0.0`. Set `STORAGE_ROOT=/data/storage`
+and mount a volume there.
+
+Web and console proxy `/api` using `API_PROXY_TARGET`. That value is read at
+**Next build** for rewrites and at **runtime** for Server Components. Compose
+defaults it to `http://api:3311`. On Railway, use the API service private
+domain and port as a Docker build argument and as a runtime variable.
+
+`nixpacks` is not used; do not let a host run `npm install` at an app
+`package.json`.
 
 ## Auth
 

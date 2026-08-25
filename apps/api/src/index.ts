@@ -13,7 +13,7 @@ import { createApp } from "./app.ts";
 const { API_PORT } = env();
 const app = createApp();
 
-app.listen(API_PORT, () => {
-  console.log(`CompliFine API  http://localhost:${API_PORT}`);
-  console.log(`OpenAPI         http://localhost:${API_PORT}/swagger`);
+app.listen({ port: API_PORT, hostname: "0.0.0.0" }, () => {
+  console.log(`CompliFine API  http://0.0.0.0:${API_PORT}`);
+  console.log(`OpenAPI         http://0.0.0.0:${API_PORT}/swagger`);
 });

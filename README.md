@@ -24,7 +24,7 @@ that name a criterion the tools never returned are flagged, not trusted.
 ## Requirements
 
 - [Bun](https://bun.sh) 1.2+
-- Docker (for the bundled Postgres 17 + pgvector), or any Postgres 16+ with `vector` and `pg_trgm`
+- Docker (for Postgres 17 + pgvector, and for deploying the apps)
 - An OpenAI key for embeddings and the agent. Everything else runs without it.
 
 ## Quick start
@@ -32,7 +32,7 @@ that name a criterion the tools never returned are flagged, not trusted.
 ```bash
 cp .env.example .env          # then set OPENAI_API_KEY
 bun install
-bun run bootstrap             # Docker, migrate, ingest, embed
+bun run bootstrap             # Docker Postgres, migrate, ingest, embed
 bun run api                   # http://localhost:3311
 bun run web                   # http://localhost:3000  (producers)
 bun run console               # http://localhost:3001  (operators)
@@ -44,6 +44,43 @@ daemon; it resumes rather than starting over.
 Without a key, the knowledge base, quality gates, lexical search and the whole
 CLI still work. Semantic search and `/ask` wait until you add one and run
 `bun run ai index`.
+
+## Docker deploy
+
+Each app has a Dockerfile. Build context is this directory (`complifine/`), not
+the app folder — Bun workspaces cannot be installed from a nested package.
+
+```bash
+cp .env.example .env          # JWT_SECRET, OPENAI_API_KEY, operator login
+docker compose up --build     # Postgres, API :3311, web :3000, console :3001
+```
+
+Then migrate/seed/ingest as needed (`docker compose exec api bun run db:seed`,
+`docker compose exec api bun run kb all`, `docker compose exec api bun run ai index`).
+The API image runs migrations on start (`RUN_MIGRATIONS=true`).
+
+On Railway (or any host that builds from a Dockerfile):
+
+| Service | Root Directory | Dockerfile path | Extra |
+| --- | --- | --- | --- |
+| api | `complifine` | `apps/api/Dockerfile` | Config-as-code: `apps/api/railway.toml` (pre-deploy migrate) |
+| web | `complifine` | `apps/web/Dockerfile` | |
+| console | `complifine` | `apps/console/Dockerfile` | |
+
+Map one Railway environment per branch: `main` → production, `dev` →
+development, `staging` → staging. GitHub Actions tests those branches; Railway
+should **Wait for CI** on the API so a red check stops the deploy. Details in
+[the runbook](docs/RUNBOOK.md#ci--cd).
+
+Use **Bun**, never npm (`workspace:*` will fail). Give the API a volume at
+`/data/storage`. Set `PORT` (injected by Railway) and `DATABASE_URL`. For web
+and console, pass build-arg `API_PROXY_TARGET` as the private API URL
+(`http://${{api.RAILWAY_PRIVATE_DOMAIN}}:${{api.PORT}}`) — Next rewrites `/api`
+to that origin at **build** time. Also set the same value at runtime for Server
+Components. Browser calls stay on `/api`.
+
+Do not run `docker compose up` and `bun run db:up` at the same time; both bind
+Postgres on **5434**.
 
 ## Everyday commands
 

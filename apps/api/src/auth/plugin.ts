@@ -48,11 +48,18 @@ export interface AuthUser {
 }
 
 function cookieAttrs(maxAge: number) {
+  const cookieSecure = process.env.COOKIE_SECURE?.trim();
+  const secure =
+    cookieSecure === "true"
+      ? true
+      : cookieSecure === "false"
+        ? false
+        : env().NODE_ENV === "production";
   return {
     httpOnly: true,
     path: "/",
     sameSite: "lax" as const,
-    secure: env().NODE_ENV === "production",
+    secure,
     maxAge,
   };
 }
