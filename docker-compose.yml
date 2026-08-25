@@ -51,6 +51,7 @@ services:
       NODE_ENV: production
       STORAGE_ROOT: /data/storage
       RUN_MIGRATIONS: "true"
+      RUN_SEED: "true"
       COOKIE_SECURE: "false"
     volumes:
       - complifine-storage:/data/storage

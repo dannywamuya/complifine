@@ -41,15 +41,15 @@ Then seed: `bun run db:seed`.
 
 ## Daily
 
-| Want | Command |
-| --- | --- |
-| Coverage | `bun run kb status` / `curl localhost:3311/status` |
-| One criterion | `bun run kb show "FV 03.01"` |
-| Smart vs GFS | `bun run kb diff` |
-| Gates | `bun run kb gates` or `/gates` in the UI |
-| Search | `bun run ai search "…"` or `/search` (chat; Passages for retrieval only) |
-| Ask | `bun run ai ask "…"` or `/search` |
-| API docs | http://localhost:3311/swagger |
+| Want          | Command                                                                  |
+| ------------- | ------------------------------------------------------------------------ |
+| Coverage      | `bun run kb status` / `curl localhost:3311/status`                       |
+| One criterion | `bun run kb show "FV 03.01"`                                             |
+| Smart vs GFS  | `bun run kb diff`                                                        |
+| Gates         | `bun run kb gates` or `/gates` in the UI                                 |
+| Search        | `bun run ai search "…"` or `/search` (chat; Passages for retrieval only) |
+| Ask           | `bun run ai ask "…"` or `/search`                                        |
+| API docs      | http://localhost:3311/swagger                                            |
 
 Start API, the user app and the console from the **repo root** in three
 terminals: `bun run api`, `bun run web`, `bun run console`. Environment
@@ -77,7 +77,7 @@ Common causes:
 
 - Partial ingest (re-run `bun run kb all`)
 - A parser change that dropped a section (look at `ingestion_events`)
-- Comparing the April 2022 *Summary of Changes* Major Must counts to the Sep
+- Comparing the April 2022 _Summary of Changes_ Major Must counts to the Sep
   2022 / Aug 2024 workbooks — that discrepancy is documented and accepted
 
 Refresh stored results: `GET /versions/{code}/gates?refresh=true`.
@@ -147,26 +147,36 @@ Deploy and migrate are Railway's job, after CI is green:
 2. Each environment **watches that branch**. A push builds the Dockerfiles.
 3. On the API service, enable **Wait for CI** so a failing test blocks the
    deploy. The check name is **Test and typecheck**.
-4. API **Pre-deploy command** (already in `apps/api/railway.toml`):
+4. API **Pre-deploy command** (`scripts/predeploy.sh`, wired in
+   `apps/api/railway.toml`): migrate, then seed the operator.
 
    ```text
-   sh -c 'bun packages/db/src/migrate.ts'
+   sh scripts/predeploy.sh
    ```
 
-   Use `bun run db:migrate`, not `drizzle-kit migrate`. The runner applies
-   extension prerequisites, then each journal file in its own transaction so
-   enum `ADD VALUE` commits before later files use the labels. Pre-deploy has
-   `DATABASE_URL` and the private network; GitHub Actions does not.
+   In the API **Deploy logs**, look for `Migrations applied.` then
+   `Operator created:` or `Operator updated:` plus the email. A failed
+   pre-deploy keeps the previous API live.
 
-5. Set `RUN_MIGRATIONS=false` on the Railway API service so a replica restart
-   does not migrate again. Local `docker compose` still migrates on API start.
+   Set `OPERATOR_EMAIL` and `OPERATOR_PASSWORD` on the API service (see
+   `apps/api/.env.example`). Those are the console login.
 
-Do not migrate from GitHub Actions unless you expose a public `DATABASE_URL`
-and accept that Actions and Railway can race. Pre-deploy is the gate that
-keeps the old API up until schema is applied.
+5. After the new API is up, `GET /ready` must return 200:
 
-Seed, ingest, and embed are still one-off (`db:seed`, `kb all`, `ai index`),
-not every deploy.
+   `{ "ok": true, "migrations": <n>, "operator": true }`
+
+   `503` with `"operator": false` means seed did not run. `/health` is
+   liveness only and does not check the database.
+
+6. Set `RUN_MIGRATIONS=false` on the Railway API service so a replica restart
+   does not migrate again. Do not set `RUN_SEED` on Railway; pre-deploy seeds.
+   Local `docker compose` still migrates and seeds on API start.
+
+Do not migrate or seed from your laptop against `*.railway.internal` — that
+host only exists on Railway's private network (`ECONNREFUSED` locally). Use
+the public Postgres URL, or the pre-deploy logs.
+
+Ingest and embed remain one-off (`kb all`, `ai index`), not every deploy.
 
 ## Ports
 
@@ -233,4 +243,3 @@ bun run ai eval retrieval          # no chat model
 bun run ai eval answer             # costs tokens; needs OPENAI_API_KEY
 bun run ai eval all
 ```
-

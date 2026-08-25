@@ -9,6 +9,6 @@ builder = "DOCKERFILE"
 dockerfilePath = "apps/api/Dockerfile"
 
 [deploy]
-healthcheckPath = "/health"
+healthcheckPath = "/ready"
 healthcheckTimeout = 30
-preDeployCommand = "sh -c 'bun packages/db/src/migrate.ts'"
+preDeployCommand = "sh scripts/predeploy.sh"

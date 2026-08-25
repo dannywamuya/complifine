@@ -13,6 +13,23 @@ export async function seedAll(db = createDatabase()) {
   return { operator, controls };
 }
 
+function unreachableDatabaseHint(error: unknown): string | null {
+  let current: unknown = error;
+  for (let i = 0; i < 8 && current && typeof current === "object"; i++) {
+    const rec = current as { code?: string; message?: string; cause?: unknown };
+    const blob = `${rec.code ?? ""} ${rec.message ?? ""}`;
+    if (blob.includes("ECONNREFUSED") || blob.includes("Failed to connect")) {
+      return (
+        "Cannot reach DATABASE_URL. A host ending in .railway.internal only " +
+        "resolves inside Railway — from your laptop use the Postgres public " +
+        "URL, or rely on the API pre-deploy command (scripts/predeploy.sh)."
+      );
+    }
+    current = rec.cause;
+  }
+  return null;
+}
+
 if (import.meta.main) {
   const db = createDatabase({ max: 1 });
   try {
@@ -23,6 +40,11 @@ if (import.meta.main) {
     console.log(
       `Control library: ${result.controls.controls} controls, ${result.controls.links} requirement links`,
     );
+  } catch (error) {
+    const hint = unreachableDatabaseHint(error);
+    if (hint) console.error(hint);
+    console.error("Seed failed:", error);
+    process.exit(1);
   } finally {
     await db.$close();
   }

@@ -31,6 +31,7 @@ import {
   standardSections,
   standardVersions,
   standards,
+  users,
 } from "@complifine/db";
 import {
   AUTHORITY_LEVEL_LABELS,
@@ -119,6 +120,40 @@ export function createApp(database = createDatabase()) {
       .get("/health", () => ({ ok: true, service: "complifine-api" }), {
         detail: { summary: "Liveness probe" },
       })
+
+      .get(
+        "/ready",
+        async ({ set }) => {
+          try {
+            const migrationRows = await db.$client<{ n: number }[]>`
+              SELECT count(*)::int AS n FROM drizzle.__drizzle_migrations
+            `;
+            const migrations = migrationRows[0]?.n ?? 0;
+            const operators = await db
+              .select({ id: users.id })
+              .from(users)
+              .where(eq(users.kind, "operator"))
+              .limit(1);
+            const ready = migrations > 0 && operators.length > 0;
+            set.status = ready ? 200 : 503;
+            return {
+              ok: ready,
+              service: "complifine-api",
+              migrations,
+              operator: operators.length > 0,
+            };
+          } catch {
+            set.status = 503;
+            return {
+              ok: false,
+              service: "complifine-api",
+              migrations: 0,
+              operator: false,
+            };
+          }
+        },
+        { detail: { summary: "Readiness: schema applied and operator seeded" } },
+      )
 
       .get(
         "/status",
