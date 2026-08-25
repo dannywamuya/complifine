@@ -6,7 +6,7 @@ import { KnowledgeGraph, type GraphPayload } from "@/components/knowledge-graph"
 import { Button } from "@/components/ui/button";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Graph" };
+export const metadata = { title: "Map" };
 
 export default async function GraphPage({
   searchParams,
@@ -22,14 +22,16 @@ export default async function GraphPage({
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
-        <div id="tour-graph" className="w-fit max-w-full">
-          <p className="font-mono text-xs uppercase tracking-widest text-muted-foreground">
-            Knowledge base
-          </p>
-          <h1 className="font-heading text-2xl font-medium">Graph</h1>
-          <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-            Certifications on the left, their published versions, then the controls that
-            satisfy requirements across them. The header filter changes what is in view.
+        <div id="tour-graph" className="w-fit max-w-full space-y-2">
+          <p className="font-mono text-xs uppercase tracking-widest text-muted-foreground">Knowledge</p>
+          <h1 className="font-heading text-2xl font-medium">Map</h1>
+          <p className="max-w-2xl text-sm text-muted-foreground">
+            Same catalog as a graph: certification → edition → shared controls. Click a version to
+            open it. For sources and outline, use the{" "}
+            <Link href="/registry" className="underline underline-offset-4">
+              catalog
+            </Link>
+            .
           </p>
         </div>
         <div className="flex gap-2">

@@ -37,6 +37,7 @@ import {
   AUTHORITY_LEVEL_LABELS,
   DOCUMENT_TYPE_LABELS,
   requirementLevelLabel,
+  VERSION_STATUS_GUIDANCE,
   VERSION_TRANSITIONS,
   env,
   hasAiCredentials,
@@ -54,11 +55,12 @@ import {
 import { recordReview, runGates, transitionVersion } from "@complifine/ingestion";
 import { adminRoutes } from "./admin.ts";
 import { conversationRoutes, finishAssistant, insertTurn, ownedSiteId } from "./conversations.ts";
-import { knowledgeGraph, listStandards, lookupRequirementIds, parseCodeList } from "./catalog.ts";
+import { knowledgeGraph, listStandards, lookupRequirementIds, parseCodeList, registryTree } from "./catalog.ts";
 import { httpError } from "./errors.ts";
-import { authModule } from "./auth/plugin.ts";
+import { authModule, requireOperator, type AuthUser } from "./auth/plugin.ts";
 import { demoRoutes } from "./demo.ts";
 import { farmRoutes } from "./farm.ts";
+import { assertPublishedVersion, publishedOnly } from "./knowledge-access.ts";
 
 const chatTurn = t.Object({
   role: t.Union([t.Literal("user"), t.Literal("assistant")]),
@@ -105,6 +107,13 @@ export function createApp(database = createDatabase()) {
       .use(adminRoutes(db))
       .onError(({ code, error, set }) => {
         const message = error instanceof Error ? error.message : String(error);
+        if (typeof code === "number") {
+          set.status = code;
+          if (error && typeof error === "object" && "response" in error) {
+            return (error as { response: unknown }).response;
+          }
+          return { error: message };
+        }
         if (code === "NOT_FOUND") {
           set.status = 404;
           return { error: message };
@@ -159,7 +168,7 @@ export function createApp(database = createDatabase()) {
 
       .get(
         "/status",
-        async () => {
+        async ({ auth }) => {
           const versions = await db
             .select({
               id: standardVersions.id,
@@ -173,6 +182,7 @@ export function createApp(database = createDatabase()) {
             })
             .from(standardVersions)
             .innerJoin(standards, eq(standards.id, standardVersions.standardId))
+            .where(publishedOnly(auth) ? eq(standardVersions.status, "published") : undefined)
             .orderBy(standardVersions.code);
           const chunks = await db
             .select({
@@ -222,16 +232,30 @@ export function createApp(database = createDatabase()) {
 
       .get(
         "/standards",
-        async () => listStandards(db),
+        async ({ auth }) => listStandards(db, { publishedOnly: publishedOnly(auth) }),
         { detail: { summary: "Certifications and their ingested versions" } },
       )
 
       .get(
+        "/registry",
+        async ({ query, auth }) =>
+          registryTree(db, {
+            publishedOnly: publishedOnly(auth),
+            standardCodes: parseCodeList(query.standards),
+          }),
+        {
+          query: t.Object({ standards: t.Optional(t.String()) }),
+          detail: { summary: "Nested registry: certifications, editions, and source documents" },
+        },
+      )
+
+      .get(
         "/graph",
-        async ({ query }) =>
+        async ({ query, auth }) =>
           knowledgeGraph(db, {
             standardCodes: parseCodeList(query.standards),
             detail: query.detail === "sections" ? "sections" : "overview",
+            publishedOnly: publishedOnly(auth),
           }),
         {
           query: t.Object({
@@ -247,7 +271,7 @@ export function createApp(database = createDatabase()) {
       // ---------------------------------------------------------------------
       .get(
         "/versions",
-        async ({ query }) => {
+        async ({ query, auth }) => {
           const standardCodes = parseCodeList(query.standards);
           const rows = await db
             .select({
@@ -270,9 +294,17 @@ export function createApp(database = createDatabase()) {
             .innerJoin(standards, eq(standards.id, standardVersions.standardId))
             .leftJoin(
               requirementVersions,
-              eq(requirementVersions.standardVersionId, standardVersions.id),
+              and(
+                eq(requirementVersions.standardVersionId, standardVersions.id),
+                publishedOnly(auth) ? eq(requirementVersions.status, "published") : undefined,
+              ),
             )
-            .where(standardCodes.length ? inArray(standards.code, standardCodes) : undefined)
+            .where(
+              and(
+                standardCodes.length ? inArray(standards.code, standardCodes) : undefined,
+                publishedOnly(auth) ? eq(standardVersions.status, "published") : undefined,
+              ),
+            )
             .groupBy(standardVersions.id, standards.id)
             .orderBy(standardVersions.code);
 
@@ -286,9 +318,9 @@ export function createApp(database = createDatabase()) {
 
       .get(
         "/versions/:code",
-        async ({ params }) => {
-          const version = await versionByCode(db, params.code);
-          if (!version) return httpError(404, `Unknown version "${params.code}"`);
+        async ({ params, auth }) => {
+          const version = visibleVersion(await versionByCode(db, params.code), auth, params.code);
+          const operator = !publishedOnly(auth);
 
           const [standard] = await db
             .select()
@@ -322,7 +354,10 @@ export function createApp(database = createDatabase()) {
 
           return {
             ...version,
-            allowedNext: VERSION_TRANSITIONS[version.status as VersionStatus],
+            allowedNext: operator ? VERSION_TRANSITIONS[version.status as VersionStatus] : [],
+            guidance: operator
+              ? VERSION_STATUS_GUIDANCE[version.status as VersionStatus]
+              : undefined,
             standard,
             levels: Object.fromEntries(
               levels.map((row) => [requirementLevelLabel(row.level, version.levelScheme), Number(row.count)]),
@@ -347,7 +382,8 @@ export function createApp(database = createDatabase()) {
 
       .get(
         "/versions/:code/gates",
-        async ({ params, query }) => {
+        async ({ params, query, auth }) => {
+          requireOperator(auth);
           const version = await versionByCode(db, params.code);
           if (!version) return httpError(404, `Unknown version "${params.code}"`);
 
@@ -390,9 +426,8 @@ export function createApp(database = createDatabase()) {
 
       .get(
         "/versions/:code/sections",
-        async ({ params }) => {
-          const version = await versionByCode(db, params.code);
-          if (!version) return httpError(404, `Unknown version "${params.code}"`);
+        async ({ params, auth }) => {
+          const version = visibleVersion(await versionByCode(db, params.code), auth, params.code);
 
           const sections = await db
             .select({
@@ -424,11 +459,13 @@ export function createApp(database = createDatabase()) {
 
       .get(
         "/versions/:code/requirements",
-        async ({ params, query }) => {
-          const version = await versionByCode(db, params.code);
-          if (!version) return httpError(404, `Unknown version "${params.code}"`);
+        async ({ params, query, auth }) => {
+          const version = visibleVersion(await versionByCode(db, params.code), auth, params.code);
 
           const conditions = [eq(requirementVersions.standardVersionId, version.id)];
+          if (publishedOnly(auth)) {
+            conditions.push(eq(requirementVersions.status, "published"));
+          }
           if (query.level) {
             const levels = query.level.split(",").map((part) => part.trim()).filter(Boolean);
             if (levels.length) conditions.push(inArray(requirementVersions.level, levels));
@@ -493,9 +530,8 @@ export function createApp(database = createDatabase()) {
 
       .get(
         "/versions/:code/applicability",
-        async ({ params }) => {
-          const version = await versionByCode(db, params.code);
-          if (!version) return httpError(404, `Unknown version "${params.code}"`);
+        async ({ params, auth }) => {
+          const version = visibleVersion(await versionByCode(db, params.code), auth, params.code);
 
           const questions = await db
             .select({
@@ -525,9 +561,8 @@ export function createApp(database = createDatabase()) {
 
       .post(
         "/versions/:code/scope",
-        async ({ params, body }) => {
-          const version = await versionByCode(db, params.code);
-          if (!version) return httpError(404, `Unknown version "${params.code}"`);
+        async ({ params, body, auth }) => {
+          const version = visibleVersion(await versionByCode(db, params.code), auth, params.code);
           return resolveChecklist(db, version.id, body.answers);
         },
         {
@@ -546,10 +581,11 @@ export function createApp(database = createDatabase()) {
 
       .post(
         "/versions/:code/reviews",
-        async ({ params, body }) => {
+        async ({ params, body, auth }) => {
+          const operator = requireOperator(auth);
           await recordReview(db, {
             versionCode: params.code,
-            reviewer: body.reviewer,
+            reviewer: body.reviewer?.trim() || operator.name,
             decision: body.decision,
             notes: body.notes,
           });
@@ -558,7 +594,7 @@ export function createApp(database = createDatabase()) {
         {
           params: t.Object({ code: t.String() }),
           body: t.Object({
-            reviewer: t.String({ minLength: 1 }),
+            reviewer: t.Optional(t.String()),
             decision: t.Union([
               t.Literal("approved"),
               t.Literal("rejected"),
@@ -572,11 +608,12 @@ export function createApp(database = createDatabase()) {
 
       .post(
         "/versions/:code/promote",
-        async ({ params, body }) => {
+        async ({ params, body, auth }) => {
+          const operator = requireOperator(auth);
           const result = await transitionVersion(db, {
             versionCode: params.code,
             to: body.to as never,
-            actor: body.actor,
+            actor: operator.name,
             notes: body.notes,
             force: body.force,
           });
@@ -586,7 +623,7 @@ export function createApp(database = createDatabase()) {
           params: t.Object({ code: t.String() }),
           body: t.Object({
             to: t.String(),
-            actor: t.String({ minLength: 1 }),
+            actor: t.Optional(t.String()),
             notes: t.Optional(t.String()),
             force: t.Optional(t.Boolean()),
           }),
@@ -596,7 +633,8 @@ export function createApp(database = createDatabase()) {
 
       .get(
         "/versions/:code/reviews",
-        async ({ params }) => {
+        async ({ params, auth }) => {
+          requireOperator(auth);
           const version = await versionByCode(db, params.code);
           if (!version) return httpError(404, `Unknown version "${params.code}"`);
           const reviews = await db
@@ -617,7 +655,7 @@ export function createApp(database = createDatabase()) {
       // ---------------------------------------------------------------------
       .get(
         "/requirements/:id",
-        async ({ params, query }) => {
+        async ({ params, query, auth }) => {
           const candidates = await lookupRequirementIds(params.id);
           const conditions = [
             or(
@@ -626,9 +664,12 @@ export function createApp(database = createDatabase()) {
             )!,
           ];
           if (query.version) {
-            const version = await versionByCode(db, query.version);
-            if (!version) return httpError(404, `Unknown version "${query.version}"`);
+            const version = visibleVersion(await versionByCode(db, query.version), auth, query.version);
             conditions.push(eq(requirementVersions.standardVersionId, version.id));
+          }
+          if (publishedOnly(auth)) {
+            conditions.push(eq(standardVersions.status, "published"));
+            conditions.push(eq(requirementVersions.status, "published"));
           }
 
           const rows = await db
@@ -679,12 +720,15 @@ export function createApp(database = createDatabase()) {
 
       .get(
         "/documents",
-        async ({ query }) => {
+        async ({ query, auth }) => {
           const standardCodes = parseCodeList(query.standards);
           const conditions = [];
+          if (publishedOnly(auth)) {
+            conditions.push(eq(standardVersions.status, "published"));
+          }
           if (query.version) {
-            const version = await versionByCode(db, query.version);
-            if (version) conditions.push(eq(standardDocuments.standardVersionId, version.id));
+            const version = visibleVersion(await versionByCode(db, query.version), auth, query.version);
+            conditions.push(eq(standardDocuments.standardVersionId, version.id));
           }
           if (standardCodes.length) {
             conditions.push(inArray(standards.code, standardCodes));
@@ -743,12 +787,16 @@ export function createApp(database = createDatabase()) {
       // ---------------------------------------------------------------------
       .get(
         "/search",
-        async ({ query }) => {
+        async ({ query, auth }) => {
+          if (query.version) {
+            visibleVersion(await versionByCode(db, query.version), auth, query.version);
+          }
           const choice = await embedderForQuery(db);
           const result = await search(db, choice.embedder, query.q, {
             versionCode: query.version,
             limit: query.limit ? Number(query.limit) : 10,
             maxAuthorityLevel: query.normative === "true" ? 3 : undefined,
+            publishedOnly: publishedOnly(auth),
             chunkTypes:
               query.kind === "regulations"
                 ? ["section"]
@@ -812,6 +860,7 @@ export function createApp(database = createDatabase()) {
             userId: auth?.id,
             organizationId: auth?.orgId ?? undefined,
             siteId: siteId ?? undefined,
+            publishedOnly: publishedOnly(auth),
           });
 
           return {
@@ -912,6 +961,7 @@ export function createApp(database = createDatabase()) {
                   userId: auth?.id,
                   organizationId: auth?.orgId ?? undefined,
                   siteId: siteId ?? undefined,
+                  publishedOnly: publishedOnly(auth),
                 })) {
                   if (event.type === "start" && turn) {
                     send({
@@ -1015,4 +1065,12 @@ export async function versionByCode(db: ReturnType<typeof createDatabase>, code:
     .from(standardVersions)
     .where(eq(standardVersions.code, code));
   return version ?? null;
+}
+
+function visibleVersion<T extends { status: string }>(
+  version: T | null | undefined,
+  auth: AuthUser | null,
+  code: string,
+): T {
+  return assertPublishedVersion(version, !publishedOnly(auth), code);
 }

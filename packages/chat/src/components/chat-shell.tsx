@@ -52,6 +52,7 @@ export interface ChatShellProps {
 	siteOptions?: SelectOption[];
 	defaultSiteId?: string;
 	profileHref?: string;
+	scopeEditionLabels?: string[];
 	/** When true, the host owns conversation history (producer app sidebar). */
 	hideHistory?: boolean;
 	/** Open this conversation on mount / when the id changes. */
@@ -109,6 +110,7 @@ export function ChatShell({
 	siteOptions,
 	defaultSiteId,
 	profileHref,
+	scopeEditionLabels,
 	hideHistory = false,
 	conversationId,
 	onConversationId,
@@ -124,7 +126,11 @@ export function ChatShell({
 	const siteLabel = siteOptions?.find(
 		(option) => option.value === siteId,
 	)?.label;
-	const contextNote = farmContextNote({ organizationName, siteLabel });
+	const contextNote = farmContextNote({
+		organizationName,
+		siteLabel,
+		editionLabels: scopeEditionLabels,
+	});
 
 	const chat = useChat({
 		apiBase,

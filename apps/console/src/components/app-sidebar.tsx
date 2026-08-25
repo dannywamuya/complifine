@@ -3,16 +3,14 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  BookOpen,
   Calendar,
   Database,
   FileSearch,
+  FolderTree,
   GitCompare,
   LayoutDashboard,
-  ListChecks,
   Network,
   Radar,
-  ScrollText,
   Search,
   ShieldCheck,
   Stamp,
@@ -35,21 +33,42 @@ import { BrandLogo } from "@/components/brand-logo";
 const SIDEBAR_CLASS =
   "border-0 **:data-[slot=sidebar-inner]:overflow-hidden **:data-[slot=sidebar-inner]:rounded-2xl **:data-[slot=sidebar-inner]:ring-0";
 
-const LINKS = [
-  { href: "/", label: "Overview", icon: LayoutDashboard },
-  { href: "/graph", label: "Graph", icon: Network },
-  { href: "/ingest", label: "Ingest", icon: Database },
-  { href: "/versions", label: "Versions", icon: BookOpen },
-  { href: "/sources", label: "Sources", icon: ScrollText },
-  { href: "/criteria", label: "Criteria", icon: ListChecks },
-  { href: "/search", label: "Search", icon: Search },
-  { href: "/gates", label: "Gates", icon: ShieldCheck },
-  { href: "/review", label: "Review", icon: Stamp },
-  { href: "/diff", label: "Compare", icon: GitCompare },
-  { href: "/watch", label: "Watch", icon: Radar },
-  { href: "/demo", label: "Demos", icon: Calendar },
-  { href: "/audit", label: "Audit", icon: FileSearch },
-];
+const GROUPS = [
+  {
+    label: "Operate",
+    links: [{ href: "/", label: "Dashboard", icon: LayoutDashboard }],
+  },
+  {
+    label: "Knowledge",
+    links: [
+      { href: "/registry", label: "Catalog", icon: FolderTree },
+      { href: "/graph", label: "Map", icon: Network },
+      { href: "/search", label: "Search", icon: Search },
+      { href: "/diff", label: "Compare", icon: GitCompare },
+      { href: "/watch", label: "Watch", icon: Radar },
+    ],
+  },
+  {
+    label: "Pipeline",
+    links: [{ href: "/ingest", label: "Ingest", icon: Database }],
+  },
+  {
+    label: "Quality",
+    links: [
+      { href: "/gates", label: "Gates", icon: ShieldCheck },
+      { href: "/review", label: "Review & publish", icon: Stamp },
+    ],
+  },
+  {
+    label: "Operations",
+    links: [
+      { href: "/demo", label: "Demos", icon: Calendar },
+      { href: "/audit", label: "Audit", icon: FileSearch },
+    ],
+  },
+] as const;
+
+const CATALOG_PATHS = ["/registry", "/versions", "/sources", "/criteria"];
 
 export function AppSidebar() {
   const path = usePathname();
@@ -69,30 +88,34 @@ export function AppSidebar() {
         </Link>
       </SidebarHeader>
       <SidebarContent>
-        <SidebarGroup id="tour-sidebar">
-          <SidebarGroupLabel>Knowledge base</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {LINKS.map((link) => {
-                const Icon = link.icon;
-                const active =
-                  link.href === "/"
-                    ? path === "/"
-                    : path === link.href || path.startsWith(`${link.href}/`);
-                return (
-                  <SidebarMenuItem key={link.href}>
-                    <SidebarMenuButton asChild isActive={active} tooltip={link.label}>
-                      <Link href={link.href}>
-                        <Icon />
-                        <span>{link.label}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {GROUPS.map((group, index) => (
+          <SidebarGroup key={group.label} id={index === 0 ? "tour-sidebar" : undefined}>
+            <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {group.links.map((link) => {
+                  const Icon = link.icon;
+                  const active =
+                    link.href === "/"
+                      ? path === "/"
+                      : link.href === "/registry"
+                        ? CATALOG_PATHS.some((prefix) => path === prefix || path.startsWith(`${prefix}/`))
+                        : path === link.href || path.startsWith(`${link.href}/`);
+                  return (
+                    <SidebarMenuItem key={link.href}>
+                      <SidebarMenuButton asChild isActive={active} tooltip={link.label}>
+                        <Link href={link.href}>
+                          <Icon />
+                          <span>{link.label}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        ))}
       </SidebarContent>
       <SidebarRail />
     </Sidebar>

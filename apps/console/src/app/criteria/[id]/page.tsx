@@ -1,5 +1,6 @@
 import { api } from "@/lib/api";
 import { LevelBadge } from "@/components/level-badge";
+import { KbTrail } from "@/components/kb-trail";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 
@@ -27,8 +28,17 @@ export default async function CriterionPage({ params }: { params: Promise<{ id: 
   const decoded = decodeURIComponent(id);
   const data = await api<Detail>(`/requirements/${encodeURIComponent(decoded)}`);
 
+  const first = data.requirements[0];
+
   return (
     <div className="space-y-10">
+      <KbTrail
+        items={[
+          { href: "/registry", label: "Catalog" },
+          { href: first ? `/criteria?version=${encodeURIComponent(first.edition)}` : "/criteria", label: "Criteria" },
+          { label: decoded },
+        ]}
+      />
       {data.requirements.map((row) => (
         <article key={row.edition} className="max-w-3xl space-y-3">
           <p className="font-mono text-xs uppercase tracking-widest text-muted-foreground">

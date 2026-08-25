@@ -3,7 +3,6 @@ import type { ReactNode } from "react";
 import { BookOpen } from "lucide-react";
 import { LevelBadge } from "@/components/level-badge";
 import type { Citation, SearchHit } from "@/lib/chat";
-import { EDITIONS } from "@/lib/editions";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
@@ -106,7 +105,7 @@ function Group({ label, children }: { label: string; children: ReactNode }) {
 }
 
 function SourceHit({ hit }: { hit: SearchHit }) {
-  const edition = EDITIONS.find((item) => item.value === hit.edition)?.label ?? hit.edition;
+  const edition = hit.edition;
   const title = hit.criterion ?? hit.heading ?? hit.document;
   const inner = (
     <div

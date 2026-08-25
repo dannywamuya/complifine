@@ -47,7 +47,7 @@ export default async function AppCriterionPage({
         <BreadcrumbList>
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
-              <Link href="/app/criteria">Criteria</Link>
+              <Link href="/app/criteria">Catalog</Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />

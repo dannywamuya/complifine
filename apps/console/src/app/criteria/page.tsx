@@ -3,6 +3,7 @@ import { api } from "@/lib/api";
 import { certScopeFromCookie } from "@/lib/scope-server";
 import { scopeQuery } from "@/lib/scope";
 import { LevelBadge } from "@/components/level-badge";
+import { KbTrail } from "@/components/kb-trail";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -68,12 +69,22 @@ export default async function CriteriaPage({
     api<VersionDetail>(`/versions/${version}`),
   ]);
 
+  const current = catalog.versions.find((item) => item.code === version);
+
   return (
     <div className="space-y-6">
-      <div id="tour-criteria" className="w-fit max-w-full">
-        <p className="font-mono text-xs uppercase tracking-widest text-muted-foreground">{version}</p>
+      <div id="tour-criteria" className="w-fit max-w-full space-y-2">
+        <KbTrail
+          items={[
+            { href: "/registry", label: "Catalog" },
+            { href: `/registry?edition=${encodeURIComponent(version)}`, label: current?.name ?? version },
+            { label: "Criteria" },
+          ]}
+        />
         <h1 className="font-heading text-2xl font-medium">Criteria</h1>
-        <p className="text-sm text-muted-foreground">{data.total} rows</p>
+        <p className="text-sm text-muted-foreground">
+          {data.total} in {current?.name ?? version}. This is the fact table the agent cites.
+        </p>
       </div>
       <form className="flex flex-wrap gap-2" method="get">
         <Input name="q" defaultValue={params.q ?? ""} placeholder="Number or text" className="w-full min-w-0 sm:max-w-64" />

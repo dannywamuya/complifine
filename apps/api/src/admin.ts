@@ -7,7 +7,7 @@
 
 import { Elysia, t } from "elysia";
 import { alias } from "drizzle-orm/pg-core";
-import { and, asc, desc, eq, type Database } from "@complifine/db";
+import { and, asc, desc, eq, or, type Database } from "@complifine/db";
 import {
   auditLogs,
   ingestionEvents,
@@ -16,13 +16,14 @@ import {
   requirementVersions,
   standardVersions,
 } from "@complifine/db";
-import { requirementLevelLabel } from "@complifine/core";
+import { requirementLevelLabel, hasAiCredentials } from "@complifine/core";
 import {
   checkForDrift,
   linkEditions,
   storageUsage,
   type JobContext,
 } from "@complifine/ingestion";
+import { briefKnowledgeHealth } from "@complifine/ai";
 import { httpError } from "./errors.ts";
 import { readAuth, requireOperator } from "./auth/plugin.ts";
 import {
@@ -30,6 +31,7 @@ import {
   startIndex,
   startPipeline,
 } from "./pipeline.ts";
+import { knowledgeHealth } from "./kb-health.ts";
 
 function silentJob(): JobContext {
   return {
@@ -92,6 +94,39 @@ export function adminRoutes(db: Database) {
           query: t.Object({ limit: t.Optional(t.String()) }),
           detail: { summary: "Recent ingestion jobs" },
         },
+      )
+
+      .get(
+        "/kb/health",
+        async () => knowledgeHealth(db),
+        { detail: { summary: "Operator dashboard: pipeline health, gates, next actions" } },
+      )
+
+      .post(
+        "/kb/insight",
+        async () => {
+          if (!hasAiCredentials()) {
+            return httpError(
+              503,
+              "OPENAI_API_KEY is not set. The dashboard briefing is still available without it.",
+            );
+          }
+          const health = await knowledgeHealth(db);
+          const text = await briefKnowledgeHealth({
+            headline: health.briefing.headline,
+            paragraphs: health.briefing.paragraphs,
+            summary: health.summary,
+            nextActions: health.nextActions,
+            blockingGates: health.blockingGates,
+            failedJobs: health.failedJobs.map((job) => ({
+              stage: job.stage,
+              versionCode: job.versionCode,
+              error: job.error,
+            })),
+          });
+          return { text };
+        },
+        { detail: { summary: "Optional LLM briefing of knowledge-base health" } },
       )
 
       .get(
@@ -191,11 +226,15 @@ export function adminRoutes(db: Database) {
         async ({ query }) => {
           const from = query.from ?? "ifa-v6-smart-fv";
           const to = query.to ?? "ifa-v6-gfs-fv";
-          return linkEditions(db, silentJob(), {
-            smartVersionCode: from,
-            gfsVersionCode: to,
-            write: false,
-          });
+          try {
+            return await linkEditions(db, silentJob(), {
+              smartVersionCode: from,
+              gfsVersionCode: to,
+              write: false,
+            });
+          } catch (error) {
+            return httpError(409, error instanceof Error ? error.message : String(error));
+          }
         },
         {
           query: t.Object({
@@ -214,8 +253,17 @@ export function adminRoutes(db: Database) {
           const fromVer = alias(standardVersions, "from_version");
           const toVer = alias(standardVersions, "to_version");
           const conditions = [];
-          if (query.from) conditions.push(eq(fromVer.code, query.from));
-          if (query.to) conditions.push(eq(toVer.code, query.to));
+          if (query.from && query.to) {
+            conditions.push(
+              or(
+                and(eq(fromVer.code, query.from), eq(toVer.code, query.to)),
+                and(eq(fromVer.code, query.to), eq(toVer.code, query.from)),
+              ),
+            );
+          } else {
+            if (query.from) conditions.push(eq(fromVer.code, query.from));
+            if (query.to) conditions.push(eq(toVer.code, query.to));
+          }
 
           const rows = await db
             .select({

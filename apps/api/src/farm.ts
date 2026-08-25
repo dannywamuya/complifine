@@ -16,6 +16,7 @@ import {
 } from "@complifine/db";
 import { resolveChecklist } from "@complifine/ai";
 import { readAuth, requireOrg, requireUser, type AuthUser } from "./auth/plugin.ts";
+import { publishedOnly, assertPublishedVersion } from "./knowledge-access.ts";
 
 export function farmRoutes(db: Database) {
   return new Elysia({ name: "complifine-farm" })
@@ -37,7 +38,12 @@ export function farmRoutes(db: Database) {
         })
         .from(organizationScopes)
         .innerJoin(standardVersions, eq(standardVersions.id, organizationScopes.standardVersionId))
-        .where(eq(organizationScopes.organizationId, user.orgId));
+        .where(
+          and(
+            eq(organizationScopes.organizationId, user.orgId),
+            publishedOnly(user) ? eq(standardVersions.status, "published") : undefined,
+          ),
+        );
       return { organization: org ?? null, sites: orgSites, scopes, role: user.role };
     })
     .post(
@@ -86,11 +92,16 @@ export function farmRoutes(db: Database) {
       "/org/scopes",
       async ({ auth, body }) => {
         const user = requireOrg(auth);
-        const [version] = await db
-          .select()
-          .from(standardVersions)
-          .where(eq(standardVersions.code, body.versionCode));
-        if (!version) throw status(404, { error: "Unknown standard version" });
+        const version = assertPublishedVersion(
+          (
+            await db
+              .select()
+              .from(standardVersions)
+              .where(eq(standardVersions.code, body.versionCode))
+          )[0],
+          !publishedOnly(user),
+          body.versionCode,
+        );
         await db
           .insert(organizationScopes)
           .values({ organizationId: user.orgId, standardVersionId: version.id })
@@ -188,11 +199,16 @@ export function farmRoutes(db: Database) {
         .from(sites)
         .where(and(eq(sites.id, params.id), eq(sites.organizationId, user.orgId)));
       if (!site) throw status(404, { error: "Site not found" });
-      const [version] = await db
-        .select()
-        .from(standardVersions)
-        .where(eq(standardVersions.code, query.versionCode));
-      if (!version) throw status(404, { error: "Unknown standard version" });
+      const version = assertPublishedVersion(
+        (
+          await db
+            .select()
+            .from(standardVersions)
+            .where(eq(standardVersions.code, query.versionCode))
+        )[0],
+        !publishedOnly(user),
+        query.versionCode,
+      );
       const saved = await db
         .select({
           questionNumber: applicabilityQuestions.sourceNumber,
@@ -225,6 +241,7 @@ export function farmRoutes(db: Database) {
           controlId: controlRequirements.controlId,
           criterion: requirementVersions.sourceRequirementId,
           edition: standardVersions.code,
+          editionStatus: standardVersions.status,
         })
         .from(controlRequirements)
         .innerJoin(
@@ -232,6 +249,9 @@ export function farmRoutes(db: Database) {
           eq(requirementVersions.id, controlRequirements.requirementVersionId),
         )
         .innerJoin(standardVersions, eq(standardVersions.id, requirementVersions.standardVersionId));
+      const visibleMapped = publishedOnly(auth)
+        ? mapped.filter((row) => row.editionStatus === "published")
+        : mapped;
       const evidence = await db
         .select({
           controlId: controlEvidenceTypes.controlId,
@@ -243,7 +263,7 @@ export function farmRoutes(db: Database) {
       return {
         controls: library.map((control) => ({
           ...control,
-          requirements: mapped.filter((row) => row.controlId === control.id),
+          requirements: visibleMapped.filter((row) => row.controlId === control.id),
           evidence: evidence.filter((row) => row.controlId === control.id),
         })),
       };

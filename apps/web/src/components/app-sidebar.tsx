@@ -192,7 +192,7 @@ function AppSidebarInner() {
 			<SidebarContent>
 				<SidebarGroup>
 					<SidebarGroupContent>
-						<SidebarMenu className='space-y-0.5'>
+						<SidebarMenu>
 							<SidebarMenuItem>
 								<SidebarMenuButton
 									asChild
@@ -210,12 +210,12 @@ function AppSidebarInner() {
 								<SidebarMenuButton
 									asChild
 									isActive={onCriteria}
-									tooltip='Criteria'
+									tooltip='Catalog'
 									className='rounded-xl'
 									onClick={() => setOpenMobile(false)}>
 									<Link href='/app/criteria'>
 										<BookOpen />
-										<span>Criteria</span>
+										<span>Catalog</span>
 									</Link>
 								</SidebarMenuButton>
 							</SidebarMenuItem>

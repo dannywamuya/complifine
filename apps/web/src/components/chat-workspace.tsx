@@ -7,9 +7,8 @@ import { ChatShell } from "@complifine/chat";
 import { api, apiBase } from "@/lib/api";
 import { CONVERSATIONS_CHANGED } from "@/components/app-sidebar";
 import { APP_HEADER_ACTIONS_ID, APP_HEADER_EXTRA_ID } from "@/components/app-header";
-import { EDITIONS } from "@/lib/editions";
-import { SITE_TYPE_LABELS, type OrgPayload } from "@/lib/farm";
 import { ChatPageSkeleton } from "@/components/app-skeletons";
+import { SITE_TYPE_LABELS, type OrgPayload } from "@/lib/farm";
 
 const SUGGESTIONS = [
   "When can workers go back into a field after spraying?",
@@ -31,7 +30,7 @@ const EMPTY_FEATURES = [
   },
   {
     title: "Official sources",
-    body: "IFA v6 Smart and GFS, versioned.",
+    body: "Published editions only, versioned.",
     icon: <BookOpen className="size-4" aria-hidden />,
   },
   {
@@ -54,16 +53,25 @@ function ChatWorkspaceInner() {
   const params = useSearchParams();
   const conversationId = params.get("c");
   const [org, setOrg] = useState<OrgPayload | null>(null);
+  const [orgReady, setOrgReady] = useState(false);
 
   useEffect(() => {
     api<OrgPayload>("/org")
       .then(setOrg)
-      .catch(() => setOrg(null));
+      .catch(() => setOrg(null))
+      .finally(() => setOrgReady(true));
   }, []);
 
   const sites = org?.sites ?? [];
   const scopes = org?.scopes ?? [];
   const defaultVersion = scopes.length === 1 ? scopes[0]!.code : "all";
+  const versionOptions =
+    scopes.length === 0
+      ? undefined
+      : [
+          ...(scopes.length > 1 ? [{ value: "all", label: "All in your scope" }] : []),
+          ...scopes.map((scope) => ({ value: scope.code, label: scope.name })),
+        ];
   const siteOptions = useMemo(
     () =>
       sites.map((site) => ({
@@ -72,6 +80,8 @@ function ChatWorkspaceInner() {
       })),
     [sites],
   );
+
+  if (!orgReady) return <ChatPageSkeleton />;
 
   return (
     <ChatShell
@@ -91,11 +101,9 @@ function ChatWorkspaceInner() {
       emptyFeatures={EMPTY_FEATURES}
       modes={["answer"]}
       defaultVersion={defaultVersion}
-      versionOptions={[
-        { value: "all", label: "All versions" },
-        ...EDITIONS.map((item) => ({ value: item.value, label: item.label })),
-      ]}
+      versionOptions={versionOptions}
       organizationName={org?.organization?.name}
+      scopeEditionLabels={scopes.map((scope) => scope.name)}
       siteOptions={org ? siteOptions : undefined}
       defaultSiteId={sites[0]?.id}
       profileHref="/app/farm"

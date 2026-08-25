@@ -37,4 +37,13 @@ describe("farmContextNote", () => {
       "This question is about company Acme Fresh, site Naivasha packhouse. Use farm tools for that company and site.",
     );
   });
+
+  test("names published editions in the company's scope", () => {
+    expect(
+      farmContextNote({
+        organizationName: "Acme Fresh",
+        editionLabels: ["IFA v6 Smart", "IFA v6 GFS"],
+      }),
+    ).toContain("Cite only these published editions in the company's scope: IFA v6 Smart; IFA v6 GFS.");
+  });
 });

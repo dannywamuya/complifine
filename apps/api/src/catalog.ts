@@ -13,10 +13,16 @@ import {
   controls,
   requirementRelationships,
   requirementVersions,
+  standardDocuments,
   standardSections,
   standardVersions,
   standards,
 } from "@complifine/db";
+import {
+  AUTHORITY_LEVEL_LABELS,
+  DOCUMENT_TYPE_LABELS,
+  type AuthorityLevel,
+} from "@complifine/core";
 
 export function parseCodeList(raw: string | undefined): string[] {
   if (!raw) return [];
@@ -26,7 +32,10 @@ export function parseCodeList(raw: string | undefined): string[] {
     .filter(Boolean);
 }
 
-export async function listStandards(db: Database) {
+export async function listStandards(
+  db: Database,
+  options: { publishedOnly?: boolean } = {},
+) {
   const standardRows = await db.select().from(standards).orderBy(asc(standards.code));
   const versionRows = await db
     .select({
@@ -42,42 +51,111 @@ export async function listStandards(db: Database) {
       criteria: count(requirementVersions.id),
     })
     .from(standardVersions)
-    .leftJoin(requirementVersions, eq(requirementVersions.standardVersionId, standardVersions.id))
+    .leftJoin(
+      requirementVersions,
+      and(
+        eq(requirementVersions.standardVersionId, standardVersions.id),
+        options.publishedOnly ? eq(requirementVersions.status, "published") : undefined,
+      ),
+    )
+    .where(options.publishedOnly ? eq(standardVersions.status, "published") : undefined)
     .groupBy(standardVersions.id)
     .orderBy(asc(standardVersions.code));
 
+  const nested = standardRows.map((standard) => ({
+    id: standard.id,
+    code: standard.code,
+    name: standard.name,
+    publisher: standard.publisher,
+    description: standard.description,
+    homepageUrl: standard.homepageUrl,
+    versions: versionRows
+      .filter((version) => version.standardId === standard.id)
+      .map((version) => ({
+        id: version.id,
+        code: version.code,
+        name: version.name,
+        edition: version.edition,
+        version: version.version,
+        scope: version.scope,
+        status: version.status,
+        levelScheme: version.levelScheme,
+        criteria: Number(version.criteria),
+      })),
+  }));
+
   return {
-    standards: standardRows.map((standard) => ({
-      id: standard.id,
-      code: standard.code,
-      name: standard.name,
-      publisher: standard.publisher,
-      description: standard.description,
-      homepageUrl: standard.homepageUrl,
-      versions: versionRows
-        .filter((version) => version.standardId === standard.id)
-        .map((version) => ({
-          id: version.id,
-          code: version.code,
-          name: version.name,
-          edition: version.edition,
-          version: version.version,
-          scope: version.scope,
-          status: version.status,
-          levelScheme: version.levelScheme,
-          criteria: Number(version.criteria),
-        })),
+    standards: options.publishedOnly
+      ? nested.filter((standard) => standard.versions.length > 0)
+      : nested,
+  };
+}
+
+export async function registryTree(
+  db: Database,
+  options: { publishedOnly?: boolean; standardCodes?: string[] } = {},
+) {
+  const catalog = await listStandards(db, { publishedOnly: options.publishedOnly });
+  const standardsInView = options.standardCodes?.length
+    ? catalog.standards.filter((standard) => options.standardCodes!.includes(standard.code))
+    : catalog.standards;
+  const versionIds = standardsInView.flatMap((standard) => standard.versions.map((version) => version.id));
+
+  const documents =
+    versionIds.length === 0
+      ? []
+      : await db
+          .select({
+            slug: standardDocuments.slug,
+            title: standardDocuments.title,
+            type: standardDocuments.documentType,
+            authorityLevel: standardDocuments.authorityLevel,
+            edition: standardVersions.code,
+            sourceUrl: standardDocuments.sourceUrl,
+            pages: standardDocuments.pageCount,
+            status: standardDocuments.status,
+            sha256: standardDocuments.fileHash,
+          })
+          .from(standardDocuments)
+          .innerJoin(standardVersions, eq(standardVersions.id, standardDocuments.standardVersionId))
+          .where(inArray(standardDocuments.standardVersionId, versionIds))
+          .orderBy(asc(standardDocuments.authorityLevel), asc(standardDocuments.slug));
+
+  return {
+    standards: standardsInView.map((standard) => ({
+      ...standard,
+      versions: standard.versions.map((version) => ({
+        ...version,
+        documents: documents
+          .filter((document) => document.edition === version.code)
+          .map((document) => ({
+            slug: document.slug,
+            title: document.title,
+            type: DOCUMENT_TYPE_LABELS[document.type],
+            authority: AUTHORITY_LEVEL_LABELS[document.authorityLevel as AuthorityLevel],
+            edition: document.edition,
+            sourceUrl: document.sourceUrl,
+            pages: document.pages,
+            status: document.status,
+            sha256: options.publishedOnly ? null : document.sha256,
+            binding: (document.authorityLevel as AuthorityLevel) <= 3,
+          })),
+      })),
     })),
   };
 }
 
 export async function knowledgeGraph(
   db: Database,
-  options: { standardCodes?: string[]; detail?: "overview" | "sections" },
+  options: {
+    standardCodes?: string[];
+    detail?: "overview" | "sections";
+    publishedOnly?: boolean;
+  },
 ) {
   const wanted = options.standardCodes ?? [];
   const detail = options.detail ?? "overview";
-  const catalog = await listStandards(db);
+  const catalog = await listStandards(db, { publishedOnly: options.publishedOnly });
   const scopedStandards = wanted.length
     ? catalog.standards.filter((standard) => wanted.includes(standard.code))
     : catalog.standards;

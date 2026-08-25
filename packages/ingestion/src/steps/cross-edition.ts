@@ -46,6 +46,7 @@ export interface CrossEditionReport {
   readonly matched: number;
   readonly smartOnly: readonly string[];
   readonly gfsOnly: readonly string[];
+  readonly matches: readonly EditionDelta[];
   readonly escalations: readonly EditionDelta[];
   readonly relaxations: readonly EditionDelta[];
   readonly textChanges: readonly EditionDelta[];
@@ -101,6 +102,7 @@ export async function linkEditions(
   const escalations: EditionDelta[] = [];
   const relaxations: EditionDelta[] = [];
   const textChanges: EditionDelta[] = [];
+  const matches: EditionDelta[] = [];
   const smartOnly: string[] = [];
   let identicalTexts = 0;
   let written = 0;
@@ -136,6 +138,7 @@ export async function linkEditions(
       textChanged,
     };
 
+    matches.push(delta);
     if (levelChanged) (escalated ? escalations : relaxations).push(delta);
     if (textChanged) textChanges.push(delta);
 
@@ -165,6 +168,7 @@ export async function linkEditions(
     matched,
     smartOnly,
     gfsOnly,
+    matches,
     escalations,
     relaxations,
     textChanges,

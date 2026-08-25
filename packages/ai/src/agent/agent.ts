@@ -31,10 +31,15 @@ import type { Embedder } from "../embed/provider.ts";
 import { buildTools, type ToolContext } from "./tools.ts";
 import {
   extractCitations,
+  PUBLISHED_ONLY_ADDENDUM,
   SYSTEM_PROMPT,
   SYSTEM_PROMPT_HASH,
   type Citation,
 } from "./prompt.ts";
+
+function systemPromptFor(publishedOnly: boolean | undefined): string {
+  return publishedOnly ? `${SYSTEM_PROMPT}\n\n${PUBLISHED_ONLY_ADDENDUM}` : SYSTEM_PROMPT;
+}
 
 export interface AskOptions {
   readonly db: Database;
@@ -59,6 +64,11 @@ export interface AskOptions {
   readonly userId?: string;
   readonly organizationId?: string;
   readonly siteId?: string;
+  /**
+   * Restrict tools to published knowledge. Set for producer chat; leave unset
+   * so operators can inspect drafts in the console.
+   */
+  readonly publishedOnly?: boolean;
 }
 
 export interface ToolCallRecord {
@@ -175,6 +185,7 @@ export async function ask(question: string, options: AskOptions): Promise<AskRes
     organizationId: options.organizationId,
     siteId: options.siteId,
     userId: options.userId,
+    publishedOnly: options.publishedOnly,
     onCall: (call) => {
       toolCalls.push({ stepIndex: toolCalls.length, ...call });
       collectIdentifiers(call.result, retrievedIdentifiers);
@@ -203,7 +214,7 @@ export async function ask(question: string, options: AskOptions): Promise<AskRes
   try {
     const result = await generateText({
       model: openai(modelName),
-      system: SYSTEM_PROMPT,
+      system: systemPromptFor(options.publishedOnly),
       messages,
       tools: buildTools(toolContext),
       stopWhen: stepCountIs(options.maxSteps ?? DEFAULT_MAX_STEPS),
@@ -299,6 +310,7 @@ export async function* askStream(
     organizationId: options.organizationId,
     siteId: options.siteId,
     userId: options.userId,
+    publishedOnly: options.publishedOnly,
     onCall: (call) => {
       toolCalls.push({ stepIndex: toolCalls.length, ...call });
       collectIdentifiers(call.result, retrievedIdentifiers);
@@ -329,7 +341,7 @@ export async function* askStream(
   try {
     const result = streamText({
       model: openai(modelName),
-      system: SYSTEM_PROMPT,
+      system: systemPromptFor(options.publishedOnly),
       messages,
       tools: buildTools(toolContext),
       stopWhen: stepCountIs(options.maxSteps ?? DEFAULT_MAX_STEPS),

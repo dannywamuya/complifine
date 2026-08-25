@@ -117,15 +117,22 @@ const NON_SEMANTIC_WEIGHT = 0.25;
 const DEFAULT_LIMIT = 10;
 const DEFAULT_DEPTH = 40;
 
-async function resolveVersionId(db: Database, versionCode?: string): Promise<string | null> {
+async function resolveVersionId(
+  db: Database,
+  versionCode: string | undefined,
+  publishedOnly?: boolean,
+): Promise<string | null> {
   if (!versionCode) return null;
   const [version] = await db
-    .select({ id: standardVersions.id })
+    .select({ id: standardVersions.id, status: standardVersions.status })
     .from(standardVersions)
     .where(eq(standardVersions.code, versionCode));
 
-  if (!version) {
-    const known = await db.select({ code: standardVersions.code }).from(standardVersions);
+  if (!version || (publishedOnly && version.status !== "published")) {
+    const known = await db
+      .select({ code: standardVersions.code })
+      .from(standardVersions)
+      .where(publishedOnly ? eq(standardVersions.status, "published") : undefined);
     throw new Error(
       `Unknown version "${versionCode}". Known: ${known.map((v) => v.code).join(", ")}`,
     );
@@ -257,7 +264,7 @@ export async function search(
     return { strategy: "hybrid", hits: [], durationMs: 0, matchedIdentifier: null };
   }
 
-  const versionId = await resolveVersionId(db, options.versionCode);
+  const versionId = await resolveVersionId(db, options.versionCode, options.publishedOnly);
 
   let strategy: SearchStrategy = "hybrid";
   let hits: SearchHit[] = [];

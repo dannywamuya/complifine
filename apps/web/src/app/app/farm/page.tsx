@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Plus, Tractor, Warehouse } from "lucide-react";
 import { api, ApiError } from "@/lib/api";
-import { EDITIONS } from "@/lib/editions";
+import { usePublishedEditions } from "@/lib/editions";
 import { SITE_TYPE_LABELS, type FarmSite, type OrgPayload } from "@/lib/farm";
 import { CreateOrgForm } from "@/components/create-org-form";
 import { LevelBadge } from "@/components/level-badge";
@@ -56,13 +56,14 @@ export default function FarmPage() {
   const [data, setData] = useState<OrgPayload | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [siteId, setSiteId] = useState("");
-  const [version, setVersion] = useState("ifa-v6-smart-fv");
+  const [version, setVersion] = useState("");
   const [questions, setQuestions] = useState<Question[]>([]);
   const [answers, setAnswers] = useState<Record<string, "yes" | "no" | "unanswered">>({});
   const [result, setResult] = useState<Resolution | null>(null);
   const [pending, setPending] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
-  const [scopeCode, setScopeCode] = useState<string>(EDITIONS[0]?.value ?? "");
+  const [scopeCode, setScopeCode] = useState("");
+  const editions = usePublishedEditions();
 
   const refresh = useCallback(async () => {
     const payload = await api<OrgPayload>("/org");
@@ -72,12 +73,19 @@ export default function FarmPage() {
   }, []);
 
   useEffect(() => {
+    if (editions.length === 0) return;
+    setVersion((current) => current || editions[0]!.value);
+    setScopeCode((current) => current || editions[0]!.value);
+  }, [editions]);
+
+  useEffect(() => {
     refresh().catch((err) => {
       setError(err instanceof ApiError ? err.message : (err as Error).message);
     });
   }, [refresh]);
 
   useEffect(() => {
+    if (!version) return;
     api<{ questions: Question[] }>(`/versions/${version}/applicability`)
       .then((payload) => setQuestions(payload.questions))
       .catch(() => setQuestions([]));
@@ -268,7 +276,7 @@ export default function FarmPage() {
                       <SelectValue placeholder="Choose a version" />
                     </SelectTrigger>
                     <SelectContent>
-                      {EDITIONS.map((edition) => (
+                      {editions.map((edition) => (
                         <SelectItem key={edition.value} value={edition.value}>
                           {edition.label}
                         </SelectItem>
@@ -318,7 +326,7 @@ export default function FarmPage() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        {EDITIONS.map((edition) => (
+                        {editions.map((edition) => (
                           <SelectItem key={edition.value} value={edition.value}>
                             {edition.label}
                           </SelectItem>

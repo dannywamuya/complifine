@@ -237,6 +237,46 @@ export const VERSION_TRANSITIONS: Record<VersionStatus, readonly VersionStatus[]
   retired: [],
 };
 
+/** Operator-facing copy for the next honest action on a version. */
+export const VERSION_STATUS_GUIDANCE: Record<
+  VersionStatus,
+  { readonly headline: string; readonly detail: string }
+> = {
+  draft: {
+    headline: "Not ingested yet",
+    detail: "This edition is registered. Open Ingest and run Registry, then Fetch through Gates.",
+  },
+  ingesting: {
+    headline: "Ingest in progress",
+    detail: "Wait for the running job, then promote to extracted when parse has finished.",
+  },
+  extracted: {
+    headline: "Extracted — not live",
+    detail: "Criteria exist in the database but producers cannot see them. Run gates, then move to validation.",
+  },
+  validation: {
+    headline: "Waiting on quality gates",
+    detail: "Fix every blocking gate, then send the edition to review. Do not publish from here.",
+  },
+  review: {
+    headline: "Needs a named human decision",
+    detail: "Record approved, rejected, or changes requested. Publishing is blocked until there is an approval.",
+  },
+  approved: {
+    headline: "Approved — ready to publish",
+    detail: "A reviewer has signed off and blocking gates must still pass. Promote to published when producers should see this.",
+  },
+  published: {
+    headline: "Live",
+    detail: "Producers and the agent may cite this edition. Retire it to hide it again.",
+  },
+  retired: {
+    headline: "Retired",
+    detail: "Hidden from producers. This is a terminal state.",
+  },
+};
+
+
 export function canTransition(from: VersionStatus, to: VersionStatus): boolean {
   return VERSION_TRANSITIONS[from].includes(to);
 }

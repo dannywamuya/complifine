@@ -61,6 +61,11 @@ export interface ToolContext {
   readonly organizationId?: string;
   readonly siteId?: string;
   readonly userId?: string;
+  /**
+   * When true, tools refuse unpublished versions. Set for producer chat;
+   * unset for the operator console.
+   */
+  readonly publishedOnly?: boolean;
   /** Called for every tool invocation, for logging and for the UI. */
   readonly onCall?: (call: {
     name: string;
@@ -131,12 +136,17 @@ function instrument<A, R>(
   };
 }
 
-async function versionIdFor(db: Database, code: string): Promise<string> {
-  const [version] = await db
-    .select({ id: standardVersions.id })
+async function versionIdFor(context: ToolContext, code: string): Promise<string> {
+  const [version] = await context.db
+    .select({ id: standardVersions.id, status: standardVersions.status })
     .from(standardVersions)
     .where(eq(standardVersions.code, code));
   if (!version) throw new Error(`Unknown version "${code}".`);
+  if (context.publishedOnly && version.status !== "published") {
+    throw new Error(
+      `Version "${code}" is not published. Only published knowledge can be cited to producers.`,
+    );
+  }
   return version.id;
 }
 
@@ -188,6 +198,7 @@ export function buildTools(context: ToolContext) {
           chunkTypes: ["requirement"],
           limit: args.limit,
           maxAuthorityLevel: args.normativeOnly ? (3 as AuthorityLevel) : undefined,
+          publishedOnly: context.publishedOnly,
           agentRunId: context.agentRunId,
         });
 
@@ -230,8 +241,12 @@ export function buildTools(context: ToolContext) {
         const conditions = [inArray(requirementVersions.sourceRequirementId, identifiers)];
         if (args.versionCode) {
           conditions.push(
-            eq(requirementVersions.standardVersionId, await versionIdFor(db, args.versionCode)),
+            eq(requirementVersions.standardVersionId, await versionIdFor(context, args.versionCode)),
           );
+        }
+        if (context.publishedOnly) {
+          conditions.push(eq(standardVersions.status, "published"));
+          conditions.push(eq(requirementVersions.status, "published"));
         }
 
         const rows = await db
@@ -280,7 +295,7 @@ export function buildTools(context: ToolContext) {
         "Use to orient before drilling in, or to answer 'what does the standard cover'.",
       inputSchema: z.object({ versionCode: versionCodeSchema }),
       execute: instrument(context, "listSections", async (args) => {
-        const versionId = await versionIdFor(db, args.versionCode);
+        const versionId = await versionIdFor(context, args.versionCode);
 
         const rows = await db
           .select({
@@ -325,7 +340,7 @@ export function buildTools(context: ToolContext) {
           .describe("Section number as printed, e.g. 'FV 32', or just '32'."),
       }),
       execute: instrument(context, "getSection", async (args) => {
-        const versionId = await versionIdFor(db, args.versionCode);
+        const versionId = await versionIdFor(context, args.versionCode);
 
         // Sections are stored as the publisher prints them ("FV 32", "FV 32.10"),
         // but people say "32", "FV 32" and "section 32" interchangeably, and the
@@ -402,7 +417,7 @@ export function buildTools(context: ToolContext) {
         "wording for each exclusion.",
       inputSchema: z.object({ versionCode: versionCodeSchema }),
       execute: instrument(context, "getApplicability", async (args) => {
-        const versionId = await versionIdFor(db, args.versionCode);
+        const versionId = await versionIdFor(context, args.versionCode);
 
         const rows = await db
           .select({
@@ -450,7 +465,7 @@ export function buildTools(context: ToolContext) {
           .describe("Answers given. Unanswered questions are treated as 'yes', i.e. in scope."),
       }),
       execute: instrument(context, "filterChecklist", async (args) => {
-        const versionId = await versionIdFor(db, args.versionCode);
+        const versionId = await versionIdFor(context, args.versionCode);
         return resolveChecklist(db, versionId, args.answers);
       }),
     }),
@@ -501,6 +516,7 @@ export function buildTools(context: ToolContext) {
             standardVersions,
             eq(standardVersions.id, requirementVersions.standardVersionId),
           )
+          .where(context.publishedOnly ? eq(standardVersions.status, "published") : undefined)
           .groupBy(standardVersions.code)
           .orderBy(asc(standardVersions.code));
 
@@ -537,6 +553,7 @@ export function buildTools(context: ToolContext) {
           chunkTypes: ["section"],
           limit: args.limit,
           maxAuthorityLevel: 2 as AuthorityLevel,
+          publishedOnly: context.publishedOnly,
           agentRunId: context.agentRunId,
         });
 
@@ -573,11 +590,14 @@ export function buildTools(context: ToolContext) {
         const conditions = [];
         if (args.versionCode) {
           conditions.push(
-            eq(standardDocuments.standardVersionId, await versionIdFor(db, args.versionCode)),
+            eq(standardDocuments.standardVersionId, await versionIdFor(context, args.versionCode)),
           );
         }
         if (args.documentType) {
           conditions.push(eq(standardDocuments.documentType, args.documentType as DocumentType));
+        }
+        if (context.publishedOnly) {
+          conditions.push(eq(standardVersions.status, "published"));
         }
 
         const rows = await db
@@ -629,7 +649,12 @@ export function buildTools(context: ToolContext) {
           })
           .from(organizationScopes)
           .innerJoin(standardVersions, eq(standardVersions.id, organizationScopes.standardVersionId))
-          .where(eq(organizationScopes.organizationId, orgId));
+          .where(
+            and(
+              eq(organizationScopes.organizationId, orgId),
+              context.publishedOnly ? eq(standardVersions.status, "published") : undefined,
+            ),
+          );
         return {
           organization: {
             name: org.name,
@@ -722,7 +747,7 @@ export function buildTools(context: ToolContext) {
           .from(sites)
           .where(and(eq(sites.id, siteId), eq(sites.organizationId, orgId)));
         if (!site) throw new Error("That site is not in this organisation.");
-        const versionId = await versionIdFor(db, args.versionCode);
+        const versionId = await versionIdFor(context, args.versionCode);
         const saved = await db
           .select({
             questionNumber: applicabilityQuestions.sourceNumber,
@@ -794,7 +819,12 @@ export function buildTools(context: ToolContext) {
             eq(requirementVersions.id, controlRequirements.requirementVersionId),
           )
           .innerJoin(standardVersions, eq(standardVersions.id, requirementVersions.standardVersionId))
-          .where(eq(controlRequirements.controlId, control.id));
+          .where(
+            and(
+              eq(controlRequirements.controlId, control.id),
+              context.publishedOnly ? eq(standardVersions.status, "published") : undefined,
+            ),
+          );
 
         if (mapped.length === 0) {
           return {

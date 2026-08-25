@@ -16,10 +16,18 @@ export function rewriteAskQuestion(input: {
 export function farmContextNote(input: {
   organizationName?: string;
   siteLabel?: string;
+  editionLabels?: readonly string[];
 }): string | undefined {
   const bits: string[] = [];
   if (input.organizationName?.trim()) bits.push(`company ${input.organizationName.trim()}`);
   if (input.siteLabel?.trim()) bits.push(`site ${input.siteLabel.trim()}`);
-  if (bits.length === 0) return undefined;
-  return `This question is about ${bits.join(", ")}. Use farm tools for that company and site.`;
+  const editions = (input.editionLabels ?? []).map((label) => label.trim()).filter(Boolean);
+  if (bits.length === 0 && editions.length === 0) return undefined;
+  const about = bits.length > 0 ? `This question is about ${bits.join(", ")}.` : "";
+  const scope =
+    editions.length > 0
+      ? `Cite only these published editions in the company's scope: ${editions.join("; ")}.`
+      : "";
+  const farm = bits.length > 0 ? " Use farm tools for that company and site." : "";
+  return `${about}${about && scope ? " " : ""}${scope}${farm}`.trim();
 }

@@ -1,8 +1,11 @@
 import { api } from "@/lib/api";
 import { certScopeFromCookie } from "@/lib/scope-server";
 import { scopeQuery } from "@/lib/scope";
+import { RefreshGatesButton } from "@/components/refresh-gates-button";
+import { KbTrail } from "@/components/kb-trail";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   Table,
   TableBody,
@@ -11,6 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Gates" };
@@ -26,6 +30,7 @@ interface GateReport {
     passed: boolean;
     expected: string | null;
     actual: string | null;
+    failures?: unknown[];
   }>;
 }
 
@@ -54,35 +59,68 @@ export default async function GatesPage({
 
   const report = await api<GateReport>(`/versions/${version}/gates`);
 
+  const current = catalog.versions.find((item) => item.code === version);
+
   return (
     <div className="space-y-6">
-      <div id="tour-gates" className="w-fit max-w-full">
-        <p className="font-mono text-xs uppercase tracking-widest text-muted-foreground">{version}</p>
+      <div id="tour-gates" className="w-fit max-w-3xl space-y-2">
+        <KbTrail
+          items={[
+            { href: "/registry", label: "Catalog" },
+            { href: `/registry?edition=${encodeURIComponent(version)}`, label: current?.name ?? version },
+            { label: "Gates" },
+          ]}
+        />
         <h1 className="font-heading text-2xl font-medium">Quality gates</h1>
-        <p className="mt-1">
+        <p className="text-sm text-muted-foreground">
+          Numbers the publisher stated independently of our parse. This edition cannot be published
+          while a blocking gate fails.
+        </p>
+        <div className="flex flex-wrap items-center gap-2">
           {report.passed ? (
             <Badge>all blocking passed</Badge>
           ) : (
             <Badge variant="destructive">{report.blockingFailures} blocking failures</Badge>
           )}
-        </p>
+          {report.advisoryFailures > 0 ? (
+            <Badge variant="outline">{report.advisoryFailures} advisory</Badge>
+          ) : null}
+        </div>
       </div>
-      <form className="flex gap-2" method="get">
-        <select
-          name="version"
-          defaultValue={version}
-          className="h-8 rounded-lg border border-input bg-background px-2.5 text-sm"
-        >
-          {catalog.versions.map((item) => (
-            <option key={item.code} value={item.code}>
-              {item.name}
-            </option>
-          ))}
-        </select>
-        <Button type="submit" variant="outline" size="sm">
-          Show
+      {!report.passed ? (
+        <Alert variant="destructive">
+          <AlertTitle>Publishing is blocked</AlertTitle>
+          <AlertDescription>
+            Fix ingest (re-parse) rather than editing rows, then re-run.{" "}
+            <Link href={`/review?version=${version}`} className="underline underline-offset-4">
+              Go to review
+            </Link>{" "}
+            only after blocking gates pass.
+          </AlertDescription>
+        </Alert>
+      ) : null}
+      <div className="flex flex-wrap items-center gap-2">
+        <form className="flex gap-2" method="get">
+          <select
+            name="version"
+            defaultValue={version}
+            className="h-8 rounded-lg border border-input bg-background px-2.5 text-sm"
+          >
+            {catalog.versions.map((item) => (
+              <option key={item.code} value={item.code}>
+                {item.name}
+              </option>
+            ))}
+          </select>
+          <Button type="submit" variant="outline" size="sm">
+            Show
+          </Button>
+        </form>
+        <RefreshGatesButton version={version} />
+        <Button asChild variant="outline" size="sm">
+          <Link href={`/registry?edition=${encodeURIComponent(version)}`}>Catalog</Link>
         </Button>
-      </form>
+      </div>
       <Table>
         <TableHeader>
           <TableRow>

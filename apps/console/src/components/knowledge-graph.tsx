@@ -50,7 +50,7 @@ const TOP = 28;
 
 const KIND_LABEL: Record<GraphKind, string> = {
   standard: "Certification",
-  version: "Version",
+  version: "Edition",
   control: "Control",
   section: "Section",
 };
@@ -133,7 +133,7 @@ export function KnowledgeGraph({ data }: { data: GraphPayload }) {
   };
 
   function open(node: GraphNode) {
-    if (node.kind === "version") router.push(`/versions/${node.code}`);
+    if (node.kind === "version") router.push(`/registry?edition=${encodeURIComponent(node.code)}`);
     if (node.kind === "section" && node.versionCode) {
       router.push(`/criteria?version=${encodeURIComponent(node.versionCode)}`);
     }
@@ -267,7 +267,7 @@ function HoverCard({
         <>
           {" "}
           ·{" "}
-          <Link className="underline" href={`/versions/${node.code}`}>
+          <Link className="underline" href={`/registry?edition=${encodeURIComponent(node.code)}`}>
             open version
           </Link>
         </>

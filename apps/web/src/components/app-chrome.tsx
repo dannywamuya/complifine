@@ -126,7 +126,7 @@ export function AppChrome({
 					<SidebarTrigger className='rounded-xl' />
 					<Separator orientation='vertical' className='h-4' />
 					<p className='shrink-0 truncate text-sm font-medium tracking-tight'>
-						{onCriteria ? 'Criteria' : onFarm ? 'Farm profile' : 'Chat'}
+						{onCriteria ? 'Catalog' : onFarm ? 'Farm profile' : 'Chat'}
 					</p>
 					<div
 						id={APP_HEADER_EXTRA_ID}

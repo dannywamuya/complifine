@@ -40,6 +40,25 @@ describe("certification catalog", () => {
     expect(kinds.has("standard") || body.nodes.length === 0).toBe(true);
   });
 
+  test("GET /registry nests documents under editions", async () => {
+    if (!(await databaseReachable())) return;
+    const { status, body } = await json("/registry");
+    expect(status).toBe(200);
+    expect(Array.isArray(body.standards)).toBe(true);
+    for (const standard of body.standards) {
+      expect(typeof standard.code).toBe("string");
+      expect(Array.isArray(standard.versions)).toBe(true);
+      for (const version of standard.versions) {
+        expect(version.status).toBe("published");
+        expect(Array.isArray(version.documents)).toBe(true);
+        for (const document of version.documents) {
+          expect(typeof document.slug).toBe("string");
+          expect(typeof document.binding).toBe("boolean");
+        }
+      }
+    }
+  });
+
   test("GET /versions accepts a standards filter", async () => {
     if (!(await databaseReachable())) return;
     const all = await json("/standards");

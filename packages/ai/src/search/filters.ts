@@ -24,6 +24,11 @@ export interface SearchFilters {
    */
   readonly maxAuthorityLevel?: AuthorityLevel;
   readonly sectionId?: string;
+  /**
+   * Members and the public agent may only retrieve `published` knowledge.
+   * Operators (console search) omit this so they can inspect a draft.
+   */
+  readonly publishedOnly?: boolean;
 }
 
 /**
@@ -62,6 +67,12 @@ export function filterConditions(
 
   if (filters.levels?.length) {
     conditions.push(sql`${requirement}.level IN (${valueList(filters.levels)})`);
+  }
+
+  if (filters.publishedOnly) {
+    // `sv` is the standard_versions alias in every retriever SQL.
+    conditions.push(sql`sv.status = 'published'`);
+    conditions.push(sql`(${requirement}.id IS NULL OR ${requirement}.status = 'published')`);
   }
 
   return conditions;

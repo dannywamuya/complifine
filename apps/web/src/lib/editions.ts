@@ -1,8 +1,40 @@
-export const EDITIONS = [
-  { value: "ifa-v6-smart-fv", label: "IFA v6 Smart" },
-  { value: "ifa-v6-gfs-fv", label: "IFA v6 GFS" },
-  { value: "smeta-7-2-pillar", label: "SMETA 7.0 2-pillar" },
-  { value: "smeta-7-4-pillar", label: "SMETA 7.0 4-pillar" },
-] as const;
+"use client";
 
-export type EditionCode = (typeof EDITIONS)[number]["value"];
+import { useEffect, useState } from "react";
+import { api } from "@/lib/api";
+
+export interface EditionOption {
+  value: string;
+  label: string;
+}
+
+interface Catalog {
+  standards: Array<{
+    versions: Array<{ code: string; name: string; status: string }>;
+  }>;
+}
+
+export function usePublishedEditions(): EditionOption[] {
+  const [editions, setEditions] = useState<EditionOption[]>([]);
+
+  useEffect(() => {
+    api<Catalog>("/standards")
+      .then((data) => {
+        setEditions(
+          data.standards.flatMap((standard) =>
+            standard.versions.map((version) => ({
+              value: version.code,
+              label: version.name,
+            })),
+          ),
+        );
+      })
+      .catch(() => setEditions([]));
+  }, []);
+
+  return editions;
+}
+
+export function editionLabel(code: string, editions: readonly EditionOption[]): string {
+  return editions.find((item) => item.value === code)?.label ?? code;
+}
