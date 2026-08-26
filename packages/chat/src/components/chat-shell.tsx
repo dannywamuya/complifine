@@ -35,6 +35,7 @@ export interface ChatShellProps {
 	emptyBody?: string;
 	emptyGreeting?: string;
 	emptyFeatures?: EmptyFeature[];
+	emptyBlobLines?: string[];
 	suggestions?: string[];
 	versionOptions?: SelectOption[];
 	kindOptions?: SelectOption[];
@@ -93,6 +94,7 @@ export function ChatShell({
 	emptyBody = '',
 	emptyGreeting,
 	emptyFeatures,
+	emptyBlobLines,
 	suggestions = DEFAULT_SUGGESTIONS,
 	versionOptions,
 	kindOptions,
@@ -367,9 +369,7 @@ export function ChatShell({
 										onExport={() => chat.exportActive('markdown')}
 										artifactOpen={chat.artifactOpen}
 										artifactCount={artifacts.length}
-										onArtifacts={() =>
-											chat.setArtifactOpen((value) => !value)
-										}
+										onArtifacts={() => chat.setArtifactOpen((value) => !value)}
 									/>,
 									actionsTarget,
 								)
@@ -378,10 +378,7 @@ export function ChatShell({
 				) : (
 					<header className='shrink-0 border-b border-(--cf-border)'>
 						<div
-							className={cn(
-								GUTTER,
-								'flex h-14 flex-row items-center gap-2',
-							)}>
+							className={cn(GUTTER, 'flex h-14 flex-row items-center gap-2')}>
 							{!showHostedHistory &&
 							(drawerSidebar || chat.sidebarCollapsed) ? (
 								<IconButton
@@ -430,9 +427,7 @@ export function ChatShell({
 									onExport={() => chat.exportActive('markdown')}
 									artifactOpen={chat.artifactOpen}
 									artifactCount={artifacts.length}
-									onArtifacts={() =>
-										chat.setArtifactOpen((value) => !value)
-									}
+									onArtifacts={() => chat.setArtifactOpen((value) => !value)}
 								/>
 							</div>
 						</div>
@@ -452,6 +447,7 @@ export function ChatShell({
 						emptyBody={emptyBody}
 						emptyGreeting={emptyGreeting}
 						emptyFeatures={emptyFeatures}
+						emptyBlobLines={emptyBlobLines}
 						onSelectBranch={(id) => void chat.selectBranch(id)}
 						onCycleBranch={chat.cycleBranch}
 						onEdit={chat.editAndResubmit}
@@ -598,12 +594,19 @@ function ChatToolButtons({
 					label={sourcesOpen ? 'Hide sources' : 'Show sources'}
 					onClick={onSources}
 					className={
-						sourcesOpen || sourceCount > 0 ? 'text-(--cf-accent-text)' : undefined
+						sourcesOpen || sourceCount > 0
+							? 'overflow-visible text-(--cf-accent-text)'
+							: 'overflow-visible'
 					}>
 					<span className='relative inline-flex'>
 						<BookOpen className='size-4' />
 						{sourceCount > 0 ? (
-							<span className='absolute -top-1.5 -right-1.5 min-w-3.5 rounded-full bg-(--cf-accent) px-1 py-px text-[9px] leading-none font-medium text-(--cf-accent-fg)'>
+							<span
+								className='absolute -top-1.5 -right-2.5 z-10 inline-flex h-3 min-w-3 items-center justify-center rounded-full px-1 text-[10px] font-semibold leading-none ring-2 ring-card'
+								style={{
+									backgroundColor: 'var(--cf-accent, var(--brand, #9ae19d))',
+									color: 'var(--cf-accent-fg, #121412)',
+								}}>
 								{sourceCount}
 							</span>
 						) : null}
@@ -667,7 +670,9 @@ function ContextChip({
 					</span>
 				) : null}
 				{organizationName && siteOptions && siteOptions.length > 0 ? (
-					<span className='hidden px-1.5 text-(--cf-fg-subtle) sm:inline' aria-hidden>
+					<span
+						className='hidden px-1.5 text-(--cf-fg-subtle) sm:inline'
+						aria-hidden>
 						·
 					</span>
 				) : null}

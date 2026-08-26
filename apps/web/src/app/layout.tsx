@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 		template: '%s · CompliFine',
 	},
 	description:
-		'Know what GLOBALG.A.P. IFA v6 and SMETA 7 require at your sites. Answers cite the published standard.',
+		'The first Intelligent Compliance OS for horticulture in Kenya. AI cites GLOBALG.A.P. IFA v6 and SMETA 7.0 — so you save time and cost before the next audit.',
 	icons: {
 		icon: [
 			{ url: '/favicon.ico' },

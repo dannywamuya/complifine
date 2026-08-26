@@ -28,7 +28,7 @@ export function AnswerArticle({
       {summary ? (
         <section className="rounded-2xl border border-celadon-900/10 bg-celadon-50/70 px-5 py-4">
           <p className="text-[11px] font-medium tracking-[0.16em] text-celadon-800 uppercase">
-            At a glance
+            In short
           </p>
           <div className="mt-2 text-lg leading-snug text-graphite-900">
             <Prose text={summary} />
@@ -40,7 +40,7 @@ export function AnswerArticle({
       {detail ? (
         <section className="space-y-2">
           <p className="text-[11px] font-medium tracking-[0.16em] text-muted-foreground uppercase">
-            What the standard says
+            From the standard
           </p>
           <div className="text-[15px] leading-relaxed text-graphite-800">
             <Prose text={detail} />
@@ -52,7 +52,7 @@ export function AnswerArticle({
       {practical ? (
         <section className="rounded-2xl bg-grey-olive-50/80 px-5 py-4 ring-1 ring-graphite-950/5">
           <p className="text-[11px] font-medium tracking-[0.16em] text-muted-foreground uppercase">
-            What this means
+            On site
           </p>
           <div className="mt-2 text-[15px] leading-relaxed text-graphite-800">
             <Prose text={practical} />

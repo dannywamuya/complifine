@@ -18,16 +18,16 @@ const CITATIONS = [
 
 const SLIDES = [
   {
-    heading: "Know what applies at your sites.",
-    body: "Cited answers from GLOBALG.A.P. IFA v6 and SMETA 7.0 — not a chatbot over PDFs.",
+    heading: "Save hours before every audit.",
+    body: "The first Intelligent Compliance OS for horticulture in Kenya. AI cites GLOBALG.A.P. and SMETA — not a chatbot over PDFs.",
   },
   {
-    heading: "Scope the site, then ask.",
-    body: "Official scoping questions decide which criteria apply. Every answer points at the published source.",
+    heading: "Know what applies at your site.",
+    body: "Answer a few yes/no questions. Chat then treats a packhouse differently from a field.",
   },
   {
-    heading: "From scramble to continuous.",
-    body: "Turn annual audit-prep into operational compliance — with versioned knowledge your team can use.",
+    heading: "Walk in ready — not re-reading the PDF.",
+    body: "Cited answers you can open. Spend less on last-minute consultants hunting clause numbers.",
   },
 ];
 
@@ -76,7 +76,7 @@ function ProductCollage() {
     <div className="relative mx-auto h-[22rem] w-full max-w-[28rem]">
       <div className="absolute top-0 left-0 z-20 w-[16.5rem] rounded-2xl border border-white/10 bg-grey-olive-50 p-4 text-graphite-900 shadow-[0_24px_48px_-20px_rgb(0_0_0_/_0.55)]">
         <p className="text-[11px] font-medium tracking-[0.16em] text-iron-grey-500 uppercase">
-          At a glance
+          In short
         </p>
         <p className="mt-2 text-sm leading-snug">
           Packhouse hygiene is a Major Must — procedures, facilities, and a

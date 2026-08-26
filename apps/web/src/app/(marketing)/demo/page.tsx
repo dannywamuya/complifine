@@ -59,8 +59,8 @@ export default function DemoPage() {
           Book a demo
         </h1>
         <p className="mt-2 max-w-[65ch] text-muted-foreground">
-          We work with Kenyan horticultural exporters preparing for GLOBALG.A.P. and
-          SMETA. Tell us which sites you run and which buyers you sell to.
+          If you are preparing for GLOBALG.A.P. and SMETA, tell us which sites
+          you run and which buyers you sell to.
         </p>
       </div>
 

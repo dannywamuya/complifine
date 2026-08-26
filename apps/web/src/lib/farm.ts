@@ -43,8 +43,8 @@ export const SITE_TYPE_LABELS: Record<string, string> = {
 };
 
 export const SITE_TYPE_HELP: Record<string, string> = {
-  farm: "Growing and harvest. Scoping answers here are about the fields.",
-  packhouse: "Packing, grading, or processing. Different rules often apply than at a growing site.",
+  farm: "Fields and harvest. Rules here are about growing, not packing.",
+  packhouse: "Where produce is packed or graded. Often a different checklist than the field.",
   collection_centre: "A hub that receives produce from growing sites.",
   warehouse: "Storage before dispatch.",
 };

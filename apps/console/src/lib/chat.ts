@@ -57,7 +57,7 @@ export interface AnswerSections {
 
 const HEADING = /^##\s+(.+?)\s*$/;
 const SUMMARY_TITLE = /^(at a glance|summary|in short)$/i;
-const DETAIL_TITLE = /^(what the standard says|the standard|detail|details)$/i;
+const DETAIL_TITLE = /^(what the standard says|from the standard|the standard|detail|details)$/i;
 const PRACTICAL_TITLE = /^(what this means|on the farm|on site|in practice)$/i;
 
 /** Keep in step with `parseAnswerSections` in packages/ai/src/agent/prompt.ts. */

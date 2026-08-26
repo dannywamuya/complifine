@@ -28,7 +28,7 @@ function LoginForm() {
   const next = safeNext(params.get("next"));
 
   return (
-    <AuthShell title="Sign in to CompliFine" description="Producer accounts use this workspace.">
+    <AuthShell title="Sign in to CompliFine" description="Ask what applies at your sites — in your own words.">
       <form
         className="space-y-4"
         onSubmit={async (event) => {

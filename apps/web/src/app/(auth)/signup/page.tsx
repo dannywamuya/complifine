@@ -20,7 +20,7 @@ export default function SignupPage() {
   return (
     <AuthShell
       title="Create a producer account"
-      description="This creates your company. Next you will choose certifications and add a site."
+      description="Set up your company, then start asking. AI cites the published standard."
       slide={1}
     >
       <form

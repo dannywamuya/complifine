@@ -14,6 +14,9 @@ export interface ScopingQuestion {
   affected: number;
 }
 
+export const SCOPING_WHY =
+  "These yes/no questions turn parts of the checklist on or off for your site, so Chat does not treat your packhouse like a field.";
+
 export function ScopingQuestionList({
   questions,
   answers,
@@ -32,7 +35,7 @@ export function ScopingQuestionList({
           </p>
           {question.affected ? (
             <p className="mt-1 text-xs text-muted-foreground">
-              {question.affected} criteria depend on this answer
+              {question.affected} {question.affected === 1 ? "rule" : "rules"} depend on this
             </p>
           ) : null}
           <RadioGroup

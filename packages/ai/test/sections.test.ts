@@ -30,6 +30,25 @@ describe("parseAnswerSections", () => {
     expect(parsed.practical).toBe("");
   });
 
+  test("also splits the casual heading names", () => {
+    const parsed = parseAnswerSections(
+      [
+        "## In short",
+        "Re-entry after spraying is a Major Must.",
+        "",
+        "## From the standard",
+        "Procedures must be in place [FV-Smart 32.10.06].",
+        "",
+        "## On site",
+        "Keep people out of the field until the label interval has passed.",
+      ].join("\n"),
+    );
+
+    expect(parsed.summary).toContain("Major Must");
+    expect(parsed.detail).toContain("FV-Smart 32.10.06");
+    expect(parsed.practical).toContain("Keep people out");
+  });
+
   test("tolerates a half-written stream that only has the summary heading", () => {
     const parsed = parseAnswerSections("## At a glance\nYou must");
     expect(parsed.summary).toBe("You must");

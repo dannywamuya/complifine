@@ -16,7 +16,8 @@ import {
 } from "@/lib/farm";
 import { markTourPending } from "@/lib/onboarding";
 import { CreateOrgForm } from "@/components/create-org-form";
-import { ScopingQuestionList, type ScopingQuestion } from "@/components/scoping-questions";
+import { EditionCardsSkeleton, ScopingListSkeleton } from "@/components/app-skeletons";
+import { ScopingQuestionList, SCOPING_WHY, type ScopingQuestion } from "@/components/scoping-questions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -122,7 +123,7 @@ export function SetupWizard({ initial }: { initial: OrgPayload }) {
 
   async function saveCerts() {
     if (selectedCodes.length === 0) {
-      setError("Choose at least one published certification. Chat will only cite these.");
+      setError("Pick at least one certification. Chat will only cite these.");
       return;
     }
     setPending(true);
@@ -143,7 +144,7 @@ export function SetupWizard({ initial }: { initial: OrgPayload }) {
   async function saveSite() {
     const name = siteName.trim();
     if (!name) {
-      setError("Name this site. That is the place scoping answers belong to.");
+      setError("Give your site a name — that is the place the answers belong to.");
       return;
     }
     setPending(true);
@@ -170,7 +171,7 @@ export function SetupWizard({ initial }: { initial: OrgPayload }) {
 
   async function finish() {
     if (questionCount > 0 && unanswered.length > 0) {
-      setError(`Answer every question for this site (${unanswered.length} left).`);
+      setError(`Answer every question for your site (${unanswered.length} left).`);
       return;
     }
     setPending(true);
@@ -212,17 +213,17 @@ export function SetupWizard({ initial }: { initial: OrgPayload }) {
           {step === 0 && "Your company"}
           {step === 1 && "Which certifications?"}
           {step === 2 && "Add a site"}
-          {step === 3 && "What applies at this site?"}
+          {step === 3 && "What applies at your site?"}
         </h1>
         <p className="max-w-lg text-base leading-relaxed text-muted-foreground">
           {step === 0 &&
-            "The company is the legal entity that holds certificates. Sites belong to it — they are not the same thing."}
+            "This is the name on the certificate. Sites (fields, packhouses) sit under it — you will add those next."}
           {step === 1 &&
-            "Chat and the catalog will only cite the published editions you attach here. You can add more later."}
+            "Chat and Catalog will only cite the editions you pick here. You can add more later."}
           {step === 2 &&
-            "A site is a place this company operates. Choose a type: growing, packing, collection, or storage. Scoping answers are stored per site, because two sites often answer differently."}
+            "A site is a place this company operates. Growing, packing, collection, or storage — pick the type that matches. Yes/no answers are stored per site, because two sites often differ."}
           {step === 3 &&
-            `Answer for ${siteName.trim() || "this site"}, not the whole company. Official questions are rephrased as “Do you…”.`}
+            `Answer for ${siteName.trim() || "your site"}, not the whole company.`}
         </p>
       </header>
 
@@ -241,7 +242,7 @@ export function SetupWizard({ initial }: { initial: OrgPayload }) {
                 {org.sedexZc ? ` · Sedex ${org.sedexZc}` : ""}
               </p>
               <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
-                This name is the company. Next you will choose certifications, then add a site.
+                This name is the company. Next: certifications, then a site.
               </p>
             </div>
             <div className="flex justify-end">
@@ -267,10 +268,10 @@ export function SetupWizard({ initial }: { initial: OrgPayload }) {
         <div className="space-y-6">
           <div className="space-y-4">
             {catalog.loading ? (
-              <p className="text-sm text-muted-foreground">Loading published editions…</p>
+              <EditionCardsSkeleton />
             ) : catalog.standards.length === 0 ? (
               <p className="text-sm text-muted-foreground">
-                No published editions are live yet. An operator has to publish before you can attach
+                No published editions are live yet. An operator has to publish them before you can attach
                 them.
               </p>
             ) : (
@@ -406,16 +407,17 @@ export function SetupWizard({ initial }: { initial: OrgPayload }) {
         <div className="space-y-6">
           <p className="text-sm text-muted-foreground">
             {questionGroups.length === 1
-              ? `Questions for ${questionGroups[0]!.label}.`
+              ? `Questions for ${questionGroups[0]!.label}. `
               : questionGroups.length > 1
-                ? "Questions for each certification you attached. Answers are stored on this site."
-                : "Questions for the certifications you chose."}
+                ? "Questions for each certification you attached. Answers are stored on your site. "
+                : "Questions for the certifications you chose. "}
+            {SCOPING_WHY}
           </p>
           {questionsLoading ? (
-            <p className="text-sm text-muted-foreground">Loading questions…</p>
+            <ScopingListSkeleton />
           ) : questionGroups.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              No scoping questions for these editions yet. You can finish setup and add answers later.
+              No questions for these editions yet. You can finish setup and add answers later.
             </p>
           ) : (
             <div className="space-y-6">

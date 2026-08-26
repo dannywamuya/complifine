@@ -14,22 +14,35 @@ export function EmptyState({
   title,
   body,
   features,
+  blobLines,
 }: {
   greeting?: string;
   title: string;
   body: string;
   features?: EmptyFeature[];
+  blobLines?: string[];
 }) {
+  const blob = blobLines && blobLines.length > 0;
+
   return (
-    <div className="flex w-full flex-col gap-10 sm:gap-12">
+    <div
+      className={cn(
+        "flex w-full flex-col gap-10 sm:gap-12",
+        blob && "items-center text-center",
+      )}
+    >
       <div className="space-y-2">
         {greeting ? <p className="cf-empty-greeting text-sm text-(--cf-fg-muted)">{greeting}</p> : null}
         <h2 className="cf-empty-title font-heading text-3xl font-medium tracking-tight text-balance sm:text-[2.125rem]">
           {title}
         </h2>
-        {body ? <p className="cf-empty-body max-w-lg text-base leading-relaxed text-(--cf-fg-muted)">{body}</p> : null}
+        {body ? (
+          <p className="cf-empty-body mx-auto max-w-lg text-base leading-relaxed text-(--cf-fg-muted)">{body}</p>
+        ) : null}
       </div>
-      {features && features.length > 0 ? (
+      {blob ? (
+        <FeatureBlob lines={blobLines} />
+      ) : features && features.length > 0 ? (
         <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
           {features.map((feature, index) => (
             <li key={feature.title} className={`cf-feature-card cf-feature-card-${(index % 4) + 1}`}>
@@ -42,6 +55,41 @@ export function EmptyState({
           ))}
         </ul>
       ) : null}
+    </div>
+  );
+}
+
+function FeatureBlob({ lines }: { lines: string[] }) {
+  const [index, setIndex] = useState(0);
+  const [reduced, setReduced] = useState(false);
+
+  useEffect(() => {
+    const media = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setReduced(media.matches);
+    const onChange = () => setReduced(media.matches);
+    media.addEventListener("change", onChange);
+    return () => media.removeEventListener("change", onChange);
+  }, []);
+
+  useEffect(() => {
+    if (reduced || lines.length < 2) return;
+    const id = window.setInterval(() => {
+      setIndex((current) => {
+        if (lines.length < 2) return current;
+        let next = current;
+        while (next === current) next = Math.floor(Math.random() * lines.length);
+        return next;
+      });
+    }, 3400);
+    return () => window.clearInterval(id);
+  }, [reduced, lines.length]);
+
+  return (
+    <div className="cf-feature-blob" aria-live="polite">
+      <span className="cf-feature-blob-flow" aria-hidden />
+      <p key={lines[index]} className="cf-feature-blob-text">
+        {lines[index]}
+      </p>
     </div>
   );
 }

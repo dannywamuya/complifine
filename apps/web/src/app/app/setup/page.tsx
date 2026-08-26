@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { api, ApiError } from "@/lib/api";
 import type { OrgPayload } from "@/lib/farm";
 import { SetupWizard } from "@/components/setup-wizard";
-import { FarmPageSkeleton } from "@/components/app-skeletons";
+import { SetupPageSkeleton } from "@/components/app-skeletons";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export default function SetupPage() {
@@ -30,7 +30,7 @@ export default function SetupPage() {
     );
   }
 
-  if (!data) return <FarmPageSkeleton />;
+  if (!data) return <SetupPageSkeleton />;
 
   return <SetupWizard initial={data} />;
 }

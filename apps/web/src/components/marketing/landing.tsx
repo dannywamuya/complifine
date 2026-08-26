@@ -55,7 +55,7 @@ const STANDARDS = [
 const STATS = [
   { value: 190, label: "Principles & Criteria", note: "IFA v6 Fruit & Vegetables" },
   { value: 2, label: "Parallel editions", note: "Smart and GFS, not one file" },
-  { value: 16, label: "Scoping questions", note: "Official, deterministic" },
+  { value: 16, label: "Yes/no questions", note: "Turn rules on or off for your site" },
 ];
 
 export function LandingPage() {
@@ -98,7 +98,7 @@ function ProofRow() {
     <Section className="py-16 sm:py-20">
       <FadeIn>
         <p className="text-center text-sm text-muted-foreground">
-          GLOBALG.A.P. IFA v6 facts — not vanity metrics.
+          From the checklist you actually use — not vanity metrics.
         </p>
       </FadeIn>
       <div className="mt-8 grid gap-8 sm:grid-cols-3">
@@ -149,17 +149,17 @@ function Problem() {
     {
       icon: Files,
       title: "Fragmented",
-      body: "Standards, Excel checklists, lab reports, training records, buyer packs, emails — none of it is one operating picture.",
+      body: "Standards, Excel checklists, lab reports, training records, buyer packs, emails — none of it is one picture you can act on.",
     },
     {
       icon: GitBranch,
       title: "Hard to interpret",
-      body: "Requirements are version-dependent, duplicated across schemes, and disconnected from the packhouse that has to act on them.",
+      body: "Rules change by edition, repeat across schemes, and do not match your packhouse.",
     },
     {
       icon: ListChecks,
       title: "Not operational",
-      body: "Companies do not want “what does GLOBALG.A.P. say?” They want what we need to do, what evidence, who owns it, and whether we will be ready.",
+      body: "You do not want “what does GLOBALG.A.P. say?” You want what you need to do, what evidence, who owns it, and whether you will be ready.",
     },
   ];
 
@@ -167,10 +167,11 @@ function Problem() {
     <Section>
       <FadeIn>
         <Eyebrow>The problem</Eyebrow>
-        <SectionHeading>Compliance is not a lack of PDFs.</SectionHeading>
+        <SectionHeading>You already have the PDFs. You still lose days.</SectionHeading>
         <Lead>
-          Horticultural exporters already have the files. What they lack is a
-          versioned reading of what applies to this site, this season, this edition.
+          You do not need another file. You need a clear reading of what
+          applies at your site, this season, this edition — without paying
+          someone to re-read the checklist every time.
         </Lead>
       </FadeIn>
       <div className="mt-12 grid gap-4 md:grid-cols-3">
@@ -192,38 +193,38 @@ function Problem() {
 
 const FEATURES = [
   {
-    title: "Grounded answers",
-    body: "Every answer cites a criterion or clause. A citation the tools never retrieved is flagged, not hidden. The database answers questions of fact; the model only writes prose.",
+    title: "Cited answers, not guesswork",
+    body: "Every answer names a criterion or clause. A citation the tools never retrieved is flagged, not hidden. The database answers questions of fact; AI only writes the prose.",
     icon: Quote,
     span: "lg:col-span-2",
   },
   {
     title: "Your sites, not a generic checklist",
-    body: "Sites, certification scope, and scoping answers live with the organisation. Ask what applies to the Naivasha packhouse; the agent reads that profile.",
+    body: "Sites, certifications, and yes/no answers live with your company. Ask what applies at your packhouse — Chat reads that profile.",
     icon: MapPinned,
     span: "",
   },
   {
     title: "Official sources, versioned",
-    body: "IFA v6 Smart and GFS are parallel editions, not treated as the same file. Original documents are hashed and preserved.",
+    body: "IFA v6 Smart and GFS stay parallel editions, not the same file. Original documents are hashed and kept.",
     icon: BookOpen,
     span: "",
   },
   {
-    title: "Principles & Criteria explorer",
-    body: "Browse Major Must / Minor Must / Recommendation with source page. Checklists map back to requirements; they are not a second standard.",
+    title: "Browse the checklist",
+    body: "Open Major Must / Minor Must / Recommendation with the source page. Checklists map back to requirements; they are not a second standard.",
     icon: ScanSearch,
     span: "",
   },
   {
-    title: "Scoping that changes the answer",
-    body: "Sixteen official scoping questions. Exempting answers exclude criteria deterministically — no silent LLM skipping.",
+    title: "Questions that change the answer",
+    body: "Sixteen official scoping questions. A yes or no turns criteria on or off for your site — no silent skipping by the AI.",
     icon: SplitSquareVertical,
     span: "",
   },
   {
     title: "Quality gates",
-    body: "Criterion counts, level distributions, and source hashes are checked before members ever see knowledge. Operators review; members only see published knowledge.",
+    body: "Criterion counts, levels, and source hashes are checked before you see them. Operators review; you only see live knowledge.",
     icon: ShieldCheck,
     span: "lg:col-span-2",
   },
@@ -233,12 +234,12 @@ function Features() {
   return (
     <Section id="features">
       <FadeIn>
-        <Eyebrow>Product</Eyebrow>
-        <SectionHeading>What ships today.</SectionHeading>
+        <Eyebrow>What's in it for you</Eyebrow>
+        <SectionHeading>Time and money back in the season.</SectionHeading>
         <Lead>
-          CompliFine for GLOBALG.A.P. — continuous compliance management for
-          Kenyan horticultural exporters. The database and published standards are
-          the system of record. AI is the interface.
+          The first Intelligent Compliance OS for horticulture in Kenya. AI is
+          the interface — cited answers instead of re-reading the PDF, chasing
+          consultants, or guessing what applies at your site.
         </Lead>
       </FadeIn>
       <div className="mt-12 grid gap-4 lg:grid-cols-3">
@@ -267,19 +268,19 @@ function Features() {
 const BENEFITS = [
   {
     title: "Stop re-reading the PDF before every audit.",
-    body: "Published knowledge is versioned once. You ask against it in the language of the site.",
+    body: "The checklist is versioned once. You ask against it in the language of your site — and get time back.",
   },
   {
-    title: "Know what applies to this site, this edition, this season.",
-    body: "Scoping and site context change the answer. A packhouse is not a field.",
+    title: "Spend less on last-minute consultants.",
+    body: "Cited answers you can check yourself. Bring a consultant in for judgement calls, not for hunting clause numbers.",
   },
   {
-    title: "Trust the answer enough to show a CB.",
+    title: "Know what applies at your site, this season.",
+    body: "Scoping and site context change the answer. Your packhouse is not a field.",
+  },
+  {
+    title: "Show a CB the source, not a guess.",
     body: "Click through AI prose to the requirement to the source page. Uncited claims are flagged.",
-  },
-  {
-    title: "One operating picture across GLOBALG.A.P. and SMETA.",
-    body: "SMETA 7.0 is coming online as a second standard. One company, one evidence set later — evidence is not shipped today.",
   },
 ];
 
@@ -288,12 +289,12 @@ function Benefits() {
     <Section>
       <FadeIn>
         <Eyebrow>Outcomes</Eyebrow>
-        <SectionHeading>What this is for.</SectionHeading>
+        <SectionHeading>What you get back.</SectionHeading>
       </FadeIn>
       <div className="mt-12 grid gap-4 sm:grid-cols-2">
         {BENEFITS.map((item, index) => (
-          <FadeIn key={item.title} delay={index * 0.07}>
-            <HoverCard>
+          <FadeIn key={item.title} delay={index * 0.07} className="h-full">
+            <HoverCard className="h-full">
               <p className="font-mono text-[11px] text-primary">0{index + 1}</p>
               <h3 className="mt-3 font-heading text-lg font-medium text-balance">
                 {item.title}
@@ -312,19 +313,19 @@ function Benefits() {
 const STEPS = [
   {
     title: "Register the operation",
-    body: "Create the company. Add sites — growing, packing, collection, storage. Pick IFA Smart or GFS — and SMETA 2-pillar or 4-pillar when in scope.",
+    body: "Create your company. Add your sites — growing, packing, collection, storage. Pick IFA Smart or GFS — and SMETA 2-pillar or 4-pillar when they are in your scope.",
   },
   {
     title: "Scope what applies",
-    body: "Answer the official scoping questions. CompliFine excludes what the standard says does not apply — no silent LLM skipping.",
+    body: "Answer the official yes/no questions. CompliFine turns off what the standard says does not apply — the AI does not skip quietly.",
   },
   {
-    title: "Ask against published knowledge",
-    body: "Search criteria or ask in plain language. Tools hit the database; the model only writes prose.",
+    title: "Ask in your own words",
+    body: "Search criteria or type the situation. Tools hit the database; AI only writes the prose.",
   },
   {
-    title: "Operate continuously",
-    body: "Today: keep the company and sites current and the knowledge cited. Next: evidence, self-assessment, findings, audit readiness.",
+    title: "Keep it current",
+    body: "Today: keep your company and sites current and the knowledge cited. Next: evidence, self-assessment, findings, audit readiness.",
     coming: true,
   },
 ];
@@ -341,7 +342,7 @@ function HowItWorks() {
     <Section id="how-it-works">
       <FadeIn>
         <Eyebrow>How it works</Eyebrow>
-        <SectionHeading>From publisher file to cited answer.</SectionHeading>
+        <SectionHeading>From the publisher’s file to a cited answer.</SectionHeading>
       </FadeIn>
       <FadeIn delay={0.08}>
         <ol className="mt-10 flex flex-wrap items-center gap-2 text-sm">
@@ -549,7 +550,7 @@ function Trust() {
     <Section>
       <FadeIn>
         <Eyebrow>How answers work</Eyebrow>
-        <SectionHeading>Three layers. Visually distinct on purpose.</SectionHeading>
+        <SectionHeading>Three layers — so you can see what is fact, what is your site, and what is AI.</SectionHeading>
         <Lead>
           The database and published standards are the system of record. AI is the
           interface. Every important claim cites a criterion, clause, page, or edition.
@@ -587,12 +588,12 @@ function Audience() {
     <Section>
       <FadeIn>
         <Eyebrow>Who it is for</Eyebrow>
-        <SectionHeading>Kenyan horticultural exporters first.</SectionHeading>
+        <SectionHeading>The first Intelligent Compliance OS for horticulture in Kenya.</SectionHeading>
         <Lead>
-          Avocado farms, packhouses, and producer groups preparing for GLOBALG.A.P.
-          and SMETA. Fruit &amp; vegetables now. Later: mango, herbs, flowers, and
-          other African agricultural exporters — when the knowledge layer is ready,
-          not before.
+          If you run a farm, packhouse, or producer group and you are preparing
+          for GLOBALG.A.P. or SMETA, this is for you. Fruit &amp; vegetables now.
+          Later: mango, herbs, flowers — when the knowledge layer is ready, not
+          before.
         </Lead>
       </FadeIn>
     </Section>
@@ -602,7 +603,7 @@ function Audience() {
 const FAQS = [
   {
     q: "Is this official certification?",
-    a: "No. CompliFine is internal readiness and published knowledge. It is not a certification body and it does not certify you. A CB decision is separate.",
+    a: "No. CompliFine helps you get ready against the published checklist. It is not a certification body and it does not certify you. A CB decision is separate.",
   },
   {
     q: "Does the AI make up clauses?",
@@ -618,7 +619,7 @@ const FAQS = [
   },
   {
     q: "Can I just upload a PDF and chat?",
-    a: "That is not the product. Official sources are ingested, reviewed, and published first. The model does not chat over an arbitrary file.",
+    a: "That is not how CompliFine works. Official sources are ingested, reviewed, and published first. The model does not chat over an arbitrary file.",
   },
 ];
 
@@ -654,12 +655,12 @@ function CtaBand() {
       <Container className="relative max-w-3xl text-center">
         <FadeIn>
           <h2 className="font-heading text-3xl font-medium tracking-tight text-balance sm:text-4xl">
-            Know exactly what your company needs to do, what evidence proves it,
-            what is missing, what changed, and whether you are ready for your audit.
+            Save time and cost before the next audit.
           </h2>
           <p className="mt-4 text-muted-foreground">
-            Built for Kenyan horticultural exporters preparing for GLOBALG.A.P. and
-            SMETA.
+            The first Intelligent Compliance OS for horticulture in Kenya — AI
+            that cites GLOBALG.A.P. and SMETA, built so you can ask in your own
+            words.
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
             <Button asChild size="lg">

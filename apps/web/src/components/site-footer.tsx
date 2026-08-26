@@ -18,13 +18,12 @@ export function SiteFooter() {
 							<BrandLogo />
 						</Link>
 						<p className='mt-4 max-w-[65ch] text-sm leading-relaxed text-muted-foreground'>
-							CompliFine is an intelligent compliance operating system that
-							turns constantly changing standards into versioned, actionable
-							company knowledge — with an agent that cites the published source.
+							CompliFine turns changing standards into knowledge you can use on
+							site — with an agent that cites the published source.
 						</p>
 						<p className='text-sm text-white/45'>
-							Turn compliance from an annual audit-prep scramble into continuous
-							operational compliance.
+							Stop the annual scramble. Keep compliance running through your
+							season.
 						</p>
 					</div>
 					<nav aria-label='Footer' className='flex flex-col gap-2 sm:items-end'>

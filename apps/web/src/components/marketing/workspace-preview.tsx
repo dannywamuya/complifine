@@ -145,7 +145,7 @@ export function WorkspacePreview({
               </div>
               <section className="rounded-2xl border border-celadon-900/10 bg-celadon-50/70 px-4 py-3.5 sm:px-5">
                 <p className="text-[11px] font-medium tracking-[0.16em] text-celadon-800 uppercase">
-                  At a glance
+                  In short
                 </p>
                 <p className="mt-2 text-[15px] leading-snug text-graphite-900 sm:text-[1.05rem]">
                   The packhouse needs documented hygiene procedures for workers
@@ -159,7 +159,7 @@ export function WorkspacePreview({
               </section>
               <section className="space-y-2">
                 <p className="text-[11px] font-medium tracking-[0.16em] text-iron-grey-500 uppercase">
-                  What the standard says
+                  From the standard
                 </p>
                 <p className="text-[13px] leading-relaxed text-graphite-700 sm:text-[15px]">
                   Procedures must match the site you scoped, not a generic
@@ -222,7 +222,7 @@ export function WorkspacePreview({
             <Link href="/signup" className="text-primary underline-offset-4 hover:underline">
               Create a producer account
             </Link>{" "}
-            to ask against published knowledge.
+            to ask in your own words.
           </p>
         ) : null}
       </div>

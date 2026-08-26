@@ -16,6 +16,7 @@ export function ThreadView({
   emptyBody,
   emptyGreeting,
   emptyFeatures,
+  emptyBlobLines,
   onSelectBranch: _onSelectBranch,
   onCycleBranch,
   onEdit,
@@ -31,6 +32,7 @@ export function ThreadView({
   emptyBody: string;
   emptyGreeting?: string;
   emptyFeatures?: EmptyFeature[];
+  emptyBlobLines?: string[];
   onSelectBranch: (id: string) => void;
   onCycleBranch: (id: string, delta: number) => void;
   onEdit: (userId: string, next: string) => void;
@@ -87,6 +89,7 @@ export function ThreadView({
             body={emptyBody}
             greeting={emptyGreeting}
             features={emptyFeatures}
+            blobLines={emptyBlobLines}
           />
         </div>
       </div>

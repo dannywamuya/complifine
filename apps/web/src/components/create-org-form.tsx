@@ -7,6 +7,7 @@ import { ORG_CHANGED, type FarmOrg, type OrgPayload } from "@/lib/farm";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { InfoHint } from "@/components/info-hint";
 
 export function CreateOrgForm({
   onCreated,
@@ -55,7 +56,13 @@ export function CreateOrgForm({
         <Input id="create-org-country" name="country" defaultValue="KE" />
       </div>
       <div className="space-y-1.5">
-        <Label htmlFor="create-org-sedex">Sedex ZC (optional)</Label>
+        <div className="flex items-center gap-1.5">
+          <Label htmlFor="create-org-sedex">Sedex ZC (optional)</Label>
+          <InfoHint label="What is a Sedex ZC?">
+            Your Sedex membership number if you have one. It is a platform ID, not a second
+            standard.
+          </InfoHint>
+        </div>
         <Input id="create-org-sedex" name="sedexZc" placeholder="ZC…" />
       </div>
       <Button type="submit" disabled={pending} className="w-fit">

@@ -117,6 +117,9 @@
 
 :root {
 	--brand: #9ae19d;
+	--cf-accent: var(--brand);
+	--cf-accent-fg: var(--color-graphite-950);
+	--cf-accent-text: var(--color-celadon-800);
 	--background: var(--color-grey-olive-50);
 	--foreground: var(--color-graphite-950);
 	--card: var(--color-grey-olive-50);
@@ -153,6 +156,9 @@
 
 .dark {
 	--brand: #9ae19d;
+	--cf-accent: var(--brand);
+	--cf-accent-fg: var(--color-graphite-950);
+	--cf-accent-text: var(--brand);
 	--background: var(--color-graphite-950);
 	--foreground: var(--color-grey-olive-50);
 	--card: var(--color-graphite-900);

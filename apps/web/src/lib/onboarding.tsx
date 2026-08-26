@@ -81,6 +81,7 @@ function page(
     nextRoute?: string;
     prevRoute?: string;
     disableInteraction?: boolean;
+    viewportID?: string;
   },
 ): Step {
   return {
@@ -91,10 +92,13 @@ function page(
     side: opts.side ?? "bottom-left",
     nextRoute: opts.nextRoute,
     prevRoute: opts.prevRoute,
+    viewportID: opts.viewportID,
     ...routed,
     disableInteraction: opts.disableInteraction ?? true,
   };
 }
+
+const inAppScroll = "cf-app-scroll";
 
 export const onboardingTours: Tour[] = [
   {
@@ -102,26 +106,26 @@ export const onboardingTours: Tour[] = [
     steps: [
       page({
         icon: "💬",
-        title: "Chat is the product",
+        title: "Ask how you talk on site",
         selector: "#cf-composer",
         side: "top",
-        what: "Ask in the words you would use on site. CompliFine retrieves published criteria in this company’s certifications — it is not a general chatbot over PDFs.",
+        what: "Type the situation in plain words. CompliFine looks up the published checklist for this company — it is not a chatbot over random PDFs.",
         how: [
-          "Describe the situation, or paste a criterion number such as FV-Smart 12.3.2.",
-          "A usable answer cites a criterion you can open in Catalog. If the retrieved text does not contain it, the assistant should say so.",
-          "Your certification body still decides binding cases. This workspace is for knowing what the published edition says.",
+          "Describe what is happening, or paste a number like FV-Smart 12.3.2.",
+          "A useful answer names a criterion you can open in Catalog. If the text is not in the library, Chat should say so.",
+          "Your certification body still makes the close calls. This is for knowing what the edition actually says.",
         ],
       }),
       page({
         icon: "📗",
-        title: "Which edition to search",
+        title: "Which edition Chat searches",
         selector: "#tour-edition",
         side: "top-left",
-        what: "This filter is the edition Chat searches. It only lists published editions you attached on Company.",
+        what: "This filter is the book Chat opens. It only lists editions you attached on Company.",
         how: [
-          "One certification: Chat searches that edition. Several: pick one, or All in your scope.",
-          "Chat will not cite an edition that is not live, even if you know the name.",
-          "Match this filter to the audit you are preparing for — Smart and GFS are different texts.",
+          "One certification: Chat searches that one. Several: pick one, or All in your scope.",
+          "Chat will not cite an edition that is not live yet, even if you know the name.",
+          "Match this to the audit you are preparing for — Smart and GFS are different texts.",
         ],
       }),
       page({
@@ -129,11 +133,11 @@ export const onboardingTours: Tour[] = [
         title: "Which site you mean",
         selector: "#tour-site",
         side: "bottom-left",
-        what: "This picker is what “us” means. Chat reads this site’s type and the scoping answers saved for it.",
+        what: "This picker is what “us” means. Chat reads your site’s type and the yes/no answers saved for it.",
         how: [
           "A farm, packhouse, collection centre, and warehouse are different places. Switch when you move.",
-          "Unanswered site questions make answers generic. Finish them under Company → Site questions.",
-          "The same company can have two sites with different answers for the same edition.",
+          "Unanswered questions make answers generic. Finish them under Company → Site questions.",
+          "Two sites in the same company can answer the same question differently.",
         ],
       }),
       page({
@@ -141,10 +145,10 @@ export const onboardingTours: Tour[] = [
         title: "Chat, Catalog, Company",
         selector: "#tour-sidebar",
         side: "bottom-left",
-        what: "Three places, one job: ask, read the official wording, then keep the profile Chat reads up to date.",
+        what: "Three places, one job: ask, read the rule as written, then keep the profile Chat reads up to date.",
         how: [
           "Chat is for questions. Catalog is the publisher’s checklist. Company is certificates, sites, and scoping.",
-          "Open a citation from Chat and you land on that criterion in Catalog.",
+          "Tap a citation in Chat and you land on that criterion in Catalog.",
         ],
       }),
       page({
@@ -153,7 +157,7 @@ export const onboardingTours: Tour[] = [
         selector: "#tour-chats",
         side: "bottom-left",
         nextRoute: "/app/criteria",
-        what: "Each thread is saved under Chats. Search with / . History is this company’s — not shared with others.",
+        what: "Each thread is saved under Chats. Search with / . History belongs to this company — not shared with others.",
         how: [
           "Start a new chat when you change site or edition so the thread stays about one context.",
           "Rename or delete from the list. Export is in the header if you need a copy.",
@@ -161,36 +165,39 @@ export const onboardingTours: Tour[] = [
       }),
       page({
         icon: "📚",
-        title: "Published knowledge only",
+        title: "The rule as written",
         selector: "#tour-catalog",
-        side: "bottom-left",
+        side: "bottom",
+        viewportID: inAppScroll,
         prevRoute: "/app",
-        what: "Catalog is the official wording the assistant is allowed to cite. Nothing in pipeline appears here.",
+        what: "Catalog is the official wording Chat is allowed to cite. Nothing still in review shows up here.",
         how: [
-          "Pick a certification, then an edition. Binding documents are normative; guidance is labelled as guidance.",
-          "If an edition is missing, it is not published yet — or it is not attached on Company.",
+          "Pick a certification, then an edition. Guidance is labelled as guidance.",
+          "If an edition is missing, it is not live yet — or it is not attached on Company.",
         ],
       }),
       page({
         icon: "🌳",
-        title: "Certification → edition",
+        title: "Pick an edition",
         selector: "#tour-catalog-editions",
         side: "right",
-        what: "The tree is the catalog: GLOBALG.A.P. or SMETA, then the published edition. The number is how many criteria are in that edition.",
+        viewportID: inAppScroll,
+        what: "This list is the catalog: GLOBALG.A.P. or SMETA, then the live edition. The number is how many criteria sit in that book.",
         how: [
           "Switch editions to read Smart vs GFS, or IFA vs SMETA, as the publisher wrote them.",
-          "Chat’s edition filter should match what you are reading, or citations will look like the wrong book.",
+          "Keep Chat’s edition filter in sync with what you are reading, or citations will look like the wrong book.",
         ],
       }),
       page({
         icon: "🔎",
-        title: "Find a criterion",
+        title: "Find a rule",
         selector: "#tour-catalog-search",
-        side: "bottom-left",
+        side: "bottom",
+        viewportID: inAppScroll,
         nextRoute: "/app/company",
-        what: "Search by number or principle. Filter by level — Major Must, Minor Must, Recommendation — then open the row.",
+        what: "Search by number or everyday words. Filter by level — Major Must, Minor Must, Recommendation — then open the row.",
         how: [
-          "The table is the publisher’s identifiers and principles, not a paraphrase.",
+          "The table is the publisher’s IDs and principles, not a paraphrase.",
           "When Chat cites a criterion, this is the page that citation should open.",
         ],
       }),
@@ -199,11 +206,12 @@ export const onboardingTours: Tour[] = [
         title: "The company holds certificates",
         selector: "#tour-company",
         side: "bottom-left",
+        viewportID: inAppScroll,
         prevRoute: "/app/criteria",
-        what: "The company is the legal entity. Sites are the places it operates. Chat uses both: certifications from the company, type and questions from the site.",
+        what: "The company is the legal name on the certificate. Sites are the places you operate. Chat uses both.",
         how: [
-          "Attach every published edition you are certified against or preparing for. Those are the only editions Chat may cite.",
-          "Adding a certification always means answering site questions for it — a packhouse is not a field.",
+          "Attach every published edition you are certified against or preparing for. Those are the only ones Chat may cite.",
+          "After you add a certification, answer the questions for your site — a packhouse is not a field.",
         ],
       }),
       page({
@@ -211,10 +219,11 @@ export const onboardingTours: Tour[] = [
         title: "Sites, certifications, questions",
         selector: "#tour-company-tabs",
         side: "bottom-left",
+        viewportID: inAppScroll,
         what: "Four tabs keep the profile Chat reads. Change something here and the next answer should change with it.",
         how: [
           "Sites: every place you operate — growing, packing, collection, or storage.",
-          "Certifications: published editions in scope. Site questions: official applicability, stored per site.",
+          "Certifications: editions in scope. Site questions: what applies at your site.",
           "Company: legal name, country, Sedex ZC if you have one.",
         ],
       }),
@@ -223,11 +232,12 @@ export const onboardingTours: Tour[] = [
         title: "Sites are places, not the company",
         selector: "#tour-company-sites",
         side: "bottom-left",
+        viewportID: inAppScroll,
         nextRoute: "/app",
         what: "Select a site here when you answer questions. The header picker is what Chat uses while you talk.",
         how: [
           "Do not reuse one site for field and packhouse. Add both and answer each.",
-          "After you add a site or a certification, finish Site questions before you trust Chat on that combination.",
+          "After you add a site or a certification, finish Site questions before you lean on Chat for that combination.",
         ],
       }),
       page({
@@ -240,7 +250,7 @@ export const onboardingTours: Tour[] = [
         what: "Tour in the header starts this walkthrough again whenever you want it.",
         how: [
           "If an answer looks generic, check the site picker and finish Site questions.",
-          "If a citation is missing, open Catalog and confirm the edition is attached and published.",
+          "If a citation is missing, open Catalog and confirm the edition is attached and live.",
         ],
       }),
     ],

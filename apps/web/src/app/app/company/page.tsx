@@ -8,7 +8,8 @@ import { api, ApiError } from "@/lib/api";
 import { usePublishedCatalog } from "@/lib/editions";
 import { SITE_TYPE_HELP, SITE_TYPE_LABELS, ORG_CHANGED, type FarmSite, type OrgPayload } from "@/lib/farm";
 import { CreateOrgForm } from "@/components/create-org-form";
-import { ScopingQuestionList, type ScopingQuestion } from "@/components/scoping-questions";
+import { ScopingQuestionList, SCOPING_WHY, type ScopingQuestion } from "@/components/scoping-questions";
+import { InfoHint } from "@/components/info-hint";
 import { LevelBadge } from "@/components/level-badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -32,7 +33,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { FarmPageSkeleton } from "@/components/app-skeletons";
+import { CompanyPageSkeleton, ScopingListSkeleton } from "@/components/app-skeletons";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 
@@ -51,6 +52,7 @@ export default function CompanyPage() {
   const [siteId, setSiteId] = useState("");
   const [version, setVersion] = useState("");
   const [questions, setQuestions] = useState<ScopingQuestion[]>([]);
+  const [questionsLoading, setQuestionsLoading] = useState(false);
   const [answers, setAnswers] = useState<Record<string, "yes" | "no" | "unanswered">>({});
   const [result, setResult] = useState<Resolution | null>(null);
   const [pending, setPending] = useState(false);
@@ -84,6 +86,7 @@ export default function CompanyPage() {
   useEffect(() => {
     if (!version) return;
     let cancelled = false;
+    setQuestionsLoading(true);
     setQuestions([]);
     api<{ questions: ScopingQuestion[] }>(`/versions/${version}/applicability`)
       .then((payload) => {
@@ -91,6 +94,9 @@ export default function CompanyPage() {
       })
       .catch(() => {
         if (!cancelled) setQuestions([]);
+      })
+      .finally(() => {
+        if (!cancelled) setQuestionsLoading(false);
       });
     return () => {
       cancelled = true;
@@ -144,7 +150,7 @@ export default function CompanyPage() {
     setTab("applicability");
     toast.success(
       payload.sites.length === 1
-        ? "Certification attached. Answer what applies at this site."
+        ? "Certification attached. Answer what applies at your site."
         : "Certification attached. Answer what applies at each site.",
     );
   }
@@ -174,7 +180,7 @@ export default function CompanyPage() {
   }
 
   if (!data) {
-    return <FarmPageSkeleton />;
+    return <CompanyPageSkeleton />;
   }
 
   if (!data.organization) {
@@ -186,7 +192,7 @@ export default function CompanyPage() {
             Name the company
           </h1>
           <p className="max-w-lg text-base leading-relaxed text-muted-foreground">
-            The company is the legal entity that holds certificates. Sites belong to it — growing,
+            The company is the name on the certificate. Sites sit under it — growing,
             packing, or storage — and you will add those next.
           </p>
         </header>
@@ -214,7 +220,7 @@ export default function CompanyPage() {
           {data.organization.country}
           {data.organization.sedexZc ? ` · Sedex ${data.organization.sedexZc}` : ""}
           {" · "}
-          The company holds certifications. Sites sit under it. Chat uses both.
+          Certificates sit on the company. Sites sit under it. Chat uses both.
         </p>
       </header>
 
@@ -238,7 +244,7 @@ export default function CompanyPage() {
           <div id="tour-company-sites" className="flex w-fit max-w-full items-center justify-between gap-3">
             <p className="text-sm text-muted-foreground">
               {data.sites.length === 0
-                ? "Add the sites this company operates. A site is a place — not the company itself."
+                ? "Add the places this company operates — a field is not a packhouse."
                 : `${data.sites.length} site${data.sites.length === 1 ? "" : "s"}`}
             </p>
             <AddSiteDialog
@@ -259,7 +265,7 @@ export default function CompanyPage() {
             <div className="rounded-2xl border border-dashed border-border bg-muted/60 px-6 py-12 text-center">
               <p className="font-heading text-base font-medium tracking-tight">No sites yet</p>
               <p className="mx-auto mt-1 max-w-sm text-sm leading-relaxed text-muted-foreground">
-                Pick a type: growing, packing, collection, or storage. Scoping questions are answered
+                Pick a type: growing, packing, collection, or storage. Questions are answered
                 per site, so two sites can differ.
               </p>
             </div>
@@ -300,7 +306,7 @@ export default function CompanyPage() {
             <div className="mb-5 space-y-1">
               <h2 className="font-heading text-base font-medium tracking-tight">Certifications</h2>
               <p className="text-sm text-muted-foreground">
-                Published editions this company is certified against or preparing for. Chat cites only
+                Editions this company is certified against or preparing for. Chat cites only
                 these.
               </p>
             </div>
@@ -336,10 +342,16 @@ export default function CompanyPage() {
                 }}
               >
                 <div className="space-y-1.5">
-                  <Label htmlFor="versionCode">Add a version</Label>
+                  <div className="flex items-center gap-1.5">
+                    <Label htmlFor="versionCode">Add a certification</Label>
+                    <InfoHint label="Why add a certification?">
+                      These are the editions Chat is allowed to cite. Attach every one you are
+                      certified against or preparing for.
+                    </InfoHint>
+                  </div>
                   <Select value={scopeCode} onValueChange={setScopeCode}>
                     <SelectTrigger id="versionCode" className="w-56 rounded-full" size="sm">
-                      <SelectValue placeholder="Choose a version" />
+                      <SelectValue placeholder="Choose an edition" />
                     </SelectTrigger>
                     <SelectContent>
                       {addableEditions.map((edition) => (
@@ -351,7 +363,7 @@ export default function CompanyPage() {
                   </Select>
                 </div>
                 <Button type="submit" variant="outline" size="sm" className="rounded-full" disabled={pending || !scopeCode}>
-                  {pending ? "Adding…" : "Add to scope"}
+                  {pending ? "Adding…" : "Add"}
                 </Button>
               </form>
               )}
@@ -372,13 +384,14 @@ export default function CompanyPage() {
               <div className="rounded-2xl border border-border bg-card p-6 shadow-[0_8px_28px_rgb(0_0_0/0.04)]">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                   <div className="space-y-1">
-                    <h2 className="font-heading text-base font-medium tracking-tight">
-                      Questions for this site
+                    <h2 className="flex items-center gap-1.5 font-heading text-base font-medium tracking-tight">
+                      Questions for {selected?.name ?? "your site"}
+                      <InfoHint label="Why are we asking these questions?">{SCOPING_WHY}</InfoHint>
                     </h2>
                     <p className="text-sm text-muted-foreground">
-                      Answer as “you” for {selected?.name ?? "this site"} (
-                      {selected ? (SITE_TYPE_LABELS[selected.siteType] ?? selected.siteType) : "site"}
-                      ). Two sites under the same company can answer differently.
+                      Answer for {selected?.name ?? "your site"}
+                      {selected ? ` (${SITE_TYPE_LABELS[selected.siteType] ?? selected.siteType})` : ""}.
+                      Two of your sites can answer differently.
                       {questions.length > 0 && answered < questions.length
                         ? ` ${questions.length - answered} left for this edition.`
                         : ""}
@@ -422,11 +435,15 @@ export default function CompanyPage() {
                 </div>
               </div>
 
-              <ScopingQuestionList
-                questions={questions}
-                answers={answers}
-                onAnswer={(id, value) => void saveOneAnswer(id, value)}
-              />
+              {questionsLoading ? (
+                <ScopingListSkeleton />
+              ) : (
+                <ScopingQuestionList
+                  questions={questions}
+                  answers={answers}
+                  onAnswer={(id, value) => void saveOneAnswer(id, value)}
+                />
+              )}
 
               <Button
                 type="button"
@@ -488,8 +505,8 @@ export default function CompanyPage() {
             <div className="mb-5 space-y-1">
               <h2 className="font-heading text-base font-medium tracking-tight">Company</h2>
               <p className="text-sm text-muted-foreground">
-                The legal entity. Sites are listed under Sites. Sedex ZC is a platform identifier, not
-                a standard.
+                The name on the certificate. Sites live under Sites. Sedex ZC is a membership
+                number, not a second standard.
               </p>
             </div>
             <form
@@ -525,7 +542,13 @@ export default function CompanyPage() {
                 <Input id="org-country" name="country" className="rounded-xl" defaultValue={data.organization.country} />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="org-sedex">Sedex ZC</Label>
+                <div className="flex items-center gap-1.5">
+                  <Label htmlFor="org-sedex">Sedex ZC</Label>
+                  <InfoHint label="What is a Sedex ZC?">
+                    Your Sedex membership number if you have one. It is a platform ID, not a
+                    second standard.
+                  </InfoHint>
+                </div>
                 <Input
                   id="org-sedex"
                   name="sedexZc"
@@ -599,8 +622,8 @@ function AddSiteDialog({
           <DialogHeader>
             <DialogTitle>Add a site</DialogTitle>
             <DialogDescription>
-              A site is a place this company operates. The company holds the certificates; the site is
-              where work happens.
+              A site is a place this company operates. Certificates sit on the company;
+              the work happens here.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
@@ -609,7 +632,13 @@ function AddSiteDialog({
               <Input id="site-name" name="name" required placeholder="Naivasha packhouse" />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="site-type">Type</Label>
+              <div className="flex items-center gap-1.5">
+                <Label htmlFor="site-type">Type</Label>
+                <InfoHint label="Why does site type matter?">
+                  Chat treats a field, packhouse, collection centre, and warehouse as different
+                  places. Pick the type that matches the work at your site.
+                </InfoHint>
+              </div>
               <Select value={siteType} onValueChange={setSiteType}>
                 <SelectTrigger id="site-type" className="w-full">
                   <SelectValue />

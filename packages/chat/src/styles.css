@@ -1,91 +1,91 @@
-@import "katex/dist/katex.min.css";
+@import 'katex/dist/katex.min.css';
 
 /* Scoped to .cf-chat so the shell can be light inside a dark host (console)
    or dark inside a light host (producer web). */
 
 .cf-chat {
-  --cf-bg: #ffffff;
-  --cf-bg-elevated: #ffffff;
-  --cf-bg-muted: #f4f4f5;
-  --cf-fg: #000000;
-  --cf-fg-muted: #52525b;
-  --cf-fg-subtle: #71717a;
-  --cf-accent: #5170ff;
-  --cf-accent-fg: #ffffff;
-  --cf-accent-text: var(--cf-accent);
-  --cf-accent-soft: color-mix(in srgb, #5170ff 14%, white);
-  --cf-danger: oklch(0.55 0.18 25);
-  --cf-danger-soft: oklch(0.95 0.03 25);
-  --cf-border: #ececee;
-  --cf-ring: #5170ff;
-  --cf-user-bg: #000000;
-  --cf-user-fg: #ffffff;
-  --cf-shadow: 0 8px 28px rgb(0 0 0 / 0.06);
-  --cf-radius: 1.25rem;
-  --cf-composer-max: 12.5rem;
-  --cf-sidebar: 17.5rem;
-  --cf-focus: 0 0 0 2px var(--cf-bg), 0 0 0 4px var(--cf-ring);
+	--cf-bg: #ffffff;
+	--cf-bg-elevated: #ffffff;
+	--cf-bg-muted: #f4f4f5;
+	--cf-fg: #000000;
+	--cf-fg-muted: #52525b;
+	--cf-fg-subtle: #71717a;
+	--cf-accent: #5170ff;
+	--cf-accent-fg: #ffffff;
+	--cf-accent-text: var(--cf-accent);
+	--cf-accent-soft: color-mix(in srgb, #5170ff 14%, white);
+	--cf-danger: oklch(0.55 0.18 25);
+	--cf-danger-soft: oklch(0.95 0.03 25);
+	--cf-border: #ececee;
+	--cf-ring: #5170ff;
+	--cf-user-bg: #000000;
+	--cf-user-fg: #ffffff;
+	--cf-shadow: 0 8px 28px rgb(0 0 0 / 0.06);
+	--cf-radius: 1.25rem;
+	--cf-composer-max: 12.5rem;
+	--cf-sidebar: 17.5rem;
+	--cf-focus: 0 0 0 2px var(--cf-bg), 0 0 0 4px var(--cf-ring);
 
-  --background: var(--cf-bg);
-  --foreground: var(--cf-fg);
-  --card: var(--cf-bg-elevated);
-  --card-foreground: var(--cf-fg);
-  --popover: var(--cf-bg-elevated);
-  --popover-foreground: var(--cf-fg);
-  --primary: var(--cf-accent);
-  --primary-foreground: var(--cf-accent-fg);
-  --secondary: var(--cf-bg-muted);
-  --secondary-foreground: var(--cf-fg);
-  --muted: var(--cf-bg-muted);
-  --muted-foreground: var(--cf-fg-muted);
-  --accent: var(--cf-accent-soft);
-  --accent-foreground: var(--cf-accent);
-  --destructive: var(--cf-danger);
-  --border: var(--cf-border);
-  --input: var(--cf-border);
-  --ring: var(--cf-ring);
-  --sidebar: var(--cf-bg-elevated);
-  --sidebar-foreground: var(--cf-fg);
-  --sidebar-accent: var(--cf-accent-soft);
-  --sidebar-accent-foreground: var(--cf-accent);
-  --sidebar-border: var(--cf-border);
-  --sidebar-ring: var(--cf-ring);
+	--background: var(--cf-bg);
+	--foreground: var(--cf-fg);
+	--card: var(--cf-bg-elevated);
+	--card-foreground: var(--cf-fg);
+	--popover: var(--cf-bg-elevated);
+	--popover-foreground: var(--cf-fg);
+	--primary: var(--cf-accent);
+	--primary-foreground: var(--cf-accent-fg);
+	--secondary: var(--cf-bg-muted);
+	--secondary-foreground: var(--cf-fg);
+	--muted: var(--cf-bg-muted);
+	--muted-foreground: var(--cf-fg-muted);
+	--accent: var(--cf-accent-soft);
+	--accent-foreground: var(--cf-accent);
+	--destructive: var(--cf-danger);
+	--border: var(--cf-border);
+	--input: var(--cf-border);
+	--ring: var(--cf-ring);
+	--sidebar: var(--cf-bg-elevated);
+	--sidebar-foreground: var(--cf-fg);
+	--sidebar-accent: var(--cf-accent-soft);
+	--sidebar-accent-foreground: var(--cf-accent);
+	--sidebar-border: var(--cf-border);
+	--sidebar-ring: var(--cf-ring);
 
-  color: var(--cf-fg);
-  background: var(--cf-bg);
-  font-family: var(--font-sans, ui-sans-serif, system-ui, sans-serif);
+	color: var(--cf-fg);
+	background: var(--cf-bg);
+	font-family: var(--font-sans, ui-sans-serif, system-ui, sans-serif);
 }
 
 .dark .cf-chat,
 .cf-chat.dark {
-  --cf-bg: #000000;
-  --cf-bg-elevated: #0a0a0a;
-  --cf-bg-muted: #171717;
-  --cf-fg: #ffffff;
-  --cf-fg-muted: #a1a1aa;
-  --cf-fg-subtle: #71717a;
-  --cf-accent: #5170ff;
-  --cf-accent-fg: #ffffff;
-  --cf-accent-text: var(--cf-accent);
-  --cf-accent-soft: color-mix(in srgb, #5170ff 28%, black);
-  --cf-danger: oklch(0.72 0.16 25);
-  --cf-danger-soft: oklch(0.28 0.06 25);
-  --cf-border: rgb(255 255 255 / 12%);
-  --cf-ring: #5170ff;
-  --cf-user-bg: #ffffff;
-  --cf-user-fg: #000000;
-  --cf-shadow: 0 18px 50px rgb(0 0 0 / 0.45);
+	--cf-bg: #000000;
+	--cf-bg-elevated: #0a0a0a;
+	--cf-bg-muted: #171717;
+	--cf-fg: #ffffff;
+	--cf-fg-muted: #a1a1aa;
+	--cf-fg-subtle: #71717a;
+	--cf-accent: #5170ff;
+	--cf-accent-fg: #ffffff;
+	--cf-accent-text: var(--cf-accent);
+	--cf-accent-soft: color-mix(in srgb, #5170ff 28%, black);
+	--cf-danger: oklch(0.72 0.16 25);
+	--cf-danger-soft: oklch(0.28 0.06 25);
+	--cf-border: rgb(255 255 255 / 12%);
+	--cf-ring: #5170ff;
+	--cf-user-bg: #ffffff;
+	--cf-user-fg: #000000;
+	--cf-shadow: 0 18px 50px rgb(0 0 0 / 0.45);
 }
 
 .cf-chat *,
 .cf-chat *::before,
 .cf-chat *::after {
-  box-sizing: border-box;
+	box-sizing: border-box;
 }
 
 .cf-chat :focus-visible {
-  outline: none;
-  box-shadow: var(--cf-focus);
+	outline: none;
+	box-shadow: var(--cf-focus);
 }
 
 .cf-chat button:focus-visible,
@@ -93,53 +93,53 @@
 .cf-chat textarea:focus-visible,
 .cf-chat input:focus-visible,
 .cf-chat select:focus-visible,
-.cf-chat [role="listbox"]:focus-visible {
-  box-shadow: var(--cf-focus);
+.cf-chat [role='listbox']:focus-visible {
+	box-shadow: var(--cf-focus);
 }
 
 .cf-composer-input:focus-within {
-  outline: 2px solid var(--cf-ring);
-  outline-offset: 2px;
+	outline: 2px solid var(--cf-ring);
+	outline-offset: 2px;
 }
 
 .cf-chat .cf-composer-input textarea,
 .cf-chat .cf-composer-input textarea:focus,
 .cf-chat .cf-composer-input textarea:focus-visible {
-  outline: none;
-  box-shadow: none;
+	outline: none;
+	box-shadow: none;
 }
 
 .cf-composer-field {
-  overflow: hidden;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
+	overflow: hidden;
+	scrollbar-width: none;
+	-ms-overflow-style: none;
 }
 
 .cf-composer-field::-webkit-scrollbar {
-  display: none;
-  width: 0;
-  height: 0;
+	display: none;
+	width: 0;
+	height: 0;
 }
 
 .cf-chat-shell {
-  position: relative;
-  display: flex;
-  min-width: 0;
-  height: 100%;
-  overflow: hidden;
-  background: var(--cf-bg);
-  color: var(--cf-fg);
+	position: relative;
+	display: flex;
+	min-width: 0;
+	height: 100%;
+	overflow: hidden;
+	background: var(--cf-bg);
+	color: var(--cf-fg);
 }
 
 @keyframes cf-fade-up {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+	from {
+		opacity: 0;
+		transform: translateY(12px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
 }
 
 .cf-empty-greeting,
@@ -147,120 +147,248 @@
 .cf-empty-body,
 .cf-empty-suggestions,
 .cf-feature-card {
-  animation: cf-fade-up 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
+	animation: cf-fade-up 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .cf-empty-greeting {
-  animation-delay: 0.02s;
+	animation-delay: 0.02s;
 }
 
 .cf-empty-title {
-  animation-delay: 0.08s;
+	animation-delay: 0.08s;
 }
 
 .cf-empty-body {
-  animation-delay: 0.14s;
+	animation-delay: 0.14s;
+}
+
+.cf-feature-blob {
+	position: relative;
+	display: grid;
+	place-items: center;
+	width: min(15rem, 82vw);
+	aspect-ratio: 1;
+	isolation: isolate;
+	animation: cf-fade-up 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+	animation-delay: 0.2s;
+}
+
+.cf-feature-blob-flow {
+	position: absolute;
+	inset: -8%;
+	background:
+		radial-gradient(
+			ellipse 70% 65% at 30% 28%,
+			var(--cf-accent) 0%,
+			transparent 58%
+		),
+		radial-gradient(ellipse 75% 70% at 72% 68%, #5eead4 0%, transparent 55%),
+		radial-gradient(ellipse 60% 70% at 62% 22%, #38bdf8 0%, transparent 52%),
+		radial-gradient(
+			ellipse 55% 55% at 40% 75%,
+			color-mix(in srgb, var(--cf-accent) 70%, #5eead4) 0%,
+			transparent 50%
+		);
+	filter: blur(18px) saturate(1.5);
+	transform-origin: 50% 50%;
+	animation: cf-blob-drift 16s ease-in-out infinite;
+	-webkit-mask-image: radial-gradient(
+		circle at 50% 50%,
+		#000 12%,
+		rgb(0 0 0 / 0.85) 42%,
+		transparent 74%
+	);
+	mask-image: radial-gradient(
+		circle at 50% 50%,
+		#000 12%,
+		rgb(0 0 0 / 0.85) 42%,
+		transparent 74%
+	);
+}
+
+.cf-feature-blob-text {
+	position: relative;
+	z-index: 1;
+	max-width: 12.5rem;
+	padding: 1.25rem;
+	font-family: var(
+		--font-heading,
+		var(--font-sans, ui-sans-serif, system-ui, sans-serif)
+	);
+	font-size: 1.05rem;
+	font-weight: 500;
+	line-height: 1.35;
+	letter-spacing: -0.02em;
+	text-wrap: balance;
+	color: var(--cf-fg);
+	text-shadow:
+		0 0 18px color-mix(in srgb, var(--cf-bg) 80%, transparent),
+		0 1px 8px color-mix(in srgb, var(--cf-bg) 55%, transparent);
+	animation: cf-blob-line 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes cf-blob-drift {
+	0%,
+	100% {
+		transform: translate(-4%, -3%) rotate(0deg) scale(1.04);
+	}
+	40% {
+		transform: translate(6%, -2%) rotate(18deg) scale(1.12);
+	}
+	70% {
+		transform: translate(-3%, 6%) rotate(-12deg) scale(1.08);
+	}
+}
+
+@keyframes cf-blob-line {
+	from {
+		opacity: 0;
+		transform: translateY(8px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.cf-feature-blob-flow,
+	.cf-feature-blob-text {
+		animation: none;
+	}
 }
 
 .cf-empty-suggestions {
-  animation-delay: 0.72s;
+	animation-delay: 0.72s;
 }
 
 .cf-suggestion-scroller {
-  display: flex;
-  gap: 0.5rem;
-  overflow-x: auto;
-  padding-bottom: 0.125rem;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
+	display: flex;
+	gap: 0.5rem;
+	overflow-x: auto;
+	padding-bottom: 0.125rem;
+	scrollbar-width: none;
+	-ms-overflow-style: none;
 }
 
 .cf-suggestion-scroller::-webkit-scrollbar {
-  display: none;
+	display: none;
 }
 
 .cf-suggestion-fade {
-  pointer-events: none;
-  position: absolute;
-  top: 0;
-  bottom: 0.125rem;
-  width: 3.5rem;
-  transition: opacity 0.2s ease;
+	pointer-events: none;
+	position: absolute;
+	top: 0;
+	bottom: 0.125rem;
+	width: 3.5rem;
+	transition: opacity 0.2s ease;
 }
 
 .cf-suggestion-fade-right {
-  right: 0;
-  background: linear-gradient(to left, var(--cf-bg), transparent);
+	right: 0;
+	background: linear-gradient(to left, var(--cf-bg), transparent);
 }
 
 .cf-suggestion-fade-left {
-  left: 0;
-  background: linear-gradient(to right, var(--cf-bg), transparent);
+	left: 0;
+	background: linear-gradient(to right, var(--cf-bg), transparent);
 }
 
 @keyframes cf-tool-pulse {
-  0%,
-  100% {
-    box-shadow: 0 0 0 0 color-mix(in srgb, var(--cf-accent) 32%, transparent);
-  }
-  70% {
-    box-shadow: 0 0 0 6px color-mix(in srgb, var(--cf-accent) 0%, transparent);
-  }
+	0%,
+	100% {
+		box-shadow: 0 0 0 0 color-mix(in srgb, var(--cf-accent) 32%, transparent);
+	}
+	70% {
+		box-shadow: 0 0 0 6px color-mix(in srgb, var(--cf-accent) 0%, transparent);
+	}
 }
 
 .cf-tool-chip {
-  animation: cf-fade-up 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+	animation: cf-fade-up 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
-.cf-tool-chip[aria-busy="true"] {
-  animation:
-    cf-fade-up 0.3s cubic-bezier(0.16, 1, 0.3, 1) both,
-    cf-tool-pulse 1.5s ease-out 0.3s infinite;
+.cf-tool-chip[aria-busy='true'] {
+	animation:
+		cf-fade-up 0.3s cubic-bezier(0.16, 1, 0.3, 1) both,
+		cf-tool-pulse 1.5s ease-out 0.3s infinite;
 }
 
 .cf-feature-card {
-  display: flex;
-  min-height: 0;
-  flex-direction: column;
-  overflow: hidden;
-  border: 1px solid var(--cf-border);
-  border-radius: 1.15rem;
-  padding: 0.875rem 1rem;
-  box-shadow: 0 1px 2px rgb(0 0 0 / 0.04);
+	display: flex;
+	min-height: 0;
+	flex-direction: column;
+	overflow: hidden;
+	border: 1px solid var(--cf-border);
+	border-radius: 1.15rem;
+	padding: 0.875rem 1rem;
+	box-shadow: 0 1px 2px rgb(0 0 0 / 0.04);
 }
 
 @media (min-width: 640px) {
-  .cf-feature-card {
-    min-height: 7.25rem;
-  }
+	.cf-feature-card {
+		min-height: 7.25rem;
+	}
 }
 
 .cf-feature-card-1 {
-  animation-delay: 0.2s;
-  background:
-    radial-gradient(120% 90% at 0% 0%, color-mix(in srgb, var(--cf-accent) 22%, transparent), transparent 58%),
-    radial-gradient(80% 70% at 100% 100%, color-mix(in srgb, var(--cf-accent) 8%, white), var(--cf-bg-elevated));
+	animation-delay: 0.2s;
+	background:
+		radial-gradient(
+			120% 90% at 0% 0%,
+			color-mix(in srgb, var(--cf-accent) 22%, transparent),
+			transparent 58%
+		),
+		radial-gradient(
+			80% 70% at 100% 100%,
+			color-mix(in srgb, var(--cf-accent) 8%, white),
+			var(--cf-bg-elevated)
+		);
 }
 
 .cf-feature-card-2 {
-  animation-delay: 0.32s;
-  background:
-    radial-gradient(120% 90% at 100% 0%, color-mix(in srgb, var(--cf-accent) 18%, transparent), transparent 58%),
-    radial-gradient(80% 70% at 0% 100%, color-mix(in srgb, var(--cf-accent) 7%, white), var(--cf-bg-elevated));
+	animation-delay: 0.32s;
+	background:
+		radial-gradient(
+			120% 90% at 100% 0%,
+			color-mix(in srgb, var(--cf-accent) 18%, transparent),
+			transparent 58%
+		),
+		radial-gradient(
+			80% 70% at 0% 100%,
+			color-mix(in srgb, var(--cf-accent) 7%, white),
+			var(--cf-bg-elevated)
+		);
 }
 
 .cf-feature-card-3 {
-  animation-delay: 0.44s;
-  background:
-    radial-gradient(110% 90% at 50% -10%, color-mix(in srgb, var(--cf-accent) 20%, transparent), transparent 55%),
-    radial-gradient(80% 70% at 0% 100%, color-mix(in srgb, var(--cf-accent) 6%, white), var(--cf-bg-elevated));
+	animation-delay: 0.44s;
+	background:
+		radial-gradient(
+			110% 90% at 50% -10%,
+			color-mix(in srgb, var(--cf-accent) 20%, transparent),
+			transparent 55%
+		),
+		radial-gradient(
+			80% 70% at 0% 100%,
+			color-mix(in srgb, var(--cf-accent) 6%, white),
+			var(--cf-bg-elevated)
+		);
 }
 
 .cf-feature-card-4 {
-  animation-delay: 0.56s;
-  background:
-    radial-gradient(120% 90% at 0% 100%, color-mix(in srgb, var(--cf-accent) 16%, transparent), transparent 58%),
-    radial-gradient(80% 70% at 100% 0%, color-mix(in srgb, var(--cf-accent) 8%, white), var(--cf-bg-elevated));
+	animation-delay: 0.56s;
+	background:
+		radial-gradient(
+			120% 90% at 0% 100%,
+			color-mix(in srgb, var(--cf-accent) 16%, transparent),
+			transparent 58%
+		),
+		radial-gradient(
+			80% 70% at 100% 0%,
+			color-mix(in srgb, var(--cf-accent) 8%, white),
+			var(--cf-bg-elevated)
+		);
 }
 
 .dark .cf-chat .cf-feature-card-1,
@@ -271,187 +399,217 @@
 .cf-chat.dark .cf-feature-card-2,
 .cf-chat.dark .cf-feature-card-3,
 .cf-chat.dark .cf-feature-card-4 {
-  background:
-    radial-gradient(120% 90% at 20% 0%, color-mix(in srgb, var(--cf-accent) 28%, transparent), transparent 58%),
-    var(--cf-bg-muted);
+	background:
+		radial-gradient(
+			120% 90% at 20% 0%,
+			color-mix(in srgb, var(--cf-accent) 28%, transparent),
+			transparent 58%
+		),
+		var(--cf-bg-muted);
 }
 
 .cf-chat-prose {
-  font-size: 0.96875rem;
-  line-height: 1.65;
-  overflow-wrap: anywhere;
+	font-size: 0.96875rem;
+	line-height: 1.65;
+	overflow-wrap: anywhere;
 }
 
 .cf-chat-prose > * + * {
-  margin-top: 0.75em;
+	margin-top: 0.75em;
 }
 
 .cf-chat-prose h1,
 .cf-chat-prose h2,
 .cf-chat-prose h3 {
-  font-family: var(--font-heading, inherit);
-  font-weight: 550;
-  letter-spacing: -0.02em;
-  line-height: 1.3;
-  color: var(--cf-fg);
+	font-family: var(--font-heading, inherit);
+	font-weight: 550;
+	letter-spacing: -0.02em;
+	line-height: 1.3;
+	color: var(--cf-fg);
 }
 
-.cf-chat-prose h1 { font-size: 1.35em; }
-.cf-chat-prose h2 { font-size: 1.15em; margin-top: 1.25em; }
-.cf-chat-prose h3 { font-size: 1.05em; }
+.cf-chat-prose h1 {
+	font-size: 1.35em;
+}
+.cf-chat-prose h2 {
+	font-size: 1.15em;
+	margin-top: 1.25em;
+}
+.cf-chat-prose h3 {
+	font-size: 1.05em;
+}
 
 .cf-chat-prose ul,
 .cf-chat-prose ol {
-  padding-left: 1.25em;
+	padding-left: 1.25em;
 }
 
 .cf-chat-prose li + li {
-  margin-top: 0.25em;
+	margin-top: 0.25em;
 }
 
 .cf-chat-prose blockquote {
-  border-left: 3px solid var(--cf-accent);
-  padding: 0.15em 0 0.15em 0.9em;
-  color: var(--cf-fg-muted);
+	border-left: 3px solid var(--cf-accent);
+	padding: 0.15em 0 0.15em 0.9em;
+	color: var(--cf-fg-muted);
 }
 
 .cf-chat-prose a {
-  color: var(--cf-accent-text);
-  text-underline-offset: 3px;
+	color: var(--cf-accent-text);
+	text-underline-offset: 3px;
 }
 
 .cf-chat-prose table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.9em;
+	width: 100%;
+	border-collapse: collapse;
+	font-size: 0.9em;
 }
 
 .cf-chat-prose th,
 .cf-chat-prose td {
-  border: 1px solid var(--cf-border);
-  padding: 0.4em 0.6em;
-  text-align: left;
+	border: 1px solid var(--cf-border);
+	padding: 0.4em 0.6em;
+	text-align: left;
 }
 
 .cf-chat-prose th {
-  background: var(--cf-bg-muted);
-  font-weight: 550;
+	background: var(--cf-bg-muted);
+	font-weight: 550;
 }
 
 .cf-chat-prose hr {
-  border: 0;
-  border-top: 1px solid var(--cf-border);
+	border: 0;
+	border-top: 1px solid var(--cf-border);
 }
 
 .cf-chat-code {
-  position: relative;
-  margin: 0.75em 0;
-  overflow: hidden;
-  border: 1px solid var(--cf-border);
-  border-radius: 0.85rem;
-  background: var(--cf-bg-muted);
+	position: relative;
+	margin: 0.75em 0;
+	overflow: hidden;
+	border: 1px solid var(--cf-border);
+	border-radius: 0.85rem;
+	background: var(--cf-bg-muted);
 }
 
 .cf-chat-code header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-  padding: 0.4rem 0.7rem;
-  border-bottom: 1px solid var(--cf-border);
-  font-family: var(--font-mono, ui-monospace, monospace);
-  font-size: 0.7rem;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--cf-fg-muted);
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.5rem;
+	padding: 0.4rem 0.7rem;
+	border-bottom: 1px solid var(--cf-border);
+	font-family: var(--font-mono, ui-monospace, monospace);
+	font-size: 0.7rem;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	color: var(--cf-fg-muted);
 }
 
 .cf-chat-code pre {
-  margin: 0;
-  overflow-x: auto;
-  padding: 0.85rem 0.95rem 1rem;
-  font-family: var(--font-mono, ui-monospace, monospace);
-  font-size: 0.8125rem;
-  line-height: 1.55;
+	margin: 0;
+	overflow-x: auto;
+	padding: 0.85rem 0.95rem 1rem;
+	font-family: var(--font-mono, ui-monospace, monospace);
+	font-size: 0.8125rem;
+	line-height: 1.55;
 }
 
 .cf-chat-code code {
-  font-family: inherit;
+	font-family: inherit;
 }
 
 .cf-chat-prose :not(pre) > code {
-  border-radius: 0.35rem;
-  background: var(--cf-bg-muted);
-  padding: 0.1em 0.35em;
-  font-family: var(--font-mono, ui-monospace, monospace);
-  font-size: 0.86em;
+	border-radius: 0.35rem;
+	background: var(--cf-bg-muted);
+	padding: 0.1em 0.35em;
+	font-family: var(--font-mono, ui-monospace, monospace);
+	font-size: 0.86em;
 }
 
 .cf-chat .hljs-keyword,
-.cf-chat .hljs-selector-tag { color: oklch(0.48 0.16 300); }
+.cf-chat .hljs-selector-tag {
+	color: oklch(0.48 0.16 300);
+}
 .cf-chat .hljs-string,
-.cf-chat .hljs-attr { color: oklch(0.45 0.12 155); }
+.cf-chat .hljs-attr {
+	color: oklch(0.45 0.12 155);
+}
 .cf-chat .hljs-number,
-.cf-chat .hljs-literal { color: oklch(0.5 0.14 40); }
-.cf-chat .hljs-comment { color: var(--cf-fg-subtle); font-style: italic; }
+.cf-chat .hljs-literal {
+	color: oklch(0.5 0.14 40);
+}
+.cf-chat .hljs-comment {
+	color: var(--cf-fg-subtle);
+	font-style: italic;
+}
 .cf-chat .hljs-title,
-.cf-chat .hljs-section { color: oklch(0.4 0.12 250); }
+.cf-chat .hljs-section {
+	color: oklch(0.4 0.12 250);
+}
 .dark .cf-chat .hljs-keyword,
-.cf-chat.dark .hljs-keyword { color: oklch(0.78 0.12 300); }
+.cf-chat.dark .hljs-keyword {
+	color: oklch(0.78 0.12 300);
+}
 .dark .cf-chat .hljs-string,
-.cf-chat.dark .hljs-string { color: oklch(0.8 0.1 155); }
+.cf-chat.dark .hljs-string {
+	color: oklch(0.8 0.1 155);
+}
 .dark .cf-chat .hljs-number,
-.cf-chat.dark .hljs-number { color: oklch(0.8 0.1 50); }
+.cf-chat.dark .hljs-number {
+	color: oklch(0.8 0.1 50);
+}
 .dark .cf-chat .hljs-title,
-.cf-chat.dark .hljs-title { color: oklch(0.78 0.1 230); }
+.cf-chat.dark .hljs-title {
+	color: oklch(0.78 0.1 230);
+}
 
 .cf-chat-citation {
-  display: inline-flex;
-  align-items: baseline;
-  margin: 0 0.15em;
-  border-radius: 999px;
-  background: color-mix(in oklch, var(--cf-accent) 12%, transparent);
-  padding: 0.05em 0.5em;
-  font-family: var(--font-mono, ui-monospace, monospace);
-  font-size: 0.72em;
-  color: var(--cf-accent-text);
-  text-decoration: none;
+	display: inline-flex;
+	align-items: baseline;
+	margin: 0 0.15em;
+	border-radius: 999px;
+	background: color-mix(in oklch, var(--cf-accent) 12%, transparent);
+	padding: 0.05em 0.5em;
+	font-family: var(--font-mono, ui-monospace, monospace);
+	font-size: 0.72em;
+	color: var(--cf-accent-text);
+	text-decoration: none;
 }
 
 .cf-chat-citation:hover {
-  background: color-mix(in oklch, var(--cf-accent) 22%, transparent);
-  color: var(--cf-accent-text);
+	background: color-mix(in oklch, var(--cf-accent) 22%, transparent);
+	color: var(--cf-accent-text);
 }
 
 .cf-chat details > summary {
-  list-style: none;
+	list-style: none;
 }
 
 .cf-chat details > summary::-webkit-details-marker {
-  display: none;
+	display: none;
 }
 
 .cf-chat details .cf-chat-chevron {
-  transition: transform 0.15s ease;
+	transition: transform 0.15s ease;
 }
 
 .cf-chat details[open] .cf-chat-chevron {
-  transform: rotate(180deg);
+	transform: rotate(180deg);
 }
 
 .cf-chat .katex-display {
-  overflow-x: auto;
-  overflow-y: hidden;
-  padding: 0.25em 0;
+	overflow-x: auto;
+	overflow-y: hidden;
+	padding: 0.25em 0;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .cf-chat *,
-  .cf-chat *::before,
-  .cf-chat *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    scroll-behavior: auto !important;
-    transition-duration: 0.01ms !important;
-  }
+	.cf-chat *,
+	.cf-chat *::before,
+	.cf-chat *::after {
+		animation-duration: 0.01ms !important;
+		animation-iteration-count: 1 !important;
+		scroll-behavior: auto !important;
+		transition-duration: 0.01ms !important;
+	}
 }

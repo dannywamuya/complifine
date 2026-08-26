@@ -2,7 +2,6 @@
 
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { BookOpen, MapPinned, Quote, SplitSquareVertical } from "lucide-react";
 import { ChatShell } from "@complifine/chat";
 import { api, apiBase } from "@/lib/api";
 import { CONVERSATIONS_CHANGED } from "@/components/app-sidebar";
@@ -15,29 +14,6 @@ const SUGGESTIONS = [
   "Is irrigation water testing a Major Must?",
   "What changes between Smart and GFS for crop protection?",
   "Do harvest hygiene rules still apply if we don't harvest?",
-];
-
-const EMPTY_FEATURES = [
-  {
-    title: "Grounded answers",
-    body: "Every claim cites a published criterion.",
-    icon: <Quote className="size-4" aria-hidden />,
-  },
-  {
-    title: "Your company",
-    body: "Sites and certifications change what applies.",
-    icon: <MapPinned className="size-4" aria-hidden />,
-  },
-  {
-    title: "Official sources",
-    body: "Published editions only, versioned.",
-    icon: <BookOpen className="size-4" aria-hidden />,
-  },
-  {
-    title: "Scoping",
-    body: "Sixteen official questions, deterministic.",
-    icon: <SplitSquareVertical className="size-4" aria-hidden />,
-  },
 ];
 
 export function ChatWorkspace() {
@@ -81,6 +57,14 @@ function ChatWorkspaceInner() {
     [sites],
   );
 
+  const siteName = sites[0]?.name;
+  const emptyBlobLines = [
+    "Ask in your own words. Get a cited answer.",
+    siteName ? `Tuned to ${siteName} — a packhouse is not a field.` : "Tuned to your site — a packhouse is not a field.",
+    "Save hours before the next audit.",
+    "Open the source page. No guessing.",
+  ];
+
   if (!orgReady) return <ChatPageSkeleton />;
 
   return (
@@ -97,8 +81,10 @@ function ChatWorkspaceInner() {
         window.dispatchEvent(new Event(CONVERSATIONS_CHANGED));
       }}
       suggestions={SUGGESTIONS}
-      emptyGreeting="Hello there"
-      emptyFeatures={EMPTY_FEATURES}
+      emptyTitle="What do you need to check today?"
+      emptyGreeting=""
+      emptyBlobLines={emptyBlobLines}
+      footer="We cite the published edition. Your certification body still decides the close calls."
       modes={["answer"]}
       defaultVersion={defaultVersion}
       versionOptions={versionOptions}

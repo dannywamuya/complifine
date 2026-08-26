@@ -170,10 +170,11 @@ export function AppChrome({
 					</div>
 				</header>
 				<div
+					id={chatHome ? undefined : 'cf-app-scroll'}
 					className={
 						chatHome
 							? 'flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden'
-							: 'min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto px-4 py-6 sm:px-8 sm:py-8'
+							: 'relative min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto px-4 py-6 sm:px-8 sm:py-8'
 					}>
 					{children}
 				</div>

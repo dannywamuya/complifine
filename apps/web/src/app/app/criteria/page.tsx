@@ -24,7 +24,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { CriteriaTableSkeleton } from "@/components/app-skeletons";
+import { CatalogBodySkeleton, CriteriaTableSkeleton } from "@/components/app-skeletons";
+import { InfoHint } from "@/components/info-hint";
 
 interface Listing {
   total: number;
@@ -127,23 +128,29 @@ export default function AppCriteriaPage() {
 
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-8">
-      <header className="w-fit max-w-full space-y-2" id="tour-catalog">
-        <p className="text-lg text-muted-foreground">Published knowledge</p>
-        <h1 className="font-heading text-3xl font-medium tracking-tight text-balance sm:text-4xl">
-          Catalog
+      <header className="w-fit max-w-full space-y-2">
+        <p className="text-lg text-muted-foreground">Catalog</p>
+        <h1
+          id="tour-catalog"
+          className="w-fit font-heading text-3xl font-medium tracking-tight text-balance sm:text-4xl"
+        >
+          The rule as written
         </h1>
         <p className="max-w-lg text-base leading-relaxed text-muted-foreground">
-          Choose a published edition, then read the official wording. Only live knowledge is listed.
+          Open a criterion the way the publisher wrote it. Chat can only cite what is live here.
         </p>
       </header>
 
       {catalog === null ? (
-        <p className="text-sm text-muted-foreground">Loading catalog…</p>
+        <CatalogBodySkeleton />
       ) : editions.length === 0 ? (
         <p className="text-sm text-muted-foreground">No published editions yet.</p>
       ) : (
         <div className="grid gap-8 lg:grid-cols-[16.5rem_minmax(0,1fr)]">
-          <CatalogNav data={catalog} selected={version} onSelect={selectVersion} />
+          <div id="tour-catalog-editions" className="h-fit w-fit max-w-full self-start">
+            <p className="mb-3 px-2 text-sm text-muted-foreground">Pick an edition</p>
+            <CatalogNav data={catalog} selected={version} onSelect={selectVersion} />
+          </div>
           <div className="min-w-0 space-y-5">
             {selected ? (
               <div className="space-y-1">
@@ -163,9 +170,19 @@ export default function AppCriteriaPage() {
               </div>
             ) : null}
 
-            <form
-              id="tour-catalog-search"
-              className="flex w-fit max-w-full flex-col gap-3 rounded-[1.75rem] border border-border bg-card p-3 shadow-[0_8px_28px_rgb(0_0_0/0.06)] sm:flex-row sm:items-center"
+            <div className="self-start space-y-3">
+              <div className="flex w-fit max-w-full items-center gap-1.5">
+                <p className="text-sm text-muted-foreground">
+                  Find a rule by number or everyday words
+                </p>
+                <InfoHint label="What do the levels mean?">
+                  Major Must is an audit blocker — you need all of them that apply. Minor Must is
+                  required as a group. Recommendation is not required for certification.
+                </InfoHint>
+              </div>
+              <form
+                id="tour-catalog-search"
+                className="flex w-full max-w-xl flex-col gap-3 rounded-[1.75rem] border border-border bg-card p-3 shadow-[0_8px_28px_rgb(0_0_0/0.06)] sm:flex-row sm:items-center"
               onSubmit={(event) => {
                 event.preventDefault();
                 setSubmitted(q.trim());
@@ -173,11 +190,11 @@ export default function AppCriteriaPage() {
             >
               <label className="relative min-w-0 flex-1">
                 <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-                <span className="sr-only">Number or principle</span>
+                <span className="sr-only">Number or everyday words</span>
                 <Input
                   value={q}
                   onChange={(event) => setQ(event.target.value)}
-                  placeholder="Number or principle"
+                  placeholder="Number or everyday words"
                   className="h-10 rounded-full border-0 bg-muted pl-9 shadow-none focus-visible:bg-card"
                 />
               </label>
@@ -198,6 +215,7 @@ export default function AppCriteriaPage() {
                 Search
               </Button>
             </form>
+            </div>
 
             {loading || !data ? (
               <CriteriaTableSkeleton />

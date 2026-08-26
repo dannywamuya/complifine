@@ -31,7 +31,7 @@ export function AnswerArticle({
 			{summary ? (
 				<section className='rounded-2xl border border-[color-mix(in_oklch,var(--cf-accent)_22%,transparent)] bg-(--cf-accent-soft) px-5 py-4'>
 					<p className='text-[11px] font-medium tracking-[0.16em] text-(--cf-accent-text) uppercase'>
-						At a glance
+						In short
 					</p>
 					<div className='mt-2 text-[1.05rem] leading-snug'>
 						<MarkdownView
@@ -43,7 +43,7 @@ export function AnswerArticle({
 				</section>
 			) : null}
 			{detail ? (
-				<CollapsibleSection title='What the standard says' defaultOpen>
+				<CollapsibleSection title='From the standard' defaultOpen>
 					<MarkdownView
 						text={detail}
 						streaming={streaming && !practical}
@@ -53,7 +53,7 @@ export function AnswerArticle({
 			) : null}
 			{practical ? (
 				<CollapsibleSection
-					title='What this means'
+					title='On site'
 					defaultOpen
 					className='rounded-2xl bg-(--cf-bg-elevated) px-5 py-3 ring-1 ring-(--cf-border)'>
 					<MarkdownView

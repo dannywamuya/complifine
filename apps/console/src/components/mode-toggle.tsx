@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { Monitor, Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
-import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 const OPTIONS = [
   { id: "light", label: "Light", icon: Sun },
@@ -19,30 +19,22 @@ export function ModeToggle() {
     setMounted(true);
   }, []);
 
+  const current = OPTIONS.find((option) => option.id === theme) ?? OPTIONS[2];
+  const next = OPTIONS[(OPTIONS.indexOf(current) + 1) % OPTIONS.length]!;
+  const Icon = mounted ? current.icon : Monitor;
+
   return (
-    <div role="group" aria-label="Color theme" className="flex rounded-xl bg-muted p-0.5">
-      {OPTIONS.map((option) => {
-        const Icon = option.icon;
-        const selected = mounted && theme === option.id;
-        return (
-          <button
-            key={option.id}
-            type="button"
-            aria-pressed={selected}
-            aria-label={option.label}
-            title={option.label}
-            onClick={() => setTheme(option.id)}
-            className={cn(
-              "inline-flex size-8 items-center justify-center rounded-lg transition-colors",
-              selected
-                ? "bg-background text-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground",
-            )}
-          >
-            <Icon className="size-3.5" />
-          </button>
-        );
-      })}
-    </div>
+    <Button
+      type="button"
+      variant="ghost"
+      size="icon"
+      aria-label={`Color theme: ${current.label}. Switch to ${next.label}.`}
+      title={`${current.label} — click for ${next.label}`}
+      onClick={() => setTheme(next.id)}
+      className="text-muted-foreground"
+    >
+      <Icon />
+      <span className="sr-only">{current.label}</span>
+    </Button>
   );
 }
