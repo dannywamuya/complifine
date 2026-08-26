@@ -13,10 +13,11 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { cn } from "../cn.ts";
 import { formatTime } from "../dates.ts";
 import { looksStructured } from "../parse-answer.ts";
+import { formatElapsed, workingLabel } from "../stream-status.ts";
 import { toolLabel } from "../tools.ts";
 import type { ChatMessage, ToolChip } from "../types.ts";
 import { AnswerArticle } from "./answer-article.tsx";
@@ -200,6 +201,7 @@ function AssistantTurn({
 }) {
   const tools = message.tools ?? [];
   const streaming = message.status === "streaming" || message.status === "pending";
+  const settled = !streaming;
   const [confirm, setConfirm] = useState(false);
 
   return (
@@ -210,16 +212,21 @@ function AssistantTurn({
             <ToolChipBadge key={`${tool.name}-${index}`} tool={tool} />
           ))}
         </div>
-      ) : streaming && !message.content ? (
-        <p className="flex items-center gap-2 text-sm text-(--cf-fg-muted)" aria-live="polite">
-          <LoaderCircle className="size-3.5 animate-spin" />
-          Looking it up in the published standard…
-        </p>
+      ) : null}
+
+      {streaming ? <WorkingStatus message={message} /> : null}
+
+      {streaming && !message.content.trim() ? (
+        <div className="space-y-2" aria-hidden>
+          <div className="h-4 w-full animate-pulse rounded-md bg-(--cf-bg-muted)" />
+          <div className="h-4 w-5/6 animate-pulse rounded-md bg-(--cf-bg-muted)" />
+          <div className="h-4 w-2/3 animate-pulse rounded-md bg-(--cf-bg-muted)" />
+        </div>
       ) : null}
 
       {message.error ? (
         <div className="rounded-2xl border border-(--cf-danger)/30 bg-(--cf-danger-soft) px-4 py-3 text-sm text-(--cf-danger)" role="alert">
-          <p className="font-medium">Could not answer</p>
+          <p className="font-medium">Could not finish this answer</p>
           <p className="mt-1">{message.error}</p>
           {onRetry ? (
             <button type="button" className="mt-2 rounded-lg bg-(--cf-danger) px-2.5 py-1 text-xs font-medium text-white" onClick={onRetry}>
@@ -235,8 +242,8 @@ function AssistantTurn({
         <MarkdownView text={message.content} streaming={streaming} criterionHref={criterionHref} />
       ) : null}
 
-      {message.status === "stopped" && message.content ? (
-        <p className="text-xs text-(--cf-fg-subtle)">Generation stopped.</p>
+      {message.status === "stopped" ? (
+        <p className="text-xs text-(--cf-fg-muted)">You stopped this. Retry if you still need the answer.</p>
       ) : null}
 
       {message.ungrounded && message.ungrounded.length > 0 ? (
@@ -246,6 +253,7 @@ function AssistantTurn({
         </div>
       ) : null}
 
+      {settled ? (
       <MessageActions>
         <BranchNav index={branchIndex} count={branchCount} onPrev={onPrevBranch} onNext={onNextBranch} />
         <Action icon={Copy} label="Copy" onClick={onCopy} />
@@ -268,9 +276,12 @@ function AssistantTurn({
         ) : null}
         <Action icon={Trash2} label="Delete" onClick={() => setConfirm(true)} />
         {message.durationMs ? (
-          <span className="px-1 text-[10px] text-(--cf-fg-subtle)">{(message.durationMs / 1000).toFixed(1)}s</span>
+          <span className="ml-1 rounded-full bg-(--cf-bg-muted) px-2 py-0.5 text-xs tabular-nums text-(--cf-fg-muted)">
+            {formatElapsed(message.durationMs)}
+          </span>
         ) : null}
       </MessageActions>
+      ) : null}
       <ConfirmDialog
         open={confirm}
         title="Delete this reply?"
@@ -285,6 +296,34 @@ function AssistantTurn({
   );
 }
 
+function WorkingStatus({ message }: { message: ChatMessage }) {
+  const elapsed = useElapsed(message.createdAt);
+  return (
+    <p
+      className="flex flex-wrap items-center gap-2 text-sm font-medium text-(--cf-accent-text)"
+      role="status"
+      aria-live="polite"
+      aria-busy="true"
+    >
+      <LoaderCircle className="size-3.5 shrink-0 animate-spin" aria-hidden />
+      <span>{workingLabel(message)}</span>
+      <span className="rounded-full bg-(--cf-accent-soft) px-2 py-0.5 text-xs tabular-nums font-medium text-(--cf-accent-text)">
+        {elapsed}
+      </span>
+    </p>
+  );
+}
+
+function useElapsed(startedAt: string): string {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const id = window.setInterval(() => setNow(Date.now()), 250);
+    return () => window.clearInterval(id);
+  }, []);
+  const started = Date.parse(startedAt);
+  return formatElapsed(Number.isFinite(started) ? now - started : 0);
+}
+
 function ToolChipBadge({ tool }: { tool: ToolChip }) {
   const running = tool.status === "running";
   const error = tool.status === "error";
@@ -292,8 +331,8 @@ function ToolChipBadge({ tool }: { tool: ToolChip }) {
     <span
       className={cn(
         "cf-tool-chip inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium",
-        running && "bg-(--cf-accent-soft) text-(--cf-accent-text)",
-        tool.status === "done" && "bg-(--cf-accent-soft) text-(--cf-fg)",
+        running && "bg-(--cf-accent-soft) text-(--cf-accent-text) ring-1 ring-(--cf-accent)/40",
+        tool.status === "done" && "bg-(--cf-bg-muted) text-(--cf-fg-muted)",
         error && "bg-(--cf-danger-soft) text-(--cf-danger)",
       )}
       aria-busy={running || undefined}

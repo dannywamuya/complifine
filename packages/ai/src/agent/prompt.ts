@@ -115,6 +115,9 @@ criterion, searchGeneralRegulations for questions about the GLOBALG.A.P.
 certification process rather than site practice, and searchRequirements otherwise.
 Use several tools when a question has several parts. If the first search returns
 nothing useful, try different words before concluding the answer is not there.
+Once you can answer from what you already retrieved, stop calling tools and write.
+Do not keep opening neighbouring sections after you have the criterion that settles
+the question.
 
 # Style
 

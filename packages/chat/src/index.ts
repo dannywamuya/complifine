@@ -20,7 +20,13 @@ export { rewriteAskQuestion, farmContextNote } from "./ask-context.ts";
 export { walkPath, siblingsOf, deepestDescendant, descendantsOf } from "./thread.ts";
 export { groupByDate, dateGroup } from "./dates.ts";
 export { stabilizeMarkdown, extractArtifacts } from "./markdown-stream.ts";
-export { parseSseFrame, friendlyError } from "./sse.ts";
+export { parseSseFrame, friendlyError, StreamStallError } from "./sse.ts";
+export {
+  workingLabel,
+  formatElapsed,
+  settleIncompleteTurn,
+  settleDoneTurn,
+} from "./stream-status.ts";
 export { titleFromFirstMessage } from "./title.ts";
 export { parseAnswerSections } from "./parse-answer.ts";
 export { toolLabel } from "./tools.ts";

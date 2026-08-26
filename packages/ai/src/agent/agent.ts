@@ -52,10 +52,11 @@ export interface AskOptions {
   /** Prior turns, so follow-up questions work. */
   readonly history?: readonly ModelMessage[];
   /**
-   * Cap on tool-calling rounds. Eight is generous: the hardest questions in
-   * the eval suite (compare an edition, then check applicability) settle in
-   * four. The cap exists to bound cost on a pathological loop, not to shape
-   * behaviour.
+   * Cap on tool-calling rounds. A scoped question spends its first three steps
+   * on context (company, applicability, site) before any research begins, so
+   * the budget has to clear that floor by a wide margin. The cap exists to
+   * bound cost on a pathological loop, not to shape behaviour: hitting it is
+   * handled by {@link wrapUpMessages} rather than by truncating the answer.
    */
   readonly maxSteps?: number;
   readonly temperature?: number;
@@ -134,9 +135,42 @@ export type AskStreamEvent =
     }
   | { type: "error"; message: string };
 
-const DEFAULT_MAX_STEPS = 8;
+const DEFAULT_MAX_STEPS = 16;
 
 const log = createLogger("agent");
+
+/**
+ * The tool loop stops the moment it reaches its step cap, which can land on a
+ * step the model spent calling a tool. The SDK reports that as
+ * `finishReason: "tool-calls"` with empty text, and the turn reaches the UI as
+ * a blank bubble. Re-asking with the tool results still in context and no tools
+ * attached leaves answering as the only available move.
+ */
+function wrapUpMessages(
+  base: readonly ModelMessage[],
+  responseMessages: readonly ModelMessage[],
+): ModelMessage[] {
+  return [
+    ...base,
+    ...responseMessages,
+    {
+      role: "user",
+      content:
+        "You have used your entire tool budget and cannot call any more tools. " +
+        "Answer the question now from the tool results above. If they do not " +
+        "settle it, say what you did establish and what is still missing.",
+    },
+  ];
+}
+
+function addTokens(a: number | undefined, b: number | undefined): number | undefined {
+  if (a === undefined) return b;
+  if (b === undefined) return a;
+  return a + b;
+}
+
+const NO_ANSWER_MESSAGE =
+  "The assistant finished without writing an answer. Please ask again.";
 
 /**
  * Reasoning models (GPT-5, o1, o3, …) reject `temperature`. Chat models still
@@ -221,7 +255,33 @@ export async function ask(question: string, options: AskOptions): Promise<AskRes
       ...samplingFor(modelName, options.temperature),
     });
 
-    const answer = result.text.trim();
+    let answer = result.text.trim();
+    let finishReason = result.finishReason;
+    let promptTokens = result.usage?.inputTokens;
+    let completionTokens = result.usage?.outputTokens;
+    const responseMessages: ModelMessage[] = [...result.response.messages];
+
+    if (!answer) {
+      log.warn("tool loop ended without prose; forcing a final answer", {
+        runId,
+        finishReason,
+        steps: toolCalls.length,
+      });
+      const wrapUp = await generateText({
+        model: openai(modelName),
+        system: systemPromptFor(options.publishedOnly),
+        messages: wrapUpMessages(messages, result.response.messages),
+        ...samplingFor(modelName, options.temperature),
+      });
+      answer = wrapUp.text.trim();
+      finishReason = wrapUp.finishReason;
+      promptTokens = addTokens(promptTokens, wrapUp.usage?.inputTokens);
+      completionTokens = addTokens(completionTokens, wrapUp.usage?.outputTokens);
+      if (answer) responseMessages.push({ role: "assistant", content: answer });
+    }
+
+    if (!answer) throw new Error(NO_ANSWER_MESSAGE);
+
     const citations = extractCitations(answer);
     const ungroundedCitations = citations.filter(
       (citation) =>
@@ -243,8 +303,8 @@ export async function ask(question: string, options: AskOptions): Promise<AskRes
       await persistRun(options.db, runId, {
         answer,
         citations,
-        usage: result.usage,
-        finishReason: result.finishReason,
+        usage: { inputTokens: promptTokens, outputTokens: completionTokens },
+        finishReason,
         durationMs,
         toolCalls,
       });
@@ -259,12 +319,12 @@ export async function ask(question: string, options: AskOptions): Promise<AskRes
       ungroundedCitations,
       toolCalls,
       usage: {
-        promptTokens: result.usage?.inputTokens,
-        completionTokens: result.usage?.outputTokens,
+        promptTokens,
+        completionTokens,
       },
-      finishReason: result.finishReason,
+      finishReason,
       durationMs,
-      messages: [...messages, ...result.response.messages],
+      messages: [...messages, ...responseMessages],
     };
   } catch (error) {
     const message = (error as Error).message;
@@ -375,7 +435,45 @@ export async function* askStream(
       result.usage,
       result.finishReason,
     ]);
-    const answer = answerRaw.trim();
+    let answer = answerRaw.trim();
+    let settledReason = finishReason;
+    let promptTokens = usage?.inputTokens;
+    let completionTokens = usage?.outputTokens;
+
+    if (!answer) {
+      log.warn("tool loop ended without prose; forcing a final answer", {
+        runId,
+        finishReason,
+        steps: toolCalls.length,
+      });
+      const response = await result.response;
+      const wrapUp = streamText({
+        model: openai(modelName),
+        system: systemPromptFor(options.publishedOnly),
+        messages: wrapUpMessages(messages, response.messages),
+        ...samplingFor(modelName, options.temperature),
+        abortSignal: options.abortSignal,
+      });
+      for await (const part of wrapUp.fullStream) {
+        if (part.type === "text-delta") {
+          if (part.text) yield { type: "text", text: part.text };
+        } else if (part.type === "error") {
+          throw part.error instanceof Error ? part.error : new Error(String(part.error));
+        }
+      }
+      const [wrapUpText, wrapUpUsage, wrapUpReason] = await Promise.all([
+        wrapUp.text,
+        wrapUp.usage,
+        wrapUp.finishReason,
+      ]);
+      answer = wrapUpText.trim();
+      settledReason = wrapUpReason;
+      promptTokens = addTokens(promptTokens, wrapUpUsage?.inputTokens);
+      completionTokens = addTokens(completionTokens, wrapUpUsage?.outputTokens);
+    }
+
+    if (!answer) throw new Error(NO_ANSWER_MESSAGE);
+
     const citations = extractCitations(answer);
     const ungroundedCitations = citations.filter(
       (citation) =>
@@ -397,8 +495,8 @@ export async function* askStream(
       await persistRun(options.db, runId, {
         answer,
         citations,
-        usage,
-        finishReason,
+        usage: { inputTokens: promptTokens, outputTokens: completionTokens },
+        finishReason: settledReason,
         durationMs,
         toolCalls,
       });
@@ -418,11 +516,11 @@ export async function* askStream(
         error: call.error,
       })),
       usage: {
-        promptTokens: usage?.inputTokens,
-        completionTokens: usage?.outputTokens,
+        promptTokens,
+        completionTokens,
       },
       durationMs,
-      finishReason,
+      finishReason: settledReason,
     };
   } catch (error) {
     const message = (error as Error).message;

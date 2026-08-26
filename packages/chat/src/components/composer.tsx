@@ -141,9 +141,10 @@ export function Composer({
             type="button"
             onClick={onStop}
             aria-label="Stop generating"
-            className="mb-0.5 inline-flex size-9 shrink-0 items-center justify-center rounded-full bg-(--cf-bg-muted) text-(--cf-fg)"
+            className="mb-0.5 inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-(--cf-danger-soft) px-3 text-sm font-medium text-(--cf-danger)"
           >
             <Square className="size-3 fill-current" />
+            Stop
           </button>
         ) : (
           <button

@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { friendlyError, parseSseFrame } from "../src/sse.ts";
+import { friendlyError, parseSseFrame, readSseStream, StreamStallError } from "../src/sse.ts";
 
 describe("parseSseFrame", () => {
   test("reads a data payload", () => {
@@ -7,8 +7,19 @@ describe("parseSseFrame", () => {
     expect(event).toEqual({ type: "text", text: "hi" });
   });
 
-  test("ignores malformed json", () => {
-    expect(parseSseFrame("data: not-json")).toBeNull();
+  test("reads a heartbeat", () => {
+    expect(parseSseFrame('event: heartbeat\ndata: {"type":"heartbeat"}')).toEqual({ type: "heartbeat" });
+  });
+});
+
+describe("readSseStream", () => {
+  test("throws if the stream goes silent", async () => {
+    const stream = new ReadableStream<Uint8Array>({
+      start() {},
+    });
+    await expect(readSseStream(stream, () => undefined, { stallMs: 25 })).rejects.toBeInstanceOf(
+      StreamStallError,
+    );
   });
 });
 

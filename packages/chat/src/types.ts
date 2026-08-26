@@ -104,7 +104,8 @@ export type AskStreamEvent =
       toolCalls: Array<{ name: string; args: unknown; durationMs: number; error?: string }>;
       durationMs: number;
     }
-  | { type: "error"; message: string };
+  | { type: "error"; message: string }
+  | { type: "heartbeat" };
 
 export interface SelectOption {
   value: string;

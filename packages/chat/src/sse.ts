@@ -1,4 +1,12 @@
+import { STREAM_STALL_MESSAGE, STREAM_STALL_MS } from "./stream-status.ts";
 import type { AskStreamEvent } from "./types.ts";
+
+export class StreamStallError extends Error {
+  override name = "StreamStallError";
+  constructor(message = STREAM_STALL_MESSAGE) {
+    super(message);
+  }
+}
 
 export function parseSseFrame(frame: string): AskStreamEvent | null {
   let data = "";
@@ -15,15 +23,39 @@ export function parseSseFrame(frame: string): AskStreamEvent | null {
   }
 }
 
+async function readOrStall(
+  reader: ReadableStreamDefaultReader<Uint8Array>,
+  stallMs: number,
+): Promise<"stall" | Awaited<ReturnType<ReadableStreamDefaultReader<Uint8Array>["read"]>>> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      reader.read(),
+      new Promise<"stall">((resolve) => {
+        timer = setTimeout(() => resolve("stall"), stallMs);
+      }),
+    ]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
+
 export async function readSseStream(
   body: ReadableStream<Uint8Array>,
   onEvent: (event: AskStreamEvent) => void,
+  options?: { stallMs?: number },
 ): Promise<void> {
+  const stallMs = options?.stallMs ?? STREAM_STALL_MS;
   const reader = body.getReader();
   const decoder = new TextDecoder();
   let buffer = "";
   while (true) {
-    const { done, value } = await reader.read();
+    const result = await readOrStall(reader, stallMs);
+    if (result === "stall") {
+      await reader.cancel().catch(() => undefined);
+      throw new StreamStallError();
+    }
+    const { done, value } = result;
     if (done) break;
     buffer += decoder.decode(value, { stream: true });
     const frames = buffer.split("\n\n");

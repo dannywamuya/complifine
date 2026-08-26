@@ -913,6 +913,16 @@ export function createApp(database = createDatabase()) {
                 );
               };
 
+              let closed = false;
+              const heartbeat = setInterval(() => {
+                if (closed) return;
+                try {
+                  send({ type: "heartbeat" });
+                } catch {
+                  closed = true;
+                }
+              }, 10_000);
+
               let turn: { userMessageId: string; assistantMessageId: string } | null = null;
               let answer = "";
               let completed:
@@ -945,6 +955,8 @@ export function createApp(database = createDatabase()) {
                     type: "error",
                     message: error instanceof Error ? error.message : String(error),
                   } as { type: string });
+                  closed = true;
+                  clearInterval(heartbeat);
                   controller.close();
                   return;
                 }
@@ -975,7 +987,9 @@ export function createApp(database = createDatabase()) {
                   }
                   if (event.type === "text") answer += event.text;
                   if (event.type === "done") {
-                    answer = event.answer;
+                    // Keep whatever streamed if the final payload is empty, so
+                    // a partial answer still survives into the stored turn.
+                    if (event.answer) answer = event.answer;
                     completed = {
                       citations: event.citations,
                       ungrounded: event.ungroundedCitations,
@@ -993,8 +1007,15 @@ export function createApp(database = createDatabase()) {
                   message: failed,
                 } as { type: string });
               } finally {
+                closed = true;
+                clearInterval(heartbeat);
                 if (turn) {
                   const aborted = request.signal.aborted;
+                  // A run that ends with no prose is a failure, not a complete
+                  // turn: storing it as complete would reload as a blank bubble.
+                  if (!aborted && !failed && !answer.trim()) {
+                    failed = "The assistant finished without writing an answer. Please ask again.";
+                  }
                   await finishAssistant(db, turn.assistantMessageId, {
                     content: answer,
                     status: aborted ? "stopped" : failed ? "error" : "complete",

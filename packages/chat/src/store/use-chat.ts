@@ -3,12 +3,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { rewriteAskQuestion } from "../ask-context.ts";
 import { ChatApiError, ChatClient, createFetcher, type Fetcher } from "../client.ts";
+import { friendlyError, StreamStallError } from "../sse.ts";
 import {
   conversationToJson,
   conversationToMarkdown,
   downloadText,
   slugTitle,
 } from "../export.ts";
+import { settleDoneTurn, settleIncompleteTurn } from "../stream-status.ts";
 import { deepestDescendant, descendantsOf, historyFromPath, siblingsOf, walkPath } from "../thread.ts";
 import { titleFromFirstMessage } from "../title.ts";
 import type {
@@ -104,23 +106,7 @@ function applyEvent(message: ChatMessage, event: AskStreamEvent): ChatMessage {
       content: message.content + event.text,
     };
   }
-  if (event.type === "done") {
-    return {
-      ...message,
-      content: event.answer,
-      citations: [...event.citations],
-      ungrounded: [...event.ungroundedCitations],
-      tools: event.toolCalls.map((call) => ({
-        name: call.name,
-        status: call.error ? "error" : "done",
-        durationMs: call.durationMs,
-      })),
-      status: "complete",
-      durationMs: event.durationMs,
-      runId: event.runId,
-      error: null,
-    };
-  }
+  if (event.type === "done") return settleDoneTurn(message, event);
   if (event.type === "error") {
     return { ...message, status: "error", error: event.message };
   }
@@ -285,7 +271,7 @@ export function useChat(options: UseChatOptions) {
     setMessages((current) =>
       current.map((message) =>
         message.status === "streaming" || message.status === "pending"
-          ? { ...message, status: "stopped" }
+          ? settleIncompleteTurn(message, "aborted")
           : message,
       ),
     );
@@ -581,6 +567,7 @@ export function useChat(options: UseChatOptions) {
             siteId: options.siteId || undefined,
           },
           (event) => {
+            if (event.type === "heartbeat") return;
             if (event.type === "start") {
               if (event.conversationId && event.conversationId !== conversationId) {
                 setActiveId(event.conversationId);
@@ -594,16 +581,17 @@ export function useChat(options: UseChatOptions) {
         await hitsPromise;
       } catch (error) {
         if ((error as Error).name === "AbortError") {
-          patchMessage(assistantId, (message) => ({
-            ...message,
-            status: "stopped",
-          }));
+          patchMessage(assistantId, (message) => settleIncompleteTurn(message, "aborted"));
+        } else if (error instanceof StreamStallError) {
+          patchMessage(assistantId, (message) => settleIncompleteTurn(message, "stalled"));
         } else {
-          const message = error instanceof ChatApiError ? error.message : (error as Error).message;
+          const text =
+            error instanceof ChatApiError
+              ? error.message
+              : friendlyError(0, (error as Error).message || String(error));
           patchMessage(assistantId, (current) => ({
-            ...current,
-            status: "error",
-            error: message,
+            ...settleIncompleteTurn(current, "disconnected"),
+            error: text,
           }));
         }
       } finally {
@@ -612,7 +600,7 @@ export function useChat(options: UseChatOptions) {
         setPending(false);
         patchMessage(assistantId, (message) =>
           message.status === "streaming" || message.status === "pending"
-            ? { ...message, status: message.content ? "stopped" : "error", error: message.error ?? "Stopped." }
+            ? settleIncompleteTurn(message, "disconnected")
             : message,
         );
         void refreshList(true);
