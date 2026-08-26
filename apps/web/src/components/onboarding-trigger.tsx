@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { useSidebar } from "@/components/ui/sidebar";
 import {
   ONBOARDING_TOUR,
+  TOUR_NAV_STEPS,
   clearTourPending,
   onboardingIsDone,
   tourIsPending,
@@ -34,31 +35,24 @@ function waitForSelector(selector: string, timeoutMs = 5000): Promise<boolean> {
 
 export function OnboardingTrigger() {
   const { startNextStep, isNextStepVisible, currentStep } = useNextStep();
-  const { setOpen, setOpenMobile } = useSidebar();
+  const { setOpen, setOpenMobile, isMobile } = useSidebar();
   const path = usePathname();
   const router = useRouter();
   const pendingNav = useRef(false);
   const autoStarted = useRef(false);
   const startRef = useRef<(force?: boolean) => void>(() => undefined);
 
-  function openSidebar() {
-    setOpen(true);
-    setOpenMobile(true);
-  }
-
   startRef.current = (force = false) => {
     if (isNextStepVisible) return;
-    openSidebar();
+    if (!isMobile) setOpen(true);
     if (path !== "/app") {
       pendingNav.current = true;
       router.push("/app");
       return;
     }
     void (async () => {
-      await waitForSelector("#tour-sidebar");
       await waitForSelector("#cf-composer");
       await waitForSelector("#tour-site");
-      await waitForSelector("#tour-chats");
       await waitForSelector("#tour-help");
       if (!force && onboardingIsDone()) return;
       clearTourPending();
@@ -67,9 +61,17 @@ export function OnboardingTrigger() {
   };
 
   useEffect(() => {
-    if (!isNextStepVisible) return;
-    if (currentStep === 3 || currentStep === 4) openSidebar();
-  }, [currentStep, isNextStepVisible]);
+    if (!isNextStepVisible) {
+      setOpenMobile(false);
+      return;
+    }
+    if (TOUR_NAV_STEPS.has(currentStep)) {
+      setOpen(true);
+      setOpenMobile(true);
+      return;
+    }
+    setOpenMobile(false);
+  }, [currentStep, isNextStepVisible, setOpen, setOpenMobile]);
 
   useEffect(() => {
     if (!pendingNav.current || path !== "/app") return;

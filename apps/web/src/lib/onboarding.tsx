@@ -100,6 +100,9 @@ function page(
 
 const inAppScroll = "cf-app-scroll";
 
+/** Chat / Catalog / Company and the conversation list live in the mobile nav sheet. */
+export const TOUR_NAV_STEPS = new Set([3, 4]);
+
 export const onboardingTours: Tour[] = [
   {
     tour: ONBOARDING_TOUR,

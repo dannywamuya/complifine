@@ -296,3 +296,17 @@
 		}
 	}
 }
+
+/* nextstepjs parks the card on the spotlight. On a phone that wrapper is empty
+   (the card is portaled to a sheet) — collapse it so it cannot overflow. */
+@media (max-width: 767px) {
+	[data-name="nextstep-card"] {
+		width: 0 !important;
+		height: 0 !important;
+		min-width: 0 !important;
+		margin: 0 !important;
+		overflow: visible !important;
+		pointer-events: none !important;
+		transform: none !important;
+	}
+}
