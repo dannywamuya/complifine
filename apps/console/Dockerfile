@@ -31,6 +31,7 @@ ENV NEXT_PUBLIC_API_URL=/api
 
 COPY --from=builder /app/apps/console/.next/standalone ./
 COPY --from=builder /app/apps/console/.next/static ./apps/console/.next/static
+COPY --from=builder /app/apps/console/public ./apps/console/public
 
 EXPOSE 3001
 CMD ["bun", "apps/console/server.js"]
