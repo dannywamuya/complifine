@@ -178,6 +178,15 @@ the public Postgres URL, or the pre-deploy logs.
 
 Ingest and embed remain one-off (`kb all`, `ai index`), not every deploy.
 
+Public GLOBALG.A.P. and AGRINFO files are downloaded on that `kb fetch` /
+`kb all` run. They do not need a laptop folder. Mount a volume at
+`/data/storage` (`STORAGE_ROOT`) so the preserved originals survive a
+redeploy; without a volume, the next `kb all` simply fetches them again.
+
+SMETA Workplace Requirements are the exception: they are member-gated. Copy
+the official PDF onto the volume at `drops/smeta/` (see below) or ingest
+stays on the public ETI Base Code only.
+
 ## Ports
 
 | 5434 | Postgres |
@@ -231,6 +240,9 @@ cp /path/to/member-file.pdf storage/drops/smeta/SMETA-7.0-Workplace-Requirements
 bun run kb parse --version smeta-7-4-pillar
 bun run ai index
 ```
+
+On Railway the same files go on the API volume at
+`/data/storage/drops/smeta/` (`STORAGE_ROOT=/data/storage`).
 
 Until that file exists, ingest still fetches the public ETI Base Code. The
 agent must refuse invented Workplace Requirement numbers. See

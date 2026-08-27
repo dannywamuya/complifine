@@ -8,10 +8,11 @@
  * megabyte of transfer.
  */
 
+import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { isAbsolute, resolve } from "node:path";
 import { env } from "@complifine/core";
-import { sha256 } from "./storage.ts";
+import { sha256, storageRoot } from "./storage.ts";
 
 export interface FetchResult {
   readonly bytes: Uint8Array;
@@ -182,8 +183,34 @@ export async function fetchDocument(
  * extranet checklists, for instance. Those enter through the same pipeline and
  * get the same hashing and provenance; only the acquisition step differs.
  */
+export function resolveLocalPath(path: string, baseDir: string): string {
+  return isAbsolute(path) ? path : resolve(baseDir, path);
+}
+
+export function localFileExists(path: string, baseDir: string): boolean {
+  return existsSync(resolveLocalPath(path, baseDir));
+}
+
+/**
+ * Where an operator drop may sit: the path as declared (usually under the repo
+ * during local `bun run kb`) and, when it is `storage/…`, the same relative
+ * path under STORAGE_ROOT so Railway's `/data/storage` volume is enough.
+ */
+export function existingLocalDrop(localPath: string, repoRoot: string): string | null {
+  const candidates: Array<{ relative: string; base: string }> = [
+    { relative: localPath, base: repoRoot },
+  ];
+  if (localPath.startsWith("storage/")) {
+    candidates.push({ relative: localPath.slice("storage/".length), base: storageRoot() });
+  }
+  for (const { relative, base } of candidates) {
+    if (localFileExists(relative, base)) return resolveLocalPath(relative, base);
+  }
+  return null;
+}
+
 export async function loadLocalDocument(path: string, baseDir: string): Promise<FetchResult> {
-  const absolute = isAbsolute(path) ? path : resolve(baseDir, path);
+  const absolute = resolveLocalPath(path, baseDir);
   const buffer = await readFile(absolute);
   const bytes = new Uint8Array(buffer);
 

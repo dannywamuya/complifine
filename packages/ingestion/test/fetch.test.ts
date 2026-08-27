@@ -1,8 +1,14 @@
 import { describe, expect, test } from "bun:test";
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { loadLocalDocument, parseOpenCmsRedirect, validateMagicBytes } from "../src/fetch.ts";
+import { resetEnvCache } from "@complifine/core";
+import {
+  existingLocalDrop,
+  loadLocalDocument,
+  parseOpenCmsRedirect,
+  validateMagicBytes,
+} from "../src/fetch.ts";
 import { sha256 } from "../src/storage.ts";
 
 const encode = (text: string) => new TextEncoder().encode(text);
@@ -114,5 +120,31 @@ describe("loadLocalDocument", () => {
 
   test("fails loudly when the declared file is not there", async () => {
     await expect(loadLocalDocument("absent.pdf", tmpdir())).rejects.toThrow();
+  });
+
+  test("existingLocalDrop finds a repo-relative drop and a STORAGE_ROOT drop", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "complifine-drop-"));
+    const previous = process.env.STORAGE_ROOT;
+    process.env.STORAGE_ROOT = join(dir, "volume");
+    resetEnvCache();
+    try {
+      await mkdir(join(dir, "storage/drops"), { recursive: true });
+      await mkdir(join(dir, "volume/drops"), { recursive: true });
+      await writeFile(join(dir, "storage/drops/in-repo.pdf"), "%PDF-1.7");
+      await writeFile(join(dir, "volume/drops/on-volume.pdf"), "%PDF-1.7");
+
+      expect(existingLocalDrop("storage/drops/in-repo.pdf", dir)).toBe(
+        join(dir, "storage/drops/in-repo.pdf"),
+      );
+      expect(existingLocalDrop("storage/drops/on-volume.pdf", dir)).toBe(
+        join(dir, "volume/drops/on-volume.pdf"),
+      );
+      expect(existingLocalDrop("storage/drops/missing.pdf", dir)).toBeNull();
+    } finally {
+      if (previous === undefined) delete process.env.STORAGE_ROOT;
+      else process.env.STORAGE_ROOT = previous;
+      resetEnvCache();
+      await rm(dir, { recursive: true, force: true });
+    }
   });
 });

@@ -26,6 +26,8 @@ RUN bun install --frozen-lockfile \
 ENV NODE_ENV=production
 ENV PORT=3311
 ENV STORAGE_ROOT=/data/storage
+# Persist this path with a Railway volume so `kb fetch` originals survive
+# a redeploy. Public documents are re-fetched if the volume is empty.
 
 EXPOSE 3311
 HEALTHCHECK --interval=15s --timeout=5s --start-period=40s --retries=5 \

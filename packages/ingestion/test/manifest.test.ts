@@ -140,10 +140,8 @@ describe("manifest URLs", () => {
 
   test("filenames with spaces are percent-encoded", () => {
     const withSpace = documents.find(({ document }) => document.filename.includes(" "));
-    if (withSpace && !withSpace.document.localPath) {
-      expect(documentUrl(withSpace.document)).not.toContain(" ");
-    }
-    // The transition tool is the file with a space in its name, and it is local.
+    expect(withSpace).toBeDefined();
+    expect(documentUrl(withSpace!.document)).not.toContain(" ");
     expect(findDocument("hpss-to-ifa-v6-gfs-transition-tool")!.filename).toContain(" ");
   });
 
@@ -191,6 +189,18 @@ describe("locally supplied documents", () => {
     if (rel === "" || rel.startsWith("..") || isAbsolute(rel)) return true;
     return rel === "storage" || rel.startsWith(`storage/`);
   }
+
+  test("the HPSS transition tool and AGRINFO briefing are fetched over HTTP, not a laptop folder", () => {
+    const hpss = findDocument("hpss-to-ifa-v6-gfs-transition-tool")!;
+    const agrinfo = findDocument("agrinfo-ifa-v6-briefing")!;
+    expect(hpss.localPath).toBeUndefined();
+    expect(documentUrl(hpss)).toStartWith("https://documents.globalgap.org/documents/");
+    expect(documentUrl(hpss)).toContain("transition%20tool");
+    expect(documentMirrorUrl(hpss)).toContain("transition%20tool");
+    expect(agrinfo.localPath).toBeUndefined();
+    expect(documentUrl(agrinfo)).toBe("https://agrinfo.eu/book-of-reports/globalgap-ifa-v6/pdf/");
+    expect(documentMirrorUrl(agrinfo)).toBeNull();
+  });
 
   test("every declared in-repo local file exists on disk, except operator drops", () => {
     for (const { document } of documents) {

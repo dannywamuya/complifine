@@ -12,9 +12,15 @@
 import { eq, type Database } from "@complifine/db";
 import { standardDocuments, standards, standardVersions } from "@complifine/db";
 import { parseGlobalGapFilename } from "@complifine/core";
-import { fetchDocument, headDocument, loadLocalDocument, validateMagicBytes } from "../fetch.ts";
+import {
+  existingLocalDrop,
+  fetchDocument,
+  headDocument,
+  loadLocalDocument,
+  validateMagicBytes,
+} from "../fetch.ts";
 import { storeSourceFile, verifyStoredFile } from "../storage.ts";
-import { findDocument, resolveChannel } from "../manifest.ts";
+import { documentMirrorUrl, documentUrl, findDocument, resolveChannel } from "../manifest.ts";
 import type { JobContext } from "../jobs.ts";
 import { recordAudit } from "../audit.ts";
 
@@ -134,28 +140,43 @@ async function fetchOne(
   const manifestEntry = findDocument(row.slug);
   const channel = manifestEntry ? resolveChannel(manifestEntry) : row.channel;
   const localPath = manifestEntry?.localPath ?? (row.metadata.localPath as string | null);
+  const sourceUrl = (manifestEntry ? documentUrl(manifestEntry) : null) ?? row.sourceUrl;
+  const mirrorUrl = (manifestEntry ? documentMirrorUrl(manifestEntry) : null) ?? row.mirrorUrl;
+  const localFile = localPath ? existingLocalDrop(localPath, options.localBaseDir) : null;
 
-  if (channel === "member_gated") {
-    const { existsSync } = await import("node:fs");
-    const { resolve } = await import("node:path");
-    if (!localPath || !existsSync(resolve(options.localBaseDir, localPath))) {
+  // Member-gated (and any remaining local-only) drops are not on a CDN. Skip
+  // when the file is absent, unless a verified copy is already in storage.
+  if (!localFile && !sourceUrl) {
+    if (!options.force && row.fileHash && row.storageKey) {
+      const intact = await verifyStoredFile(row.storageKey, row.fileHash);
+      if (intact) {
+        await ctx.debug(`Stored copy of ${row.slug} is intact; origin not required this run.`);
+        return "unchanged";
+      }
+    }
+    if (channel === "member_gated" || channel === "local") {
       await ctx.info(
-        `${row.slug} is member-gated and no local file is present. Skipping (not an error).`,
+        channel === "member_gated"
+          ? `${row.slug} is member-gated and no local file is present. Skipping (not an error).`
+          : `${row.slug} is a local drop and no file is present on this machine. Skipping (not an error).`,
       );
       return "unchanged";
     }
+    throw new Error(`${row.slug} has no origin URL and no local file.`);
   }
+
   const parsed = parseGlobalGapFilename(row.filename);
 
   // --- cheap change detection ---------------------------------------------
   // A HEAD request settles the common case - nothing changed - for a few bytes
-  // rather than a megabyte. Only run it when we already hold a verified copy.
-  if (!options.force && !localPath && row.fileHash && row.storageKey && row.sourceUrl) {
+  // rather than a megabyte. Only run it when we already hold a verified copy
+  // and we would otherwise download (no local drop sitting on disk).
+  if (!options.force && !localFile && sourceUrl && row.fileHash && row.storageKey) {
     const stillIntact = await verifyStoredFile(row.storageKey, row.fileHash);
 
     if (stillIntact) {
       try {
-        const head = await headDocument(row.sourceUrl);
+        const head = await headDocument(sourceUrl);
         const sameSize = head.byteSize !== null && head.byteSize === row.byteSize;
         const sameEtag = head.etag !== null && head.etag === row.etag;
 
@@ -179,9 +200,9 @@ async function fetchOne(
   }
 
   // --- acquire -------------------------------------------------------------
-  const result = localPath
-    ? await loadLocalDocument(localPath, options.localBaseDir)
-    : await fetchDocument(row.sourceUrl!, { mirrorUrl: row.mirrorUrl });
+  const result = localFile
+    ? await loadLocalDocument(localFile, "")
+    : await fetchDocument(sourceUrl!, { mirrorUrl });
 
   validateMagicBytes(result.bytes, parsed.extension);
 

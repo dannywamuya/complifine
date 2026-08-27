@@ -120,14 +120,14 @@ actually do this", never a citation for "what is required".
 | Document | Filename | Why it matters |
 | --- | --- | --- |
 | Summary of changes, IFA v5 to v6 | `220503_Summary_of_Changes_IFA_v5_to_v6_GFS-Smart_en.pdf` | Authoritative v5 to v6 delta with official P&C counts. Feeds the version engine. |
+| HPSS v1.2 → IFA v6 GFS FV transition tool | `260115_transition tool_HPSS_v1.2_-_IFA_v6_GFS_for_FV_v1_protected_en.xlsx` | Official GLOBALG.A.P. workbook. Public on the document CDN. Independent cross-check of GFS criterion IDs, text and levels. |
 | Technical News for CBs | `240819_Technical_News_CB_2024_02_en.pdf`, `260430_Technical_News_CB_2026_01_en.pdf` | Corrections issued between releases. A criterion's wording can change here without the P&C PDF being reissued. |
 
-### Local sources already in the research folder
+### Level 6 — Third-party summary
 
-| File | Level | Assessment |
+| Document | Origin | Assessment |
 | --- | --- | --- |
-| `global gap/260115_transition tool_HPSS_v1.2_-_IFA_v6_GFS_for_FV_v1_protected_en.xlsx` | 5 | Official GLOBALG.A.P. transition tool mapping HPSS v1.2 to IFA v6 GFS FV. Carries full GFS criterion IDs, text and levels — a genuinely independent cross-check for the GFS import. |
-| `global gap/globalgap-ifa-v6.pdf` | 6 | **Not a GLOBALG.A.P. document.** A 4-page AGRINFO/COLEAD news summary, ReportLab-generated, EU-funded, published by COLEAD. Accurate background, but it must never be treated as the standard. |
+| AGRINFO briefing, GLOBALG.A.P. IFA v6 | `https://agrinfo.eu/book-of-reports/globalgap-ifa-v6/pdf/` | **Not a GLOBALG.A.P. document.** A COLEAD/AGRINFO news summary. Accurate background, never treated as the standard. Fetched like any other HTTP source. |
 
 ---
 

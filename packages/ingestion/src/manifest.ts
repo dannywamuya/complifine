@@ -313,9 +313,8 @@ export const GLOBALGAP_IFA_FV: ManifestStandard = {
           documentType: "transition_tool",
           authorityLevel: AUTHORITY_LEVELS.OFFICIAL_UPDATE,
           filename: "260115_transition tool_HPSS_v1.2_-_IFA_v6_GFS_for_FV_v1_protected_en.xlsx",
-          localPath: "../global gap/260115_transition tool_HPSS_v1.2_-_IFA_v6_GFS_for_FV_v1_protected_en.xlsx",
           licenseNote: GG_LICENSE,
-          note: "Supplied locally rather than downloaded. Valuable as an independent third check: it restates every GFS criterion number, principle text and level, so reconciliation can verify the checklist import against a separately produced document.",
+          note: "Public on the GLOBALG.A.P. document CDN. Independent third check: it restates every GFS criterion number, principle text and level, so reconciliation can verify the checklist import against a separately produced document.",
         },
       ],
     },
@@ -337,9 +336,9 @@ export const NON_AUTHORITATIVE_SOURCES: readonly ManifestDocument[] = [
     documentType: "third_party_summary",
     authorityLevel: AUTHORITY_LEVELS.CB_GUIDANCE,
     filename: "globalgap-ifa-v6.pdf",
-    localPath: "../global gap/globalgap-ifa-v6.pdf",
+    originUrl: "https://agrinfo.eu/book-of-reports/globalgap-ifa-v6/pdf/",
     licenseNote: "Copyright COLEAD. AGRINFO is funded by the European Union and implemented by COLEAD.",
-    note: "A four-page third-party news summary, NOT a GLOBALG.A.P. document. Registered at authority level 6 with no requirement extraction, purely so that its non-authoritative status is recorded rather than assumed.",
+    note: "A four-page third-party news summary, NOT a GLOBALG.A.P. document. Registered at authority level 6 with no requirement extraction, purely so that its non-authoritative status is recorded rather than assumed. Fetched from AGRINFO, not from a laptop folder.",
   },
 ];
 
@@ -404,7 +403,11 @@ export function findVersion(code: string): ManifestVersion | null {
 }
 
 export function findDocument(slug: string): ManifestDocument | null {
-  return allManifestDocuments().find((d) => d.document.slug === slug)?.document ?? null;
+  return (
+    allManifestDocuments().find((d) => d.document.slug === slug)?.document ??
+    NON_AUTHORITATIVE_SOURCES.find((d) => d.slug === slug) ??
+    null
+  );
 }
 
 /**

@@ -61,9 +61,9 @@ import { MANIFEST } from './manifest.ts';
 /**
  * Base directory that manifest `localPath` entries resolve against.
  *
- * The two locally supplied documents live beside the repo rather than inside
- * it, because they are third-party files we were given rather than ones we
- * fetched. Resolving from the repo root keeps that relationship explicit.
+ * Repo-relative drops (`storage/drops/…`) are also looked up under
+ * STORAGE_ROOT so a Railway volume at `/data/storage` is enough; public
+ * documents are fetched over HTTP and do not need a laptop folder.
  */
 const REPO_ROOT = resolve(import.meta.dir, '../../..');
 
