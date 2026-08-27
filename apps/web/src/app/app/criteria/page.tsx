@@ -177,7 +177,7 @@ export default function AppCriteriaPage() {
                 </p>
                 <InfoHint label="What do the levels mean?">
                   Major Must is an audit blocker — you need all of them that apply. Minor Must is
-                  required as a group. Recommendation is not required for certification.
+                  required as a group. Recommendation is not required to pass the audit.
                 </InfoHint>
               </div>
               <form

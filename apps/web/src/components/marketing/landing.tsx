@@ -200,7 +200,7 @@ const FEATURES = [
   },
   {
     title: "Your sites, not a generic checklist",
-    body: "Sites, certifications, and yes/no answers live with your company. Ask what applies at your packhouse — Chat reads that profile.",
+    body: "Sites, standards, and yes/no answers live with your company. Ask what applies at your packhouse — Chat reads that profile.",
     icon: MapPinned,
     span: "",
   },

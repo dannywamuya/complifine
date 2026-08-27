@@ -24,7 +24,7 @@ import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 
-const STEPS = ["Company", "Certifications", "Sites", "Questions"] as const;
+const STEPS = ["Company", "Standards", "Sites", "Questions"] as const;
 
 export function SetupWizard({ initial }: { initial: OrgPayload }) {
   const router = useRouter();
@@ -123,7 +123,7 @@ export function SetupWizard({ initial }: { initial: OrgPayload }) {
 
   async function saveCerts() {
     if (selectedCodes.length === 0) {
-      setError("Pick at least one certification. Chat will only cite these.");
+      setError("Pick at least one standard. Chat will only cite these.");
       return;
     }
     setPending(true);
@@ -211,7 +211,7 @@ export function SetupWizard({ initial }: { initial: OrgPayload }) {
         </p>
         <h1 className="font-heading text-3xl font-medium tracking-tight text-balance sm:text-4xl">
           {step === 0 && "Your company"}
-          {step === 1 && "Which certifications?"}
+          {step === 1 && "Which standards?"}
           {step === 2 && "Add a site"}
           {step === 3 && "What applies at your site?"}
         </h1>
@@ -242,7 +242,7 @@ export function SetupWizard({ initial }: { initial: OrgPayload }) {
                 {org.sedexZc ? ` · Sedex ${org.sedexZc}` : ""}
               </p>
               <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
-                This name is the company. Next: certifications, then a site.
+                This name is the company. Next: standards, then a site.
               </p>
             </div>
             <div className="flex justify-end">
@@ -409,8 +409,8 @@ export function SetupWizard({ initial }: { initial: OrgPayload }) {
             {questionGroups.length === 1
               ? `Questions for ${questionGroups[0]!.label}. `
               : questionGroups.length > 1
-                ? "Questions for each certification you attached. Answers are stored on your site. "
-                : "Questions for the certifications you chose. "}
+                ? "Questions for each standard you attached. Answers are stored on your site. "
+                : "Questions for the standards you chose. "}
             {SCOPING_WHY}
           </p>
           {questionsLoading ? (

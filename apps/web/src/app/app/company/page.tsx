@@ -128,7 +128,7 @@ export default function CompanyPage() {
   const attachedCodes = new Set(data?.scopes.map((scope) => scope.code) ?? []);
   const addableEditions = editions.filter((edition) => !attachedCodes.has(edition.value));
 
-  async function attachCertification(code: string) {
+  async function attachStandard(code: string) {
     await api("/org/scopes", {
       method: "POST",
       body: JSON.stringify({ versionCode: code }),
@@ -139,19 +139,19 @@ export default function CompanyPage() {
       () => ({ questions: [] as ScopingQuestion[] }),
     );
     if (applicability.questions.length === 0) {
-      toast.success("Certification attached. This edition has no scoping questions.");
+      toast.success("Standard attached. This edition has no scoping questions.");
       return;
     }
     if (payload.sites.length === 0) {
       setTab("sites");
-      toast.success("Certification attached. Add a site, then answer what applies there.");
+      toast.success("Standard attached. Add a site, then answer what applies there.");
       return;
     }
     setTab("applicability");
     toast.success(
       payload.sites.length === 1
-        ? "Certification attached. Answer what applies at your site."
-        : "Certification attached. Answer what applies at each site.",
+        ? "Standard attached. Answer what applies at your site."
+        : "Standard attached. Answer what applies at each site.",
     );
   }
 
@@ -230,7 +230,7 @@ export default function CompanyPage() {
             Sites
           </TabsTrigger>
           <TabsTrigger value="scope" className="rounded-full px-4">
-            Certifications
+            Standards
           </TabsTrigger>
           <TabsTrigger value="applicability" className="rounded-full px-4">
             Site questions
@@ -253,7 +253,7 @@ export default function CompanyPage() {
               onCreated={async (site) => {
                 const payload = await refresh();
                 setSiteId(site.id);
-                toast.success("Site added. Answer what applies for the certifications in scope.");
+                toast.success("Site added. Answer what applies for the standards in scope.");
                 if (payload.scopes.length > 0) {
                   setVersion((current) => current || payload.scopes[0]!.code);
                   setTab("applicability");
@@ -304,7 +304,7 @@ export default function CompanyPage() {
         <TabsContent value="scope" className="mt-0">
           <div className="rounded-2xl border border-border bg-card p-6 shadow-[0_8px_28px_rgb(0_0_0/0.04)]">
             <div className="mb-5 space-y-1">
-              <h2 className="font-heading text-base font-medium tracking-tight">Certifications</h2>
+              <h2 className="font-heading text-base font-medium tracking-tight">Standards</h2>
               <p className="text-sm text-muted-foreground">
                 Editions this company is certified against or preparing for. Chat cites only
                 these.
@@ -332,7 +332,7 @@ export default function CompanyPage() {
                   if (!scopeCode) return;
                   setPending(true);
                   try {
-                    await attachCertification(scopeCode);
+                    await attachStandard(scopeCode);
                     setScopeCode("");
                   } catch (err) {
                     toast.error((err as Error).message);
@@ -343,8 +343,8 @@ export default function CompanyPage() {
               >
                 <div className="space-y-1.5">
                   <div className="flex items-center gap-1.5">
-                    <Label htmlFor="versionCode">Add a certification</Label>
-                    <InfoHint label="Why add a certification?">
+                    <Label htmlFor="versionCode">Add a standard</Label>
+                    <InfoHint label="Why add a standard?">
                       These are the editions Chat is allowed to cite. Attach every one you are
                       certified against or preparing for.
                     </InfoHint>

@@ -126,7 +126,7 @@ export const onboardingTours: Tour[] = [
         side: "top-left",
         what: "This filter is the book Chat opens. It only lists editions you attached on Company.",
         how: [
-          "One certification: Chat searches that one. Several: pick one, or All in your scope.",
+          "One standard: Chat searches that one. Several: pick one, or All in your scope.",
           "Chat will not cite an edition that is not live yet, even if you know the name.",
           "Match this to the audit you are preparing for — Smart and GFS are different texts.",
         ],
@@ -175,7 +175,7 @@ export const onboardingTours: Tour[] = [
         prevRoute: "/app",
         what: "Catalog is the official wording Chat is allowed to cite. Nothing still in review shows up here.",
         how: [
-          "Pick a certification, then an edition. Guidance is labelled as guidance.",
+          "Pick a standard, then an edition. Guidance is labelled as guidance.",
           "If an edition is missing, it is not live yet — or it is not attached on Company.",
         ],
       }),
@@ -214,19 +214,19 @@ export const onboardingTours: Tour[] = [
         what: "The company is the legal name on the certificate. Sites are the places you operate. Chat uses both.",
         how: [
           "Attach every published edition you are certified against or preparing for. Those are the only ones Chat may cite.",
-          "After you add a certification, answer the questions for your site — a packhouse is not a field.",
+          "After you add a standard, answer the questions for your site — a packhouse is not a field.",
         ],
       }),
       page({
         icon: "🗂️",
-        title: "Sites, certifications, questions",
+        title: "Sites, standards, questions",
         selector: "#tour-company-tabs",
         side: "bottom-left",
         viewportID: inAppScroll,
         what: "Four tabs keep the profile Chat reads. Change something here and the next answer should change with it.",
         how: [
           "Sites: every place you operate — growing, packing, collection, or storage.",
-          "Certifications: editions in scope. Site questions: what applies at your site.",
+          "Standards: editions in scope. Site questions: what applies at your site.",
           "Company: legal name, country, Sedex ZC if you have one.",
         ],
       }),
@@ -240,7 +240,7 @@ export const onboardingTours: Tour[] = [
         what: "Select a site here when you answer questions. The header picker is what Chat uses while you talk.",
         how: [
           "Do not reuse one site for field and packhouse. Add both and answer each.",
-          "After you add a site or a certification, finish Site questions before you lean on Chat for that combination.",
+          "After you add a site or a standard, finish Site questions before you lean on Chat for that combination.",
         ],
       }),
       page({

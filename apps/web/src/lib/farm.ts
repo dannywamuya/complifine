@@ -49,7 +49,7 @@ export const SITE_TYPE_HELP: Record<string, string> = {
   warehouse: "Storage before dispatch.",
 };
 
-/** True until the company has at least one certification and one site. */
+/** True until the company has at least one standard and one site. */
 export function needsSetup(payload: OrgPayload | null | undefined): boolean {
   if (!payload?.organization) return true;
   return payload.scopes.length === 0 || payload.sites.length === 0;
