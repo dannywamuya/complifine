@@ -61,6 +61,7 @@ import { knowledgeGraph, listStandards, lookupRequirementIds, parseCodeList, reg
 import { httpError } from "./errors.ts";
 import { authModule, requireOperator, type AuthUser } from "./auth/plugin.ts";
 import { demoRoutes } from "./demo.ts";
+import { crmRoutes } from "./crm.ts";
 import { farmRoutes } from "./farm.ts";
 import { formRoutes } from "./forms.ts";
 import { evidenceRoutes } from "./evidence.ts";
@@ -114,6 +115,7 @@ export function createApp(
       .decorate("db", db)
       .use(authModule(db))
       .use(demoRoutes(db))
+      .use(crmRoutes(db))
       .use(farmRoutes(db))
       .use(formRoutes(db, capture))
       .use(evidenceRoutes(db))

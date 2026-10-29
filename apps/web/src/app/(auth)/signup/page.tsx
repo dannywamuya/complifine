@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Building2, Globe, Mail, User } from "lucide-react";
 import { api, ApiError } from "@/lib/api";
@@ -11,11 +12,35 @@ import {
   AuthSubmit,
 } from "@/components/marketing/auth-shell";
 import { AuthAlert, AuthPasswordField } from "@/components/marketing/auth-fields";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export default function SignupPage() {
   const router = useRouter();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [awaitingApproval, setAwaitingApproval] = useState(false);
+
+  if (awaitingApproval) {
+    return (
+      <AuthShell
+        title="Account created"
+        description="An operator will review your signup shortly."
+        slide={1}
+      >
+        <Alert>
+          <AlertTitle>Waiting for approval</AlertTitle>
+          <AlertDescription>
+            We will email you when your account is ready. You can then{" "}
+            <Link href="/login" className="underline underline-offset-4">
+              sign in
+            </Link>
+            .
+          </AlertDescription>
+        </Alert>
+        <AuthFooterLink prompt="Already approved?" href="/login" label="Sign in" />
+      </AuthShell>
+    );
+  }
 
   return (
     <AuthShell
@@ -31,7 +56,7 @@ export default function SignupPage() {
           setPending(true);
           setError(null);
           try {
-            await api("/auth/register", {
+            const result = await api<{ pending?: boolean }>("/auth/register", {
               method: "POST",
               body: JSON.stringify({
                 name: String(form.get("name") ?? ""),
@@ -41,6 +66,10 @@ export default function SignupPage() {
                 country: String(form.get("country") ?? "KE"),
               }),
             });
+            if (result.pending) {
+              setAwaitingApproval(true);
+              return;
+            }
             router.push("/app/setup");
             router.refresh();
           } catch (err) {

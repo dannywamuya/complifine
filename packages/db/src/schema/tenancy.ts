@@ -18,6 +18,8 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 import {
+  accountStatusEnum,
+  createdAtOnly,
   membershipRoleEnum,
   primaryId,
   timestamps,
@@ -32,13 +34,18 @@ export const users = pgTable(
     name: text("name").notNull(),
     passwordHash: text("password_hash").notNull(),
     kind: userKindEnum("kind").notNull().default("member"),
+    accountStatus: accountStatusEnum("account_status").notNull().default("active"),
     emailVerifiedAt: timestamp("email_verified_at", { withTimezone: true }),
     lastLoginAt: timestamp("last_login_at", { withTimezone: true }),
+    approvedAt: timestamp("approved_at", { withTimezone: true }),
+    approvedBy: uuid("approved_by"),
+    statusNote: text("status_note"),
     ...timestamps,
   },
   (t) => [
     uniqueIndex("users_email_key").on(t.email),
     index("users_kind_idx").on(t.kind),
+    index("users_account_status_idx").on(t.accountStatus),
   ],
 );
 
@@ -116,9 +123,35 @@ export const demoRequests = pgTable(
   ],
 );
 
+/** Operator outbound mail to producers or demo leads. */
+export const crmMessages = pgTable(
+  "crm_messages",
+  {
+    id: primaryId(),
+    operatorId: uuid("operator_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    userId: uuid("user_id").references(() => users.id, { onDelete: "set null" }),
+    demoRequestId: uuid("demo_request_id").references(() => demoRequests.id, {
+      onDelete: "set null",
+    }),
+    toEmail: text("to_email").notNull(),
+    subject: text("subject").notNull(),
+    body: text("body").notNull(),
+    /** `manual` | `approved` | `rejected` | `disabled` */
+    kind: text("kind").notNull(),
+    ...createdAtOnly,
+  },
+  (t) => [
+    index("crm_messages_user_idx").on(t.userId),
+    index("crm_messages_demo_idx").on(t.demoRequestId),
+  ],
+);
+
 export const usersRelations = relations(users, ({ many }) => ({
   memberships: many(memberships),
   refreshTokens: many(refreshTokens),
+  crmMessages: many(crmMessages),
 }));
 
 export const organizationsRelations = relations(organizations, ({ many }) => ({
@@ -146,3 +179,5 @@ export type NewMembership = typeof memberships.$inferInsert;
 export type RefreshToken = typeof refreshTokens.$inferSelect;
 export type DemoRequest = typeof demoRequests.$inferSelect;
 export type NewDemoRequest = typeof demoRequests.$inferInsert;
+export type CrmMessage = typeof crmMessages.$inferSelect;
+export type NewCrmMessage = typeof crmMessages.$inferInsert;

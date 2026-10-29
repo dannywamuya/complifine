@@ -3,6 +3,7 @@ import { eq, type Database } from "@complifine/db";
 import { demoRequests } from "@complifine/db";
 import { readAuth, requireOperator, type AuthUser } from "./auth/plugin.ts";
 import { isEmail, normalizeEmail } from "./auth/crypto.ts";
+import { sendCrmEmail } from "./email/crm.ts";
 
 const hits = new Map<string, { count: number; reset: number }>();
 
@@ -87,6 +88,63 @@ export function demoRoutes(db: Database) {
           status: t.Union([t.Literal("new"), t.Literal("contacted"), t.Literal("closed")]),
           notes: t.Optional(t.String()),
         }),
+        detail: { summary: "Update demo request status (operators)" },
+      },
+    )
+    .patch(
+      "/demo-requests/:id",
+      async ({ auth, params, body }) => {
+        requireOperator(auth);
+        const [row] = await db
+          .update(demoRequests)
+          .set({ notes: body.notes ?? null, updatedAt: new Date() })
+          .where(eq(demoRequests.id, params.id))
+          .returning();
+        if (!row) throw status(404, { error: "Demo request not found" });
+        return row;
+      },
+      {
+        params: t.Object({ id: t.String() }),
+        body: t.Object({ notes: t.Optional(t.Union([t.String(), t.Null()])) }),
+        detail: { summary: "Update demo request notes (operators)" },
+      },
+    )
+    .post(
+      "/demo-requests/:id/email",
+      async ({ auth, params, body }) => {
+        const operator = requireOperator(auth);
+        const [row] = await db.select().from(demoRequests).where(eq(demoRequests.id, params.id)).limit(1);
+        if (!row) throw status(404, { error: "Demo request not found" });
+
+        const result = await sendCrmEmail({
+          db,
+          operatorId: operator.id,
+          to: row.email,
+          subject: body.subject,
+          text: body.body,
+          kind: "manual",
+          demoRequestId: row.id,
+        });
+
+        let updated = row;
+        if (row.status === "new") {
+          const [next] = await db
+            .update(demoRequests)
+            .set({ status: "contacted", updatedAt: new Date() })
+            .where(eq(demoRequests.id, row.id))
+            .returning();
+          updated = next!;
+        }
+
+        return { ...result, to: row.email, request: updated };
+      },
+      {
+        params: t.Object({ id: t.String() }),
+        body: t.Object({
+          subject: t.String({ minLength: 1, maxLength: 200 }),
+          body: t.String({ minLength: 1, maxLength: 10_000 }),
+        }),
+        detail: { summary: "Email a demo lead (operators)" },
       },
     );
 }

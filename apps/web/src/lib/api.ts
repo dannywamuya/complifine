@@ -39,6 +39,7 @@ export class ApiError extends Error {
   constructor(
     readonly status: number,
     message: string,
+    readonly code?: string,
   ) {
     super(message);
     this.name = "ApiError";
@@ -83,15 +84,17 @@ export function startSessionKeepAlive(): () => void {
   };
 }
 
-async function readError(response: Response): Promise<string> {
+async function readError(response: Response): Promise<{ message: string; code?: string }> {
   let message = `${response.status} ${response.statusText}`;
+  let code: string | undefined;
   try {
-    const body = (await response.json()) as { error?: string };
+    const body = (await response.json()) as { error?: string; code?: string };
     if (body.error) message = body.error;
+    if (body.code) code = body.code;
   } catch {
     // keep the status line
   }
-  return message;
+  return { message, code };
 }
 
 export async function api<T>(path: string, init?: RequestInit): Promise<T> {
@@ -120,7 +123,8 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
   }
 
   if (!response.ok) {
-    throw new ApiError(response.status, await readError(response));
+    const err = await readError(response);
+    throw new ApiError(response.status, err.message, err.code);
   }
 
   if (response.status === 204) return undefined as T;

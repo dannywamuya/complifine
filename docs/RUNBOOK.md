@@ -245,7 +245,18 @@ Producer register/login is `/signup` and `/login` on :3000. The console is
 operator-only. JWT cookies (`cf_access`, `cf_refresh`) are set by the API and
 sent through the Next `/api` proxy so they stay same-origin.
 
-`bun run db:seed` (also part of bootstrap) creates or updates the operator.
+`bun run db:seed` (also part of bootstrap) creates or updates the operator
+(`account_status = active`).
+
+Producer signups start as `pending`. They cannot sign in until an operator
+approves them in the console under **People** (`/people`). Reject and disable
+are the same screen; disable revokes refresh tokens. Demo leads stay under
+**Demos** (`/demo`) — status, notes, and outbound email.
+
+Outbound CRM and digest mail use Resend when `RESEND_API_KEY` and
+`RESEND_FROM_EMAIL` are set on the API. `APP_BASE_URL` should be the public
+web origin so approval emails can link to `/login`. Without Resend, the API
+still records `crm_messages` and returns `sent: false`.
 
 ## SMETA member drop
 

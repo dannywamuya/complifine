@@ -14,6 +14,7 @@ import {
   Search,
   ShieldCheck,
   Stamp,
+  Users,
 } from "lucide-react";
 import {
   Sidebar,
@@ -62,6 +63,7 @@ const GROUPS = [
   {
     label: "Operations",
     links: [
+      { href: "/people", label: "People", icon: Users },
       { href: "/demo", label: "Demos", icon: Calendar },
       { href: "/audit", label: "Audit", icon: FileSearch },
     ],

@@ -6,7 +6,7 @@ import { Elysia, status, t } from "elysia";
 import { jwt } from "@elysiajs/jwt";
 import { and, eq, isNull, type Database } from "@complifine/db";
 import { memberships, organizations, refreshTokens, users } from "@complifine/db";
-import { env, type MembershipRole, type UserKind } from "@complifine/core";
+import { env, type AccountStatus, type MembershipRole, type UserKind } from "@complifine/core";
 import {
   hashPassword,
   hashRefreshToken,
@@ -20,6 +20,37 @@ export const ACCESS_COOKIE = "cf_access";
 export const REFRESH_COOKIE = "cf_refresh";
 const ACCESS_MAX_AGE = 60 * 15;
 const REFRESH_MAX_AGE = 60 * 60 * 24 * 30;
+
+const ACCOUNT_BLOCK_MESSAGES: Record<Exclude<AccountStatus, "active">, string> = {
+  pending: "Your account is waiting for approval. We will email you when it is ready.",
+  rejected: "This account was not approved. Contact CompliFine if you think that is a mistake.",
+  disabled: "This account has been disabled. Contact CompliFine for help.",
+};
+
+const ACCOUNT_BLOCK_CODES: Record<Exclude<AccountStatus, "active">, string> = {
+  pending: "account_pending",
+  rejected: "account_rejected",
+  disabled: "account_disabled",
+};
+
+function isTestEnv(): boolean {
+  return env().NODE_ENV === "test";
+}
+
+/** Members must be active to use the app. Operators are always allowed. */
+export function assertMemberActive(user: typeof users.$inferSelect): void {
+  if (user.kind === "operator") return;
+  if (user.accountStatus === "active") return;
+  const statusKey = user.accountStatus as Exclude<AccountStatus, "active">;
+  throw status(403, {
+    error: ACCOUNT_BLOCK_MESSAGES[statusKey],
+    code: ACCOUNT_BLOCK_CODES[statusKey],
+  });
+}
+
+function memberMayUseSession(user: typeof users.$inferSelect): boolean {
+  return user.kind === "operator" || user.accountStatus === "active";
+}
 
 type CookieJar = Record<
   string,
@@ -142,7 +173,7 @@ async function resumeFromRefresh(
     .where(and(eq(refreshTokens.tokenHash, hashRefreshToken(raw)), isNull(refreshTokens.revokedAt)));
   if (!stored || stored.expiresAt.getTime() < Date.now()) return null;
   const [user] = await db.select().from(users).where(eq(users.id, stored.userId));
-  if (!user) return null;
+  if (!user || !memberMayUseSession(user)) return null;
   const membership = await membershipFor(db, user.id);
   const auth = authFromUser(user, membership?.organizationId ?? null, membership?.role ?? null);
   await writeAccessCookie(accessJwt, cookie, auth);
@@ -170,7 +201,7 @@ export function authModule(db: Database) {
         const claims = (await accessJwt.verify(token)) as AccessClaims | false;
         if (claims && claims.sub) {
           const [user] = await db.select().from(users).where(eq(users.id, claims.sub));
-          if (!user) return { auth: null };
+          if (!user || !memberMayUseSession(user)) return { auth: null };
 
           let orgId = claims.orgId ?? null;
           let role = claims.role ?? null;
@@ -196,6 +227,7 @@ export function authModule(db: Database) {
       const [existing] = await db.select().from(users).where(eq(users.email, email));
       if (existing) throw status(409, { error: "An account with that email already exists" });
 
+      const autoActive = isTestEnv();
       const [user] = await db
         .insert(users)
         .values({
@@ -203,6 +235,8 @@ export function authModule(db: Database) {
           name: body.name.trim(),
           passwordHash: await hashPassword(body.password),
           kind: "member",
+          accountStatus: autoActive ? "active" : "pending",
+          ...(autoActive ? { approvedAt: new Date() } : {}),
         })
         .returning();
       const [org] = await db
@@ -214,6 +248,20 @@ export function authModule(db: Database) {
         organizationId: org!.id,
         role: "owner",
       });
+
+      if (!autoActive) {
+        return {
+          pending: true,
+          user: {
+            id: user!.id,
+            email: user!.email,
+            name: user!.name,
+            kind: user!.kind,
+            accountStatus: user!.accountStatus,
+          },
+        };
+      }
+
       return issueSession(db, user!, org!.id, "owner", accessJwt, cookie, request);
     }, {
       body: t.Object({
@@ -230,6 +278,7 @@ export function authModule(db: Database) {
       if (!user || !(await verifyPassword(body.password, user.passwordHash))) {
         throw status(401, { error: "Email or password is wrong" });
       }
+      assertMemberActive(user);
       const [membership] = await db.select().from(memberships).where(eq(memberships.userId, user.id)).limit(1);
       await db.update(users).set({ lastLoginAt: new Date() }).where(eq(users.id, user.id));
       return issueSession(
@@ -246,6 +295,17 @@ export function authModule(db: Database) {
       detail: { summary: "Sign in" },
     })
     .post("/auth/refresh", async ({ auth, accessJwt, cookie }) => {
+      const raw = cookieToken(cookie[REFRESH_COOKIE]?.value);
+      if (raw) {
+        const [stored] = await db
+          .select()
+          .from(refreshTokens)
+          .where(and(eq(refreshTokens.tokenHash, hashRefreshToken(raw)), isNull(refreshTokens.revokedAt)));
+        if (stored) {
+          const [row] = await db.select().from(users).where(eq(users.id, stored.userId));
+          if (row && !memberMayUseSession(row)) assertMemberActive(row);
+        }
+      }
       const user = auth ?? (await resumeFromRefresh(db, accessJwt, cookie));
       if (!user) throw status(401, { error: "Refresh token is invalid" });
       return { user };

@@ -20,6 +20,7 @@ export async function seedOperator(db: Database): Promise<{ email: string; creat
       .update(users)
       .set({
         kind: "operator",
+        accountStatus: "active",
         passwordHash,
         name: existing.name || "CompliFine operator",
         updatedAt: new Date(),
@@ -33,6 +34,7 @@ export async function seedOperator(db: Database): Promise<{ email: string; creat
     name: "CompliFine operator",
     passwordHash,
     kind: "operator",
+    accountStatus: "active",
   });
   return { email, created: true };
 }

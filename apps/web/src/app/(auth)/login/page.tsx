@@ -47,7 +47,11 @@ function LoginForm() {
             router.push(next);
             router.refresh();
           } catch (err) {
-            setError(err instanceof ApiError ? err.message : (err as Error).message);
+            if (err instanceof ApiError) {
+              setError(loginErrorCopy(err.code, err.message));
+            } else {
+              setError((err as Error).message);
+            }
           } finally {
             setPending(false);
           }
@@ -82,4 +86,17 @@ function safeNext(value: string | null): string {
   if (value === "/app/farm" || value.startsWith("/app/farm/")) return "/app/company";
   if (value.startsWith("/app")) return value;
   return "/app";
+}
+
+function loginErrorCopy(code: string | undefined, fallback: string): string {
+  switch (code) {
+    case "account_pending":
+      return "Your account is waiting for approval. We will email you when it is ready.";
+    case "account_rejected":
+      return "This account was not approved. Contact CompliFine if you think that is a mistake.";
+    case "account_disabled":
+      return "This account has been disabled. Contact CompliFine for help.";
+    default:
+      return fallback;
+  }
 }

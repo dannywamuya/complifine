@@ -467,6 +467,17 @@ export function isGgapEdition(value: string): value is Edition {
 export const USER_KINDS = ["member", "operator"] as const;
 export type UserKind = (typeof USER_KINDS)[number];
 
+/** Producer account lifecycle. Operators are always `active`. */
+export const ACCOUNT_STATUSES = ["pending", "active", "rejected", "disabled"] as const;
+export type AccountStatus = (typeof ACCOUNT_STATUSES)[number];
+
+export const ACCOUNT_STATUS_LABELS: Record<AccountStatus, string> = {
+  pending: "Pending approval",
+  active: "Active",
+  rejected: "Rejected",
+  disabled: "Disabled",
+};
+
 export const MEMBERSHIP_ROLES = [
   "owner",
   "compliance_manager",

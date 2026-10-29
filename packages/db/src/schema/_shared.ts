@@ -42,6 +42,7 @@ import {
   SITE_TYPES,
   SOURCE_CHANNELS,
   USER_KINDS,
+  ACCOUNT_STATUSES,
   VERSION_STATUSES,
 } from "@complifine/core";
 
@@ -82,6 +83,7 @@ export const versionStatusEnum = pgEnum("version_status", VERSION_STATUSES);
 export const requirementStatusEnum = pgEnum("requirement_status", REQUIREMENT_STATUSES);
 export const sourceChannelEnum = pgEnum("source_channel", SOURCE_CHANNELS);
 export const userKindEnum = pgEnum("user_kind", USER_KINDS);
+export const accountStatusEnum = pgEnum("account_status", ACCOUNT_STATUSES);
 export const membershipRoleEnum = pgEnum("membership_role", MEMBERSHIP_ROLES);
 export const siteTypeEnum = pgEnum("site_type", SITE_TYPES);
 export const controlTypeEnum = pgEnum("control_type", CONTROL_TYPES);

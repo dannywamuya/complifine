@@ -23,7 +23,7 @@ complifine/
   packages/chat        shared assistant UI (web + console)
   apps/api             HTTP: JWT auth, demo, farm, knowledge, ingest, chat
   apps/web             marketing site + producer app (`/app`)
-  apps/console         operator console (ingest, gates, demo inbox)
+  apps/console         operator console (ingest, gates, people CRM, demo inbox)
   infra/               Postgres 17 + pgvector
 ```
 
