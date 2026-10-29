@@ -49,6 +49,7 @@ import {
 } from '@/components/app-skeletons';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
+import { VariantEditor } from '@/components/variant-editor';
 
 interface Resolution {
 	applicable: number;
@@ -275,6 +276,9 @@ export default function CompanyPage() {
 					</TabsTrigger>
 					<TabsTrigger value='organisation' className='rounded-full px-4'>
 						Company
+					</TabsTrigger>
+					<TabsTrigger value='records' className='rounded-full px-4'>
+						Record defaults
 					</TabsTrigger>
 				</TabsList>
 
@@ -580,6 +584,10 @@ export default function CompanyPage() {
 							) : null}
 						</>
 					)}
+				</TabsContent>
+
+				<TabsContent value='records' className='mt-0'>
+					<VariantEditor />
 				</TabsContent>
 
 				<TabsContent value='organisation' className='mt-0'>

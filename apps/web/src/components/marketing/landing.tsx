@@ -12,8 +12,10 @@ import {
   ArrowRight,
   BookOpen,
   Building2,
+  ClipboardList,
   FileSearch,
   Files,
+  Gauge,
   GitBranch,
   Layers,
   ListChecks,
@@ -25,7 +27,6 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Accordion,
@@ -159,7 +160,7 @@ function Problem() {
     {
       icon: ListChecks,
       title: "Not operational",
-      body: "You do not want “what does GLOBALG.A.P. say?” You want what you need to do, what evidence, who owns it, and whether you will be ready.",
+      body: "The checklist, the records, and the self-audit are one picture: what applies, what is on file, and whether this site is ready.",
     },
   ];
 
@@ -223,10 +224,22 @@ const FEATURES = [
     span: "",
   },
   {
+    title: "Records and evidence",
+    body: "File what happened, or upload the document, for the site in the header. See what is overdue, due, pending, or missing. A draft does not count until a person confirms it.",
+    icon: ClipboardList,
+    span: "",
+  },
+  {
+    title: "Self-audit, not a certificate",
+    body: "Readiness counts applicable Musts that are assessed, evidenced, and free of open findings. Run Audit reads the records and suggests a verdict. It counts only after someone accepts it.",
+    icon: Gauge,
+    span: "",
+  },
+  {
     title: "Quality gates",
     body: "Criterion counts, levels, and source hashes are checked before you see them. Operators review; you only see live knowledge.",
     icon: ShieldCheck,
-    span: "lg:col-span-2",
+    span: "",
   },
 ];
 
@@ -237,9 +250,9 @@ function Features() {
         <Eyebrow>What's in it for you</Eyebrow>
         <SectionHeading>Time and money back in the season.</SectionHeading>
         <Lead>
-          The first Intelligent Compliance OS for horticulture in Kenya. AI is
-          the interface — cited answers instead of re-reading the PDF, chasing
-          consultants, or guessing what applies at your site.
+          The first Intelligent Compliance OS for horticulture in Kenya. Ask in
+          plain words, file the records the checklist expects, and run a
+          self-audit against the evidence on file.
         </Lead>
       </FadeIn>
       <div className="mt-12 grid gap-4 lg:grid-cols-3">
@@ -275,12 +288,12 @@ const BENEFITS = [
     body: "Cited answers you can check yourself. Bring a consultant in for judgement calls, not for hunting clause numbers.",
   },
   {
-    title: "Know what applies at your site, this season.",
-    body: "Scoping and site context change the answer. Your packhouse is not a field.",
+    title: "See the gaps before the auditor does.",
+    body: "Overdue records, missing evidence, and open findings are counted for the site you picked. A draft stays a draft until someone confirms it.",
   },
   {
-    title: "Show a CB the source, not a guess.",
-    body: "Click through AI prose to the requirement to the source page. Uncited claims are flagged.",
+    title: "Run a self-audit you can defend.",
+    body: "The readiness percent is a count, not a certificate. Run Audit drafts a verdict from the records. It counts when a person accepts it, or you open a finding instead.",
   },
 ];
 
@@ -324,17 +337,21 @@ const STEPS = [
     body: "Search criteria or type the situation. Tools hit the database; AI only writes the prose.",
   },
   {
-    title: "Keep it current",
-    body: "Today: keep your company and sites current and the knowledge cited. Next: evidence, self-assessment, findings, audit readiness.",
-    coming: true,
+    title: "File the proof",
+    body: "Record what happened, or upload the document. Records shows what is overdue, due, pending, or missing for that site.",
+  },
+  {
+    title: "Run the self-audit",
+    body: "Readiness counts Musts that are assessed, evidenced, and free of open findings. Run Audit suggests a verdict from the records. Accept it, or open a finding. It is not a certificate.",
   },
 ];
 
 const PIPELINE = [
   "Official source",
-  "Versioned requirements",
   "Your sites & scope",
-  "Grounded answer (citation)",
+  "Records & evidence",
+  "Self-audit",
+  "Cited answer",
 ];
 
 function HowItWorks() {
@@ -342,7 +359,7 @@ function HowItWorks() {
     <Section id="how-it-works">
       <FadeIn>
         <Eyebrow>How it works</Eyebrow>
-        <SectionHeading>From the publisher’s file to a cited answer.</SectionHeading>
+        <SectionHeading>From the publisher’s file to the proof on file.</SectionHeading>
       </FadeIn>
       <FadeIn delay={0.08}>
         <ol className="mt-10 flex flex-wrap items-center gap-2 text-sm">
@@ -381,12 +398,10 @@ function StepRow({
   index,
   title,
   body,
-  coming,
 }: {
   index: number;
   title: string;
   body: string;
-  coming?: boolean;
 }) {
   const ref = useRef<HTMLLIElement>(null);
   const inView = useInView(ref, { once: true, margin: "-20%" });
@@ -411,14 +426,7 @@ function StepRow({
         {index + 1}
       </span>
       <div className="rounded-xl border border-white/10 bg-white/[0.03] p-5">
-        <div className="flex flex-wrap items-center gap-2">
-          <h3 className="font-heading text-lg font-medium">{title}</h3>
-          {coming ? (
-            <Badge variant="outline" className="border-white/15 text-white/60">
-              Coming
-            </Badge>
-          ) : null}
-        </div>
+        <h3 className="font-heading text-lg font-medium">{title}</h3>
         <p className="mt-2 max-w-[65ch] text-sm leading-relaxed text-muted-foreground">
           {body}
         </p>
@@ -536,7 +544,7 @@ const LAYERS = [
   {
     icon: Building2,
     title: "Site context",
-    body: "Which sites you run, which edition you are certified against, and how you answered the scoping questions.",
+    body: "Which site you are working on, how you answered the scoping questions, and which records and evidence are actually on file.",
   },
   {
     icon: Layers,
@@ -619,7 +627,11 @@ const FAQS = [
   },
   {
     q: "Can I just upload a PDF and chat?",
-    a: "That is not how CompliFine works. Official sources are ingested, reviewed, and published first. The model does not chat over an arbitrary file.",
+    a: "Official sources are ingested and published first. Your own files are evidence for a site: you upload them on Records, and a person confirms a draft before it counts.",
+  },
+  {
+    q: "What is the self-audit?",
+    a: "Readiness is a count of applicable Musts that are assessed, evidenced, and free of open findings. Run Audit reads that site’s records and suggests a verdict. It counts only after a person accepts it, or you open a finding instead. It is not a certification audit.",
   },
 ];
 
@@ -658,9 +670,8 @@ function CtaBand() {
             Save time and cost before the next audit.
           </h2>
           <p className="mt-4 text-muted-foreground">
-            The first Intelligent Compliance OS for horticulture in Kenya — AI
-            that cites GLOBALG.A.P. and SMETA, built so you can ask in your own
-            words.
+            File the records, see what is missing, and run a self-audit before
+            the certification body does. Cited answers for GLOBALG.A.P. and SMETA.
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
             <Button asChild size="lg">

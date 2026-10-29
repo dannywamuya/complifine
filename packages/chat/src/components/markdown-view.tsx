@@ -6,6 +6,7 @@ import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
 import rehypeHighlight from "rehype-highlight";
+import { criterionLinkId, isInventedCriterionHref, prettifyAnswerLinks } from "../criterion-link.ts";
 import { stabilizeMarkdown } from "../markdown-stream.ts";
 import { CodeBlock } from "./code-block.tsx";
 
@@ -32,7 +33,7 @@ export const MarkdownView = memo(function MarkdownView({
     return () => window.clearTimeout(timer);
   }, [text, streaming]);
 
-  const source = useMemo(() => stabilizeMarkdown(shown), [shown]);
+  const source = useMemo(() => prettifyAnswerLinks(stabilizeMarkdown(shown)), [shown]);
 
   return (
     <div className="cf-chat-prose">
@@ -63,6 +64,7 @@ export const MarkdownView = memo(function MarkdownView({
             return <li>{linkify(children, criterionHref)}</li>;
           },
           a({ href, children }) {
+            if (href && isInventedCriterionHref(href)) return <>{children}</>;
             return (
               <a href={href} target={href?.startsWith("http") ? "_blank" : undefined} rel="noreferrer">
                 {children}
@@ -93,28 +95,25 @@ function linkify(children: ReactNode, criterionHref?: (id: string) => string): R
     if (index > last) pieces.push(children.slice(last, index));
     const raw = match[0];
     const inner = match[1] ?? raw;
-    const href = criterionHref?.(canonicalize(inner) ?? inner);
-    pieces.push(
-      href ? (
-        <a key={`${index}-${raw}`} href={href} className="cf-chat-citation">
-          {raw.replace(/^\[|\]$/g, "")}
-        </a>
-      ) : (
-        <span key={`${index}-${raw}`} className="cf-chat-citation">
-          {raw.replace(/^\[|\]$/g, "")}
-        </span>
-      ),
-    );
+    const id = criterionLinkId(inner);
+    const href = id ? criterionHref?.(id) : undefined;
+    if (!id) {
+      pieces.push(raw);
+    } else {
+      pieces.push(
+        href ? (
+          <a key={`${index}-${raw}`} href={href} className="cf-chat-citation">
+            {raw.replace(/^\[|\]$/g, "")}
+          </a>
+        ) : (
+          <span key={`${index}-${raw}`} className="cf-chat-citation">
+            {raw.replace(/^\[|\]$/g, "")}
+          </span>
+        ),
+      );
+    }
     last = index + raw.length;
   }
   if (last < children.length) pieces.push(children.slice(last));
   return pieces;
-}
-
-function canonicalize(raw: string): string | null {
-  const match = /\bFV[\s-]?(Smart|GFS)\s*(\d{1,2})\.(\d{1,2})(?:\.(\d{1,2}))?/i.exec(raw);
-  if (!match) return null;
-  const edition = match[1]!.toLowerCase() === "gfs" ? "FV-GFS" : "FV-Smart";
-  const pad = (value: string | undefined) => (value ? value.padStart(2, "0") : undefined);
-  return `${edition} ${[pad(match[2]), pad(match[3]), pad(match[4])].filter(Boolean).join(".")}`;
 }

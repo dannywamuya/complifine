@@ -1,4 +1,5 @@
 export * from "./enums.ts";
+export * from "./forms.ts";
 export * from "./identifiers.ts";
 export * from "./text.ts";
 export * from "./filename.ts";

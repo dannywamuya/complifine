@@ -504,3 +504,147 @@ export type ControlType = (typeof CONTROL_TYPES)[number];
 
 export const DEMO_INTERESTS = ["globalgap-ifa", "smeta-7", "both"] as const;
 export type DemoInterest = (typeof DEMO_INTERESTS)[number];
+
+// ---------------------------------------------------------------------------
+// Company evidence and records
+// ---------------------------------------------------------------------------
+
+export const EVIDENCE_VERIFICATION_STATUSES = ["unverified", "verified", "rejected"] as const;
+export type EvidenceVerificationStatus = (typeof EVIDENCE_VERIFICATION_STATUSES)[number];
+
+/** How an evidence row came to exist. `form` rows are created only by submitting a record. */
+export const EVIDENCE_SOURCES = ["upload", "note", "imported", "form"] as const;
+export type EvidenceSource = (typeof EVIDENCE_SOURCES)[number];
+
+export const COMPANY_DOCUMENT_PURPOSES = ["evidence", "capture_source"] as const;
+export type CompanyDocumentPurpose = (typeof COMPANY_DOCUMENT_PURPOSES)[number];
+
+export const FORM_CATEGORIES = ["policy", "plan", "register", "checklist", "finding"] as const;
+export type FormCategory = (typeof FORM_CATEGORIES)[number];
+
+export const FORM_CATEGORY_LABELS: Record<FormCategory, string> = {
+  policy: "Policies and declarations",
+  plan: "Plans and risk assessments",
+  register: "Registers",
+  checklist: "Inspections and checklists",
+  finding: "Findings, complaints and recall",
+};
+
+export const FORM_CADENCES = [
+  "once",
+  "per_event",
+  "daily",
+  "weekly",
+  "monthly",
+  "quarterly",
+  "annual",
+] as const;
+export type FormCadence = (typeof FORM_CADENCES)[number];
+
+export const FORM_CADENCE_LABELS: Record<FormCadence, string> = {
+  once: "Signed once, reviewed yearly",
+  per_event: "Whenever it happens",
+  daily: "Daily",
+  weekly: "Weekly",
+  monthly: "Monthly",
+  quarterly: "Quarterly",
+  annual: "Yearly",
+};
+
+/**
+ * Days a submitted record keeps its evidence current. Each value includes a
+ * short grace period so a register filled on the last day of the month is not
+ * stale on the first. `per_event` registers (incidents, spraying) never go
+ * stale by silence: no spray means no spray record is owed.
+ */
+export const FORM_CADENCE_VALID_DAYS: Record<FormCadence, number | null> = {
+  once: 366,
+  per_event: null,
+  daily: 2,
+  weekly: 8,
+  monthly: 35,
+  quarterly: 100,
+  annual: 380,
+};
+
+export const FORM_RECORD_STATUSES = ["draft", "submitted", "verified", "rejected"] as const;
+export type FormRecordStatus = (typeof FORM_RECORD_STATUSES)[number];
+
+export const FORM_RECORD_ORIGINS = ["manual", "capture"] as const;
+export type FormRecordOrigin = (typeof FORM_RECORD_ORIGINS)[number];
+
+export const EVIDENCE_GAP_STATUSES = ["present", "stale", "expired", "missing", "unmapped"] as const;
+export type EvidenceGapStatus = (typeof EVIDENCE_GAP_STATUSES)[number];
+
+export const EVIDENCE_GAP_STATUS_LABELS: Record<EvidenceGapStatus, string> = {
+  present: "Present",
+  stale: "Out of date",
+  expired: "Expired",
+  missing: "Missing",
+  unmapped: "Not in control library",
+};
+
+export const ASSESSMENT_STATUSES = ["draft", "complete"] as const;
+export type AssessmentStatus = (typeof ASSESSMENT_STATUSES)[number];
+
+export const ASSESSMENT_RESPONSES = [
+  "compliant",
+  "partial",
+  "non_compliant",
+  "not_applicable",
+  "not_assessed",
+] as const;
+export type AssessmentResponse = (typeof ASSESSMENT_RESPONSES)[number];
+
+export const FINDING_STATUSES = ["open", "in_progress", "closed"] as const;
+export type FindingStatus = (typeof FINDING_STATUSES)[number];
+
+export const FINDING_SEVERITIES = ["major", "minor", "observation"] as const;
+export type FindingSeverity = (typeof FINDING_SEVERITIES)[number];
+
+export const CORRECTIVE_ACTION_STATUSES = ["open", "done", "verified"] as const;
+export type CorrectiveActionStatus = (typeof CORRECTIVE_ACTION_STATUSES)[number];
+
+/** An on-demand AI audit. Queued until the worker starts, then running until it finishes or fails. */
+export const AUDIT_RUN_STATUSES = ["queued", "running", "complete", "failed"] as const;
+export type AuditRunStatus = (typeof AUDIT_RUN_STATUSES)[number];
+
+/**
+ * What the auditor is willing to say. Every value is a simulation, not a
+ * certification decision, and none of them write an assessment until a person accepts.
+ */
+export const AUDIT_VERDICTS = [
+  "likely_compliant",
+  "at_risk",
+  "likely_non_compliant",
+  "not_applicable",
+  "insufficient_evidence",
+] as const;
+export type AuditVerdict = (typeof AUDIT_VERDICTS)[number];
+
+export const AUDIT_CITATION_KINDS = ["evidence", "record", "document"] as const;
+export type AuditCitationKind = (typeof AUDIT_CITATION_KINDS)[number];
+
+// ---------------------------------------------------------------------------
+// Notifications
+// ---------------------------------------------------------------------------
+
+/** Deterministic events a user can be told about. Channels are separate. */
+export const NOTIFICATION_EVENT_TYPES = [
+  "record_overdue",
+  "record_due",
+  "record_sent_back",
+  "record_draft",
+  "evidence_missing",
+  "evidence_expired",
+  "daily_digest",
+  "audit_complete",
+] as const;
+export type NotificationEventType = (typeof NOTIFICATION_EVENT_TYPES)[number];
+
+/** `in_app` is delivered today. The others are stored so a sender can be added later. */
+export const NOTIFICATION_CHANNELS = ["in_app", "email", "sms", "push"] as const;
+export type NotificationChannel = (typeof NOTIFICATION_CHANNELS)[number];
+
+export const NOTIFICATION_DIGESTS = ["immediate", "daily", "off"] as const;
+export type NotificationDigest = (typeof NOTIFICATION_DIGESTS)[number];

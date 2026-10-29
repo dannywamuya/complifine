@@ -178,7 +178,7 @@ const NO_ANSWER_MESSAGE =
  * diversity would make the same compliance question come back differently
  * on two consecutive days.
  */
-function samplingFor(model: string, temperature: number | undefined): { temperature?: number } {
+export function samplingFor(model: string, temperature: number | undefined): { temperature?: number } {
   const id = model.toLowerCase();
   if (
     id.startsWith("gpt-5") ||

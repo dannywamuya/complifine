@@ -85,6 +85,14 @@ and block on mismatch with numbers the publisher states independently of the
 file being parsed. A human review is a named person and a stored decision, not
 a comment on a chat transcript.
 
+## Company records
+
+Forms are company artifacts. A template names an evidence type; controls map that type onto any standard. Organisation variants may change header defaults, document reference, approver, option lists and fixed rows. They cannot change columns.
+
+A record is a draft until submit or confirm. Only those two writes create `evidence`. Capture (photo, voice, spreadsheet) and `draftRecord` stop at draft. The gap list and readiness ignore drafts.
+
+Company files are `orgs/<orgId>/evidence/` and `orgs/<orgId>/captures/` under `STORAGE_ROOT`, content-addressed, never inside the knowledge tree. Documents are 10 MB; audio is 25 MB.
+
 ## What the model never does
 
 - Extract criteria from the checklist. The XLSX is already a relational

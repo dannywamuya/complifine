@@ -1,10 +1,12 @@
 'use client';
 
 import { useEffect, useState, type ReactNode } from 'react';
+import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { api, ApiError, startSessionKeepAlive } from '@/lib/api';
-import type { Me, OrgPayload } from '@/lib/farm';
+import { SITE_TYPE_LABELS, type Me, type OrgPayload } from '@/lib/farm';
 import { needsSetup, ORG_CHANGED } from '@/lib/farm';
+import { useSite } from '@/lib/use-site';
 import {
 	SidebarInset,
 	SidebarProvider,
@@ -29,7 +31,63 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { ModeToggle } from '@/components/mode-toggle';
+import { NotificationBell } from '@/components/notification-bell';
 import { OnboardingTrigger } from '@/components/onboarding-trigger';
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from '@/components/ui/select';
+
+function sectionTitle(path: string): string {
+	if (path.startsWith('/app/setup')) return 'Set up';
+	if (path.startsWith('/app/records') || path.startsWith('/app/evidence')) return 'Records';
+	if (path.startsWith('/app/findings')) return 'Findings';
+	if (path.startsWith('/app/readiness') || path.startsWith('/app/assess')) return 'Readiness';
+	if (path.startsWith('/app/criteria')) return 'Catalog';
+	if (path.startsWith('/app/company')) return 'Company';
+	if (path.startsWith('/app/settings')) return 'Settings';
+	return 'Chat';
+}
+
+function HeaderSiteSelect() {
+	const { sites, siteId, choose, org } = useSite();
+	if (!siteId || sites.length === 0) return null;
+	const orgName = org?.organization?.name;
+	return (
+		<div
+			id='tour-site'
+			className='inline-flex min-w-0 max-w-[min(100%,20rem)] items-center rounded-full bg-muted py-0.5 pr-1 pl-3'>
+			{orgName ? (
+				<span className='hidden min-w-0 truncate text-xs text-muted-foreground sm:inline'>
+					{orgName}
+				</span>
+			) : null}
+			{orgName ? (
+				<span className='hidden px-1.5 text-muted-foreground/70 sm:inline' aria-hidden>
+					·
+				</span>
+			) : null}
+			<Select value={siteId} onValueChange={choose}>
+				<SelectTrigger
+					aria-label='Site in context'
+					size='sm'
+					className='h-7 max-w-52 border-0 bg-transparent px-2 shadow-none hover:bg-background/70 dark:bg-transparent dark:hover:bg-background/40'>
+					<SelectValue />
+				</SelectTrigger>
+				<SelectContent>
+					{sites.map((row) => (
+						<SelectItem key={row.id} value={row.id}>
+							{row.name} · {SITE_TYPE_LABELS[row.siteType] ?? row.siteType}
+						</SelectItem>
+					))}
+				</SelectContent>
+			</Select>
+		</div>
+	);
+}
 
 function initials(name: string): string {
 	return name
@@ -89,8 +147,6 @@ export function AppChrome({
 	}, [me]);
 
 	const chatHome = path === '/app';
-	const onCriteria = path.startsWith('/app/criteria');
-	const onCompany = path.startsWith('/app/company');
 	const onSetup = path.startsWith('/app/setup');
 	const setup = onSetup || needsSetup(org);
 
@@ -132,6 +188,9 @@ export function AppChrome({
 					) : null}
 				</DropdownMenuLabel>
 				<DropdownMenuSeparator />
+				<DropdownMenuItem asChild>
+					<Link href='/app/settings'>Settings</Link>
+				</DropdownMenuItem>
 				<DropdownMenuItem
 					onClick={async () => {
 						await api('/auth/logout', { method: 'POST' });
@@ -153,8 +212,9 @@ export function AppChrome({
 					{setup ? null : <SidebarTrigger className='rounded-xl' />}
 					{setup ? null : <Separator orientation='vertical' className='h-4' />}
 					<p className='shrink-0 truncate text-sm font-medium tracking-tight'>
-						{onSetup ? 'Set up' : onCriteria ? 'Catalog' : onCompany ? 'Company' : 'Chat'}
+						{sectionTitle(path)}
 					</p>
+					{setup || chatHome ? null : <HeaderSiteSelect />}
 					<div
 						id={APP_HEADER_EXTRA_ID}
 						className='flex min-w-0 flex-1 items-center'
@@ -164,6 +224,7 @@ export function AppChrome({
 							id={APP_HEADER_ACTIONS_ID}
 							className='flex items-center gap-0.5'
 						/>
+						{setup ? null : <NotificationBell />}
 						{setup ? null : <OnboardingTrigger />}
 						<ModeToggle />
 						{userMenu}

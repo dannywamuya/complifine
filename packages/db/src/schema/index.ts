@@ -10,3 +10,8 @@ export * from "./ai.ts";
 export * from "./tenancy.ts";
 export * from "./operations.ts";
 export * from "./controls.ts";
+export * from "./evidence.ts";
+export * from "./forms.ts";
+export * from "./assessment.ts";
+export * from "./audit.ts";
+export * from "./notifications.ts";

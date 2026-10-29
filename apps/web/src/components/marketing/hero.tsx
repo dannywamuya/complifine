@@ -10,8 +10,8 @@ import { ProductFrame } from '@/components/marketing/product-frame';
 
 const BENEFITS = [
 	'Save hours before every audit',
-	'Spend less on last-minute consultants',
-	'Know what applies at your site today',
+	'See which records are still missing',
+	'Run a self-audit against your evidence',
 	'Walk in ready — not re-reading the PDF',
 ];
 
@@ -63,9 +63,10 @@ export function Hero() {
 					<p
 						className='marketing-fade-up mt-4 max-w-[44ch] text-sm leading-relaxed text-muted-foreground sm:text-base'
 						style={{ animationDelay: '0.2s' }}>
-						The first Intelligent Compliance OS for horticulture in Kenya. Ask
-						in plain words — AI cites GLOBALG.A.P. IFA v6 and SMETA 7.0, not a
-						chatbot over PDFs.
+						The first Intelligent Compliance OS for horticulture in Kenya. File
+						the records the checklist expects, run a self-audit against the
+						evidence, and ask in plain words. AI cites GLOBALG.A.P. IFA v6 and
+						SMETA 7.0. It does not certify you.
 					</p>
 					<div
 						className='marketing-fade-up mt-7 flex flex-wrap gap-3'

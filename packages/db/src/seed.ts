@@ -6,11 +6,13 @@
 import { createDatabase } from './client.ts';
 import { seedOperator } from './seed-operator.ts';
 import { seedControls } from './seed-controls.ts';
+import { seedForms } from './seed-forms.ts';
 
 export async function seedAll(db = createDatabase()) {
 	const operator = await seedOperator(db);
 	const controls = await seedControls(db);
-	return { operator, controls };
+	const forms = await seedForms(db);
+	return { operator, controls, forms };
 }
 
 function unreachableDatabaseHint(error: unknown): string | null {
@@ -39,6 +41,9 @@ if (import.meta.main) {
 		);
 		console.log(
 			`Control library: ${result.controls.controls} controls, ${result.controls.links} requirement links`,
+		);
+		console.log(
+			`Form library: ${result.forms.templates} templates (${result.forms.created} new, ${result.forms.revised} revised)`,
 		);
 	} catch (error) {
 		const hint = unreachableDatabaseHint(error);

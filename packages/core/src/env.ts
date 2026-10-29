@@ -65,6 +65,8 @@ const BLANKABLE = [
   "LOG_LEVEL",
   "OPERATOR_EMAIL",
   "OPERATOR_PASSWORD",
+  "DIGEST_ENABLED",
+  "AUDIT_CONCURRENCY",
   "NEXT_PUBLIC_CAL_URL",
 ] as const;
 
@@ -108,6 +110,10 @@ const baseSchema = z.object({
   OPERATOR_EMAIL: z.string().email().default("operator@complifine.local"),
   OPERATOR_PASSWORD: z.string().min(8).default("changeme-operator"),
   NEXT_PUBLIC_CAL_URL: z.string().optional(),
+  /** Unset follows the environment: on in development and test, off in production. */
+  DIGEST_ENABLED: z.string().optional(),
+  /** How many requirements the AI auditor judges at once. */
+  AUDIT_CONCURRENCY: z.coerce.number().int().positive().max(16).default(4),
 });
 
 const aiSchema = z.object({
@@ -130,6 +136,18 @@ function formatIssues(error: z.ZodError): string {
 }
 
 let cachedBase: BaseEnv | null = null;
+
+/** Daily pending digest. Explicit `true`/`false` wins; otherwise on outside production. */
+export function auditConcurrency(): number {
+  return env().AUDIT_CONCURRENCY;
+}
+
+export function digestEnabled(): boolean {
+  const flag = env().DIGEST_ENABLED?.trim().toLowerCase();
+  if (flag === "1" || flag === "true" || flag === "yes") return true;
+  if (flag === "0" || flag === "false" || flag === "no") return false;
+  return env().NODE_ENV !== "production";
+}
 
 export function env(): BaseEnv {
   if (cachedBase) return cachedBase;

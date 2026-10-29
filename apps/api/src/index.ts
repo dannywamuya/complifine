@@ -8,10 +8,14 @@
  */
 
 import { env } from "@complifine/core";
+import { createDatabase } from "@complifine/db";
 import { createApp } from "./app.ts";
+import { startDigestScheduler } from "./digest.ts";
 
 const { API_PORT } = env();
-const app = createApp();
+const db = createDatabase();
+const app = createApp(db);
+startDigestScheduler(db);
 
 app.listen({ port: API_PORT, hostname: "0.0.0.0", reusePort: false }, () => {
   console.log(`CompliFine API  http://0.0.0.0:${API_PORT}`);

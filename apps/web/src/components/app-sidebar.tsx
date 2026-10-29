@@ -6,10 +6,14 @@ import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'rea
 import {
 	BookOpen,
 	Building2,
+	CircleAlert,
+	ClipboardList,
+	Gauge,
 	MessageSquare,
 	Pencil,
 	Search,
 	Trash2,
+	type LucideIcon,
 } from 'lucide-react';
 import { groupByDate } from '@complifine/chat';
 import { api } from '@/lib/api';
@@ -32,6 +36,20 @@ import {
 import { cn } from '@/lib/utils';
 
 export const CONVERSATIONS_CHANGED = 'cf-conversations-changed';
+
+const APP_NAV: ReadonlyArray<{ href: string; label: string; icon: LucideIcon }> = [
+	{ href: '/app', label: 'Chat', icon: MessageSquare },
+	{ href: '/app/records', label: 'Records', icon: ClipboardList },
+	{ href: '/app/findings', label: 'Findings', icon: CircleAlert },
+	{ href: '/app/readiness', label: 'Readiness', icon: Gauge },
+	{ href: '/app/criteria', label: 'Catalog', icon: BookOpen },
+	{ href: '/app/company', label: 'Company', icon: Building2 },
+];
+
+function navActive(href: string, path: string): boolean {
+	if (href === '/app') return path === '/app';
+	return path === href || path.startsWith(`${href}/`);
+}
 
 const SIDEBAR_CLASS =
 	'border-0 **:data-[slot=sidebar-inner]:overflow-hidden **:data-[slot=sidebar-inner]:rounded-2xl **:data-[slot=sidebar-inner]:ring-0';
@@ -126,9 +144,6 @@ function AppSidebarInner({ setup }: { setup: boolean }) {
 
 	const groups = useMemo(() => groupByDate(conversations), [conversations]);
 	const collapsed = state === 'collapsed';
-	const onChat = path === '/app';
-	const onCriteria = path.startsWith('/app/criteria');
-	const onCompany = path.startsWith('/app/company');
 
 	useEffect(() => {
 		function onKey(event: KeyboardEvent) {
@@ -207,45 +222,21 @@ function AppSidebarInner({ setup }: { setup: boolean }) {
 				<SidebarGroup id='tour-sidebar'>
 					<SidebarGroupContent>
 						<SidebarMenu>
-							<SidebarMenuItem>
-								<SidebarMenuButton
-									asChild
-									isActive={onChat}
-									tooltip='Chat'
-									className='rounded-xl'
-									onClick={() => setOpenMobile(false)}>
-									<Link href='/app'>
-										<MessageSquare />
-										<span>Chat</span>
-									</Link>
-								</SidebarMenuButton>
-							</SidebarMenuItem>
-							<SidebarMenuItem>
-								<SidebarMenuButton
-									asChild
-									isActive={onCriteria}
-									tooltip='Catalog'
-									className='rounded-xl'
-									onClick={() => setOpenMobile(false)}>
-									<Link href='/app/criteria'>
-										<BookOpen />
-										<span>Catalog</span>
-									</Link>
-								</SidebarMenuButton>
-							</SidebarMenuItem>
-							<SidebarMenuItem>
-								<SidebarMenuButton
-									asChild
-									isActive={onCompany}
-									tooltip='Company'
-									className='rounded-xl'
-									onClick={() => setOpenMobile(false)}>
-									<Link href='/app/company'>
-										<Building2 />
-										<span>Company</span>
-									</Link>
-								</SidebarMenuButton>
-							</SidebarMenuItem>
+							{APP_NAV.map((item) => (
+								<SidebarMenuItem key={item.href}>
+									<SidebarMenuButton
+										asChild
+										isActive={navActive(item.href, path)}
+										tooltip={item.label}
+										className='rounded-xl'
+										onClick={() => setOpenMobile(false)}>
+										<Link href={item.href}>
+											<item.icon />
+											<span>{item.label}</span>
+										</Link>
+									</SidebarMenuButton>
+								</SidebarMenuItem>
+							))}
 						</SidebarMenu>
 					</SidebarGroupContent>
 				</SidebarGroup>

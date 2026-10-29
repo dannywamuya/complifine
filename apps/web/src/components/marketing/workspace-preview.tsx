@@ -157,6 +157,21 @@ export function WorkspacePreview({
                   <CitationChip id="FV-Smart 12.2.1" />.
                 </p>
               </section>
+              <section className="grid grid-cols-3 gap-2">
+                {[
+                  ["Overdue records", "4"],
+                  ["Evidence gaps", "7"],
+                  ["Readiness", "62%"],
+                ].map(([label, value]) => (
+                  <div key={label} className="rounded-xl border border-grey-olive-200 bg-white px-3 py-2">
+                    <p className="font-heading text-lg font-medium tracking-tight">{value}</p>
+                    <p className="text-[11px] leading-snug text-iron-grey-500">{label}</p>
+                  </div>
+                ))}
+              </section>
+              <p className="text-[11px] text-iron-grey-500">
+                Self-audit simulation. Not a certificate. A verdict counts after a person accepts it.
+              </p>
               <section className="space-y-2">
                 <p className="text-[11px] font-medium tracking-[0.16em] text-iron-grey-500 uppercase">
                   From the standard

@@ -7,5 +7,12 @@ export function LevelBadge({ level }: { level: string }) {
     : key.includes("minor")
       ? "outline"
       : "secondary";
-  return <Badge variant={variant}>{level}</Badge>;
+  return <Badge variant={variant}>{levelLabel(level)}</Badge>;
+}
+
+function levelLabel(level: string): string {
+  return level
+    .split("_")
+    .map((part) => (part.length <= 3 ? part.toUpperCase() : part[0]?.toUpperCase() + part.slice(1)))
+    .join(" ");
 }

@@ -2,8 +2,9 @@
 
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ChatShell } from "@complifine/chat";
-import { api, apiBase } from "@/lib/api";
+import { ChatShell, type Attachment } from "@complifine/chat";
+import { api, apiBase, ApiError } from "@/lib/api";
+import { toast } from "sonner";
 import { CONVERSATIONS_CHANGED } from "@/components/app-sidebar";
 import { APP_HEADER_ACTIONS_ID, APP_HEADER_EXTRA_ID } from "@/components/app-header";
 import { ChatPageSkeleton } from "@/components/app-skeletons";
@@ -15,6 +16,33 @@ const SUGGESTIONS = [
   "What changes between Smart and GFS for crop protection?",
   "Do harvest hygiene rules still apply if we don't harvest?",
 ];
+
+async function createRecordFromChat(
+  input: { siteId: string; attachments: Attachment[] },
+  router: { push: (href: string) => void },
+) {
+  const form = new FormData();
+  form.set("siteId", input.siteId);
+  for (const file of input.attachments) {
+    if (!file.dataUrl) continue;
+    const blob = await fetch(file.dataUrl).then((response) => response.blob());
+    form.append("files", new File([blob], file.name, { type: file.mime || blob.type }));
+  }
+  try {
+    const result = await api<{ drafts: Array<{ id: string; templateId: string }> }>("/form-records/capture", {
+      method: "POST",
+      body: form,
+    });
+    const draft = result.drafts[0];
+    if (!draft) {
+      toast.error("Nothing in that file matched a record");
+      return;
+    }
+    router.push(`/app/records/${draft.templateId}/${draft.id}`);
+  } catch (err) {
+    toast.error(err instanceof ApiError ? err.message : "Could not create a record");
+  }
+}
 
 export function ChatWorkspace() {
   return (
@@ -94,6 +122,7 @@ function ChatWorkspaceInner() {
       defaultSiteId={sites[0]?.id}
       profileHref="/app/company"
       criterionHref={(id) => `/app/criteria/${encodeURIComponent(id)}`}
+      onCreateRecord={(input) => void createRecordFromChat(input, router)}
     />
   );
 }

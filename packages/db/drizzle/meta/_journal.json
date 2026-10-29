@@ -43,6 +43,34 @@
       "when": 1787202000000,
       "tag": "0005_conversation_messages",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1787203000000,
+      "tag": "0006_company_evidence",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1787204000000,
+      "tag": "0007_assessments_findings",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1787205000000,
+      "tag": "0008_notifications",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1787206000000,
+      "tag": "0009_audit_runs",
+      "breakpoints": true
     }
   ]
 }

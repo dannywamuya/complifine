@@ -53,6 +53,7 @@ import {
 } from "@complifine/core";
 import type { Embedder } from "../embed/provider.ts";
 import { search } from "../search/hybrid.ts";
+import { recordTools } from "./record-tools.ts";
 
 export interface ToolContext {
   readonly db: Database;
@@ -863,6 +864,7 @@ export function buildTools(context: ToolContext) {
         };
       }),
     }),
+    ...recordTools(context),
   };
 }
 

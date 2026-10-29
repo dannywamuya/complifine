@@ -49,8 +49,10 @@ import {
   ask,
   askStream,
   embedderForQuery,
+  openaiCaptureGenerator,
   resolveChecklist,
   search,
+  type CaptureGenerator,
 } from "@complifine/ai";
 import { recordReview, runGates, transitionVersion } from "@complifine/ingestion";
 import { adminRoutes } from "./admin.ts";
@@ -60,6 +62,12 @@ import { httpError } from "./errors.ts";
 import { authModule, requireOperator, type AuthUser } from "./auth/plugin.ts";
 import { demoRoutes } from "./demo.ts";
 import { farmRoutes } from "./farm.ts";
+import { formRoutes } from "./forms.ts";
+import { evidenceRoutes } from "./evidence.ts";
+import { pendingRoutes } from "./pending.ts";
+import { notificationRoutes } from "./notifications.ts";
+import { auditRoutes } from "./audit.ts";
+import { auditRunRoutes, type AuditRouteOptions } from "./audit-runs.ts";
 import { assertPublishedVersion, publishedOnly } from "./knowledge-access.ts";
 
 const chatTurn = t.Object({
@@ -67,8 +75,12 @@ const chatTurn = t.Object({
   content: t.String(),
 });
 
-export function createApp(database = createDatabase()) {
+export function createApp(
+  database = createDatabase(),
+  options: { capture?: CaptureGenerator } & AuditRouteOptions = {},
+) {
   const db = database;
+  const capture = options.capture ?? (hasAiCredentials() ? openaiCaptureGenerator() : undefined);
 
   return (
     new Elysia({ name: "complifine-api" })
@@ -103,6 +115,12 @@ export function createApp(database = createDatabase()) {
       .use(authModule(db))
       .use(demoRoutes(db))
       .use(farmRoutes(db))
+      .use(formRoutes(db, capture))
+      .use(evidenceRoutes(db))
+      .use(pendingRoutes(db))
+      .use(notificationRoutes(db))
+      .use(auditRoutes(db))
+      .use(auditRunRoutes(db, options))
       .use(conversationRoutes(db))
       .use(adminRoutes(db))
       .onError(({ code, error, set }) => {

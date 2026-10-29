@@ -136,6 +136,16 @@ The assistant's history. Messages form a tree: `parent_id` is the previous
 turn, and siblings under the same parent are edits or regenerations. The row
 the user is looking at is `conversations.active_leaf_id`. See [CHAT.md](CHAT.md).
 
+## Company evidence and records
+
+`documents` are company files (`purpose` `evidence` or `capture_source`), not `standard_documents`. `evidence` is the compliance row: one evidence type at one site, optionally pointing at a document or a submitted `form_records` row. `evidence_controls` and `evidence_requirements` copy the library mapping at filing time.
+
+`form_templates` with `organization_id` null are the library. A variant points at `parent_template_id` and stores `overrides` only. `form_records.status` is `draft` until submit. `form_record_entries.extraction` holds per-field confidence from capture and is cleared when a person edits the field.
+
+`assessments` / `assessment_items` are the self-assessment. Completing one inserts `findings` for partial and non-compliant items. `corrective_actions` hang off a finding. Readiness is computed, not stored.
+
+Cadence keeps evidence current for: once 366 days, daily 2, weekly 8, monthly 35, quarterly 100, annual 380. `per_event` does not expire by silence.
+
 ## Authority levels
 
 | Level | Meaning | Citable as a requirement? |

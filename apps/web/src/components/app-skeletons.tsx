@@ -23,9 +23,9 @@ export function AppChromeSkeleton({
         {setup ? null : sidebarOpen ? (
           <>
             <div className="mt-4 space-y-2">
-              <Skeleton className="h-8 w-full rounded-xl bg-sidebar-accent" />
-              <Skeleton className="h-8 w-full rounded-xl bg-sidebar-accent" />
-              <Skeleton className="h-8 w-full rounded-xl bg-sidebar-accent" />
+              {Array.from({ length: 7 }, (_, index) => (
+                <Skeleton key={index} className="h-8 w-full rounded-xl bg-sidebar-accent" />
+              ))}
             </div>
             <Skeleton className="mt-6 h-8 w-full rounded-xl bg-sidebar-accent" />
             <div className="mt-4 space-y-2">
@@ -40,7 +40,7 @@ export function AppChromeSkeleton({
           </>
         ) : (
           <div className="mt-4 space-y-2">
-            {Array.from({ length: 4 }, (_, index) => (
+            {Array.from({ length: 7 }, (_, index) => (
               <Skeleton key={index} className="size-8 rounded-xl bg-sidebar-accent" />
             ))}
           </div>

@@ -248,6 +248,29 @@ Until that file exists, ingest still fetches the public ETI Base Code. The
 agent must refuse invented Workplace Requirement numbers. See
 [SOURCES-SMETA.md](SOURCES-SMETA.md).
 
+## Company files and records
+
+Company uploads and capture sources live under `STORAGE_ROOT`:
+
+```text
+orgs/<orgId>/evidence/<sha256>.<ext>
+orgs/<orgId>/captures/<sha256>.<ext>
+```
+
+Documents are capped at 10 MB, audio at 25 MB. The stored bytes are the SHA-256 in `documents.file_hash`; identical bytes are not written twice.
+
+```bash
+sha256sum "$STORAGE_ROOT/orgs/<orgId>/evidence/<hash>.pdf"
+```
+
+The hash must match `documents.file_hash`.
+
+Add a template in `packages/db/src/form-library.ts`, map its evidence type from a control in `seed-controls.ts`, and run `bun run db:seed`. The seed fails if a template's evidence type is not on a control, or if a listed IFA or ETI number is missing from an ingested edition.
+
+An organisation variant (`POST /form-templates/:id/variant`) may set header defaults, document reference, approver, option lists and fixed rows. A request that includes `entryFields`, `headerFields` or `definition` is rejected.
+
+A captured record points at `documents.id` via `form_records.source_document_id` and at `agent_runs.id` via `capture_run_id`. The run's tool call lists the source document ids.
+
 ## Answer evaluation
 
 ```bash

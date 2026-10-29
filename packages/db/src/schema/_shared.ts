@@ -10,7 +10,24 @@ import { sql } from "drizzle-orm";
 import {
   APPLICABILITY_SOURCES,
   CHUNK_TYPES,
+  COMPANY_DOCUMENT_PURPOSES,
   CONTROL_TYPES,
+  EVIDENCE_SOURCES,
+  EVIDENCE_VERIFICATION_STATUSES,
+  FORM_CADENCES,
+  FORM_CATEGORIES,
+  FORM_RECORD_ORIGINS,
+  FORM_RECORD_STATUSES,
+  ASSESSMENT_RESPONSES,
+  ASSESSMENT_STATUSES,
+  CORRECTIVE_ACTION_STATUSES,
+  NOTIFICATION_CHANNELS,
+  NOTIFICATION_DIGESTS,
+  NOTIFICATION_EVENT_TYPES,
+  AUDIT_RUN_STATUSES,
+  AUDIT_VERDICTS,
+  FINDING_SEVERITIES,
+  FINDING_STATUSES,
   DOCUMENT_STATUSES,
   DOCUMENT_TYPES,
   JOB_STAGES,
@@ -77,6 +94,29 @@ export const jobStatusEnum = pgEnum("job_status", JOB_STATUSES);
 export const logLevelEnum = pgEnum("log_level", LOG_LEVELS);
 export const chunkTypeEnum = pgEnum("chunk_type", CHUNK_TYPES);
 export const reviewDecisionEnum = pgEnum("review_decision", REVIEW_DECISIONS);
+export const evidenceVerificationEnum = pgEnum(
+  "evidence_verification",
+  EVIDENCE_VERIFICATION_STATUSES,
+);
+export const evidenceSourceEnum = pgEnum("evidence_source", EVIDENCE_SOURCES);
+export const companyDocumentPurposeEnum = pgEnum(
+  "company_document_purpose",
+  COMPANY_DOCUMENT_PURPOSES,
+);
+export const formCategoryEnum = pgEnum("form_category", FORM_CATEGORIES);
+export const formCadenceEnum = pgEnum("form_cadence", FORM_CADENCES);
+export const formRecordStatusEnum = pgEnum("form_record_status", FORM_RECORD_STATUSES);
+export const formRecordOriginEnum = pgEnum("form_record_origin", FORM_RECORD_ORIGINS);
+export const assessmentStatusEnum = pgEnum("assessment_status", ASSESSMENT_STATUSES);
+export const assessmentResponseEnum = pgEnum("assessment_response", ASSESSMENT_RESPONSES);
+export const findingStatusEnum = pgEnum("finding_status", FINDING_STATUSES);
+export const findingSeverityEnum = pgEnum("finding_severity", FINDING_SEVERITIES);
+export const correctiveActionStatusEnum = pgEnum("corrective_action_status", CORRECTIVE_ACTION_STATUSES);
+export const notificationEventTypeEnum = pgEnum("notification_event_type", NOTIFICATION_EVENT_TYPES);
+export const notificationChannelEnum = pgEnum("notification_channel", NOTIFICATION_CHANNELS);
+export const notificationDigestEnum = pgEnum("notification_digest", NOTIFICATION_DIGESTS);
+export const auditRunStatusEnum = pgEnum("audit_run_status", AUDIT_RUN_STATUSES);
+export const auditVerdictEnum = pgEnum("audit_verdict", AUDIT_VERDICTS);
 
 // ---------------------------------------------------------------------------
 // Column helpers

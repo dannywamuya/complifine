@@ -1,7 +1,7 @@
 "use client";
 
-import { ArrowUp, Paperclip, Sparkles, Square, X } from "lucide-react";
-import { useEffect, useRef, type ClipboardEvent, type DragEvent, type KeyboardEvent } from "react";
+import { ArrowUp, Mic, Paperclip, Sparkles, Square, X } from "lucide-react";
+import { useEffect, useRef, useState, type ClipboardEvent, type DragEvent, type KeyboardEvent } from "react";
 import { CHAR_LIMIT, CHAR_WARN_AT, type Attachment, type ModelOption, type SelectOption } from "../types.ts";
 import { cn } from "../cn.ts";
 import { MenuSelect } from "./select.tsx";
@@ -16,6 +16,7 @@ export function Composer({
   attachments,
   onRemoveAttachment,
   onFiles,
+  onCreateRecord,
   placeholder = "Ask a question, or paste a criterion number…",
   version,
   versionOptions,
@@ -37,6 +38,8 @@ export function Composer({
   attachments: Attachment[];
   onRemoveAttachment: (id: string) => void;
   onFiles: (files: FileList | File[]) => void;
+  /** Shown when a photo, voice note or file is attached. */
+  onCreateRecord?: () => void;
   placeholder?: string;
   version?: string;
   versionOptions?: SelectOption[];
@@ -51,6 +54,8 @@ export function Composer({
 }) {
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const fileRef = useRef<HTMLInputElement | null>(null);
+  const recorder = useRef<MediaRecorder | null>(null);
+  const [recording, setRecording] = useState(false);
 
   useEffect(() => {
     const el = textareaRef.current;
@@ -83,6 +88,29 @@ export function Composer({
       event.preventDefault();
       onFiles(files);
     }
+  }
+
+  async function toggleMic() {
+    if (recorder.current) {
+      recorder.current.stop();
+      recorder.current = null;
+      setRecording(false);
+      return;
+    }
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const media = new MediaRecorder(stream);
+    const chunks: Blob[] = [];
+    media.ondataavailable = (event) => {
+      if (event.data.size) chunks.push(event.data);
+    };
+    media.onstop = () => {
+      stream.getTracks().forEach((track) => track.stop());
+      const blob = new Blob(chunks, { type: media.mimeType || "audio/webm" });
+      onFiles([new File([blob], "voice-note.webm", { type: blob.type || "audio/webm" })]);
+    };
+    recorder.current = media;
+    media.start();
+    setRecording(true);
   }
 
   const over = draft.length > CHAR_LIMIT;
@@ -207,6 +235,26 @@ export function Composer({
               {draft.length}/{CHAR_LIMIT}
             </span>
           ) : null}
+          {onCreateRecord && attachments.some(isCaptureAttachment) ? (
+            <button
+              type="button"
+              className="inline-flex h-9 items-center rounded-full bg-(--cf-accent) px-3.5 text-sm font-medium text-(--cf-accent-fg)"
+              onClick={onCreateRecord}
+            >
+              Create record from this
+            </button>
+          ) : null}
+          <button
+            type="button"
+            aria-label={recording ? "Stop recording" : "Record a voice note"}
+            className={cn(
+              "inline-flex size-9 items-center justify-center rounded-full border border-(--cf-border) bg-(--cf-bg-elevated)",
+              recording && "border-(--cf-danger) text-(--cf-danger)",
+            )}
+            onClick={() => void toggleMic()}
+          >
+            <Mic className="size-3.5" />
+          </button>
           <input
             ref={fileRef}
             type="file"
@@ -230,6 +278,16 @@ export function Composer({
         </div>
       </div>
     </div>
+  );
+}
+
+function isCaptureAttachment(file: { kind: string; mime: string }): boolean {
+  return (
+    file.kind === "image" ||
+    file.mime.startsWith("audio/") ||
+    file.mime === "application/pdf" ||
+    file.mime === "text/csv" ||
+    file.mime.includes("spreadsheet")
   );
 }
 

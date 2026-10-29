@@ -62,6 +62,8 @@ export interface ChatShellProps {
 	onFeedback?: (messageId: string, vote: 'up' | 'down' | null) => void;
 	/** Host chrome header targets. When set, the shell does not render its own bar. */
 	headerPortal?: { extra: string; actions: string };
+	/** Turn the attached photo, voice note or file into a draft record. */
+	onCreateRecord?: (input: { siteId: string; attachments: import('../types.ts').Attachment[] }) => void;
 }
 
 const DEFAULT_SUGGESTIONS = [
@@ -118,6 +120,7 @@ export function ChatShell({
 	onConversationId,
 	onFeedback,
 	headerPortal,
+	onCreateRecord,
 }: ChatShellProps) {
 	const embedded = variant === 'embedded';
 	const [siteId, setSiteId] = useState(() => defaultSiteId || readStoredSite());
@@ -495,6 +498,15 @@ export function ChatShell({
 									)
 								}
 								onFiles={(files) => void chat.addFiles(files)}
+								onCreateRecord={
+									onCreateRecord && knownSiteId
+										? () =>
+												onCreateRecord({
+													siteId: knownSiteId,
+													attachments: chat.attachments,
+												})
+										: undefined
+								}
 								placeholder={placeholder}
 								version={chat.version}
 								versionOptions={versionOptions}

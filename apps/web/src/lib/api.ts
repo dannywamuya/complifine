@@ -96,7 +96,9 @@ async function readError(response: Response): Promise<string> {
 
 export async function api<T>(path: string, init?: RequestInit): Promise<T> {
   const headers = new Headers(init?.headers);
-  if (!headers.has("Content-Type")) headers.set("Content-Type", "application/json");
+  if (!headers.has("Content-Type") && !(init?.body instanceof FormData)) {
+    headers.set("Content-Type", "application/json");
+  }
   const cookie = await incomingCookieHeader();
   if (cookie && !headers.has("Cookie")) headers.set("Cookie", cookie);
 
