@@ -16,16 +16,18 @@ that name a criterion the tools never returned are flagged, not trusted.
 | Ingestion | Fetch official documents, parse the checklist XLSX and the PDFs, map Smart to GFS, run quality gates |
 | Knowledge base | Postgres + pgvector. 190 Smart criteria, 191 GFS, 16 scoping questions, publisher GUIDs as identity |
 | Retrieval | Identifier lookup, then IDF-weighted full text fused with embeddings by Reciprocal Rank Fusion |
-| Agent | Tools over the database, including the signed-in company and sites. The model chooses what to fetch; the database answers questions of fact |
+| Agent | Tools over the database, including the signed-in company, sites, records and evidence. The model chooses what to fetch; the database answers questions of fact |
+| Operations | Records and evidence per site, findings linked to requirements, readiness count, on-demand Run Audit (verdicts count only after a person accepts them) |
 | API | Elysia on port 3311. JWT auth, OpenAPI at `/swagger` |
-| Web | Next.js on port 3000. Marketing site, Book a Demo, producer `/app` |
+| Web | Next.js on port 3000. Marketing site, Book a Demo, producer `/app` (Chat, Records, Findings, Readiness, Catalog, Company) |
 | Console | Next.js on port 3001. Ingest, gates, review, demo inbox. Operator login |
 
 ## Requirements
 
 - [Bun](https://bun.sh) 1.2+
 - Docker (for Postgres 17 + pgvector, and for deploying the apps)
-- An OpenAI key for embeddings and the agent. Everything else runs without it.
+- An OpenAI key for embeddings, chat, and Run Audit. Everything else runs without it.
+- [Poppler](https://poppler.freedesktop.org/) (`pdftotext`) for the record PDF unit tests. On Debian/Ubuntu: `sudo apt-get install -y poppler-utils`. CI installs it before `bun test`.
 
 ## Quick start
 
@@ -42,8 +44,8 @@ bun run console               # http://localhost:3001  (operators)
 daemon; it resumes rather than starting over.
 
 Without a key, the knowledge base, quality gates, lexical search and the whole
-CLI still work. Semantic search and `/ask` wait until you add one and run
-`bun run ai index`.
+CLI still work. Semantic search, `/ask`, and Run Audit wait until you add one
+and run `bun run ai index`.
 
 ## Docker deploy
 
@@ -76,6 +78,12 @@ should **Wait for CI** on the API so a red check stops the deploy. Details in
 
 Use **Bun**, never npm (`workspace:*` will fail). Give the API a volume at
 `/data/storage`. Set `PORT` (injected by Railway) and `DATABASE_URL`.
+GitHub Actions installs Poppler before tests so record PDF checks pass.
+
+On the **API**, copy [apps/api/.env.example](apps/api/.env.example). Optional
+for this product surface: `AUDIT_CONCURRENCY` (default `4`, max `16`) and
+`DIGEST_ENABLED` (off in production unless set to `true`). See the root
+[.env.example](.env.example).
 
 On **web**, copy [apps/web/.env.example](apps/web/.env.example). The one
 required runtime variable is:
@@ -130,7 +138,8 @@ workbooks share zero publisher GUIDs, so identity is not inferred from numbers.
 - [Sources](docs/SOURCES.md) — GLOBALG.A.P. official files, authority, licence notes
 - [SMETA sources](docs/SOURCES-SMETA.md) — ETI public vs Sedex member-gated
 - [Workbook structure](docs/WORKBOOK-STRUCTURE.md) — the hidden Excel tables
-- [Runbook](docs/RUNBOOK.md) — operate, recover, re-index, drop a SMETA file
+- [Runbook](docs/RUNBOOK.md) — operate, recover, re-index, drop a SMETA file, CI / CD
+- [Notifications](docs/notifications.md) — in-app digest and preferences
 
 ## Licence
 
