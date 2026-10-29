@@ -22,7 +22,7 @@
 // OpenAI SDK eagerly constructs a default client from `process.env`, and it
 // rejects an empty `OPENAI_BASE_URL` - which is how a .env template spells
 // "unset". Core normalises those blanks away on load, so it has to go first.
-import { createLogger, requireAiEnv } from "@complifine/core";
+import { chatMaxSteps, createLogger, requireAiEnv } from "@complifine/core";
 import { createOpenAI } from "@ai-sdk/openai";
 import { generateText, streamText, stepCountIs, type ModelMessage } from "ai";
 import { randomUUID } from "node:crypto";
@@ -44,7 +44,7 @@ function systemPromptFor(publishedOnly: boolean | undefined): string {
 export interface AskOptions {
   readonly db: Database;
   readonly embedder: Embedder | null;
-  /** Chat model. Defaults to the `AGENT_MODEL` environment variable. */
+  /** Chat model. Defaults to `CHAT_MODEL` (producer chat), not `AGENT_MODEL`. */
   readonly model?: string;
   readonly apiKey?: string;
   /** Groups turns of one conversation; generated when absent. */
@@ -135,7 +135,8 @@ export type AskStreamEvent =
     }
   | { type: "error"; message: string };
 
-const DEFAULT_MAX_STEPS = 16;
+/** Prior turns kept in the model context. Shorter history keeps each step cheaper. */
+export const HISTORY_MESSAGE_LIMIT = 8;
 
 const log = createLogger("agent");
 
@@ -201,7 +202,8 @@ export async function ask(question: string, options: AskOptions): Promise<AskRes
   // Validated up front rather than deep inside the HTTP client, so a missing
   // key produces a sentence telling you what to do about it.
   const env = requireAiEnv();
-  const modelName = options.model ?? env.AGENT_MODEL;
+  const modelName = options.model ?? env.CHAT_MODEL;
+  const stepBudget = options.maxSteps ?? chatMaxSteps();
   const openai = createOpenAI({
     apiKey: options.apiKey ?? env.OPENAI_API_KEY,
     baseURL: env.OPENAI_BASE_URL,
@@ -251,7 +253,7 @@ export async function ask(question: string, options: AskOptions): Promise<AskRes
       system: systemPromptFor(options.publishedOnly),
       messages,
       tools: buildTools(toolContext),
-      stopWhen: stepCountIs(options.maxSteps ?? DEFAULT_MAX_STEPS),
+      stopWhen: stepCountIs(stepBudget),
       ...samplingFor(modelName, options.temperature),
     });
 
@@ -354,7 +356,8 @@ export async function* askStream(
   const persist = options.persist ?? true;
 
   const env = requireAiEnv();
-  const modelName = options.model ?? env.AGENT_MODEL;
+  const modelName = options.model ?? env.CHAT_MODEL;
+  const stepBudget = options.maxSteps ?? chatMaxSteps();
   const openai = createOpenAI({
     apiKey: options.apiKey ?? env.OPENAI_API_KEY,
     baseURL: env.OPENAI_BASE_URL,
@@ -404,7 +407,7 @@ export async function* askStream(
       system: systemPromptFor(options.publishedOnly),
       messages,
       tools: buildTools(toolContext),
-      stopWhen: stepCountIs(options.maxSteps ?? DEFAULT_MAX_STEPS),
+      stopWhen: stepCountIs(stepBudget),
       ...samplingFor(modelName, options.temperature),
       abortSignal: options.abortSignal,
     });
@@ -490,6 +493,15 @@ export async function* askStream(
     }
 
     const durationMs = Math.round(performance.now() - started);
+    const toolCount = toolCalls.length;
+
+    log.info("askStream finished", {
+      runId,
+      durationMs,
+      model: modelName,
+      toolCount,
+      promptTokens,
+    });
 
     if (persist) {
       await persistRun(options.db, runId, {
@@ -535,9 +547,9 @@ export async function* askStream(
   }
 }
 
-function historyToMessages(history: AskOptions["history"]): ModelMessage[] {
+export function historyToMessages(history: AskOptions["history"]): ModelMessage[] {
   if (!history || history.length === 0) return [];
-  return [...history.slice(-16)];
+  return [...history.slice(-HISTORY_MESSAGE_LIMIT)];
 }
 
 async function ensureConversation(
@@ -593,6 +605,7 @@ async function persistRun(
       completionTokens: data.usage?.outputTokens ?? null,
       finishReason: data.finishReason,
       durationMs: data.durationMs,
+      toolCount: data.toolCalls.length,
       finishedAt: new Date(),
     })
     .where(eq(agentRuns.id, runId));

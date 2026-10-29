@@ -61,6 +61,8 @@ const BLANKABLE = [
   "OPENAI_API_KEY",
   "EMBEDDING_MODEL",
   "AGENT_MODEL",
+  "CHAT_MODEL",
+  "CHAT_MAX_STEPS",
   "LOG_FORMAT",
   "LOG_LEVEL",
   "OPERATOR_EMAIL",
@@ -123,7 +125,12 @@ const aiSchema = z.object({
   OPENAI_BASE_URL: z.string().optional(),
   EMBEDDING_MODEL: z.string().default("text-embedding-3-small"),
   EMBEDDING_DIMENSIONS: z.coerce.number().int().positive().default(1536),
+  /** Run Audit, capture extraction, operator briefing. */
   AGENT_MODEL: z.string().default("gpt-5"),
+  /** Producer `/ask` and `/ask/stream`. Prefer a snappy chat model. */
+  CHAT_MODEL: z.string().default("gpt-4.1"),
+  /** Tool-calling rounds for chat. Cap cost; wrap-up still runs if prose is empty. */
+  CHAT_MAX_STEPS: z.coerce.number().int().positive().max(16).default(8),
 });
 
 export type BaseEnv = z.infer<typeof baseSchema>;
@@ -178,6 +185,11 @@ export function requireAiEnv(): AiEnv {
 /** Whether AI features can run, without throwing. Used to degrade the UI gracefully. */
 export function hasAiCredentials(): boolean {
   return aiSchema.safeParse(process.env).success;
+}
+
+/** Chat tool-round budget from `CHAT_MAX_STEPS` (default 8, max 16). */
+export function chatMaxSteps(): number {
+  return requireAiEnv().CHAT_MAX_STEPS;
 }
 
 /** Reset memoized config and re-normalise blanks. Test-only. */

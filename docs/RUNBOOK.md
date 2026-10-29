@@ -105,6 +105,14 @@ Refresh stored results: `GET /versions/{code}/gates?refresh=true`.
 - Empty tools: the embedder used for the query does not match the index. See
   `embedderForQuery`.
 
+## Chat feels slow
+
+- Set `CHAT_MODEL=gpt-4.1` (or another fast chat model) on the API service.
+  Leave `AGENT_MODEL` for Run Audit / capture.
+- Optional: lower `CHAT_MAX_STEPS` (default 8, max 16) if the model wanders.
+- Compare latency by model and tool volume with the queries in [CHAT.md](CHAT.md)
+  (Latency and models).
+
 ## Postgres
 
 ```bash

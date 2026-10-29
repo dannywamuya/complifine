@@ -107,3 +107,44 @@ Import styles once per app:
 @import "@complifine/chat/styles.css";
 @source "../../../../packages/chat/src";
 ```
+
+## Latency and models
+
+Producer `/ask` and `/ask/stream` use `CHAT_MODEL` (default `gpt-4.1`) and
+`CHAT_MAX_STEPS` (default 8, max 16). Run Audit, capture extraction, and the
+operator briefing keep `AGENT_MODEL` (default `gpt-5`).
+
+Each finished run stores `duration_ms`, token counts, `model`, and `tool_count`
+on `agent_runs`. Streaming also logs one structured line (`durationMs`, `model`,
+`toolCount`, `promptTokens`) via the `agent` logger.
+
+```sql
+-- Latency by model
+SELECT model,
+       count(*) AS runs,
+       avg(duration_ms)::int AS avg_ms,
+       percentile_cont(0.5) WITHIN GROUP (ORDER BY duration_ms)::int AS p50_ms,
+       percentile_cont(0.95) WITHIN GROUP (ORDER BY duration_ms)::int AS p95_ms
+FROM agent_runs
+WHERE finished_at IS NOT NULL AND error IS NULL
+GROUP BY model
+ORDER BY runs DESC;
+
+-- Avg tools and prompt tokens
+SELECT model,
+       avg(tool_count)::numeric(10, 2) AS avg_tools,
+       avg(prompt_tokens)::int AS avg_prompt_tokens,
+       avg(completion_tokens)::int AS avg_completion_tokens
+FROM agent_runs
+WHERE finished_at IS NOT NULL AND error IS NULL
+GROUP BY model;
+
+-- Slow tools
+SELECT tool_name,
+       count(*) AS calls,
+       avg(duration_ms)::int AS avg_ms,
+       max(duration_ms) AS max_ms
+FROM agent_tool_calls
+GROUP BY tool_name
+ORDER BY avg_ms DESC NULLS LAST;
+```

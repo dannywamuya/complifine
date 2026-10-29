@@ -54,6 +54,9 @@ import {
 import type { Embedder } from "../embed/provider.ts";
 import { search } from "../search/hybrid.ts";
 import { recordTools } from "./record-tools.ts";
+import { truncateToolResult } from "./truncate.ts";
+
+export { TOOL_RESULT_MAX_CHARS, truncateToolResult } from "./truncate.ts";
 
 export interface ToolContext {
   readonly db: Database;
@@ -112,7 +115,7 @@ function instrument<A, R>(
   return async (args: A) => {
     const started = performance.now();
     try {
-      const result = asJsonValue(await execute(args));
+      const result = truncateToolResult(asJsonValue(await execute(args))) as R;
       await context.onCall?.({
         name,
         args,

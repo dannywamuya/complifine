@@ -305,6 +305,8 @@ export const agentRuns = pgTable(
     promptTokens: integer("prompt_tokens"),
     completionTokens: integer("completion_tokens"),
     durationMs: integer("duration_ms"),
+    /** Tool invocations completed during the run. Set when the run finishes. */
+    toolCount: integer("tool_count"),
 
     finishReason: text("finish_reason"),
     error: text("error"),

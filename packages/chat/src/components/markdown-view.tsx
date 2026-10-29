@@ -6,7 +6,12 @@ import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
 import rehypeHighlight from "rehype-highlight";
-import { criterionLinkId, isInventedCriterionHref, prettifyAnswerLinks } from "../criterion-link.ts";
+import {
+  criterionLinkId,
+  isDocumentCitation,
+  isInventedCriterionHref,
+  prettifyAnswerLinks,
+} from "../criterion-link.ts";
 import { stabilizeMarkdown } from "../markdown-stream.ts";
 import { CodeBlock } from "./code-block.tsx";
 
@@ -95,22 +100,32 @@ function linkify(children: ReactNode, criterionHref?: (id: string) => string): R
     if (index > last) pieces.push(children.slice(last, index));
     const raw = match[0];
     const inner = match[1] ?? raw;
+    const label = raw.replace(/^\[|\]$/g, "");
     const id = criterionLinkId(inner);
-    const href = id ? criterionHref?.(id) : undefined;
-    if (!id) {
-      pieces.push(raw);
-    } else {
+    if (id) {
+      const href = criterionHref?.(id);
       pieces.push(
         href ? (
           <a key={`${index}-${raw}`} href={href} className="cf-chat-citation">
-            {raw.replace(/^\[|\]$/g, "")}
+            {label}
           </a>
         ) : (
           <span key={`${index}-${raw}`} className="cf-chat-citation">
-            {raw.replace(/^\[|\]$/g, "")}
+            {label}
           </span>
         ),
       );
+    } else if (raw.startsWith("[") && isDocumentCitation(inner)) {
+      pieces.push(
+        <span key={`${index}-${raw}`} className="cf-chat-citation">
+          {label}
+        </span>,
+      );
+    } else if (raw.startsWith("[")) {
+      // Leftover tool-label brackets should already be rewritten; drop if any remain.
+      pieces.push("");
+    } else {
+      pieces.push(raw);
     }
     last = index + raw.length;
   }

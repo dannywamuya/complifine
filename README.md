@@ -47,6 +47,9 @@ Without a key, the knowledge base, quality gates, lexical search and the whole
 CLI still work. Semantic search, `/ask`, and Run Audit wait until you add one
 and run `bun run ai index`.
 
+Producer chat uses `CHAT_MODEL` (default `gpt-4.1`); Run Audit and capture keep
+`AGENT_MODEL`. See `.env.example` and [docs/CHAT.md](docs/CHAT.md).
+
 ## Docker deploy
 
 Each app has a Dockerfile. Build context is this directory (`complifine/`), not

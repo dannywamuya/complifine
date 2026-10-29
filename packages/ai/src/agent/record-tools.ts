@@ -2,7 +2,9 @@
  * Org-scoped record and evidence tools.
  *
  * Reads report what is on file. The one write, `draftRecord`, creates a draft
- * and nothing else: it cannot submit, verify, or make a row count as evidence.
+ * shell and nothing else: it cannot submit, verify, or make a row count as
+ * evidence, and it does not call an LLM — the person fills columns on the
+ * record page.
  */
 
 import { tool } from "ai";
@@ -11,17 +13,15 @@ import { and, desc, eq, isNull, lt, type Database } from "@complifine/db";
 import {
   evidence,
   evidenceTypes,
-  formRecordEntries,
   formRecords,
   formTemplates,
   sites,
 } from "@complifine/db";
-import type { FormDefinition } from "@complifine/core";
+import type { FormValues } from "@complifine/core";
 import { evidenceGap } from "../evidence-gap.ts";
 import { auditReadiness } from "../readiness.ts";
-import { extractDraft } from "../capture/extract.ts";
-import { openaiCaptureGenerator } from "../capture/openai.ts";
 import type { ToolContext } from "./tools.ts";
+import { truncateToolResult } from "./truncate.ts";
 
 function siteIdOf(context: ToolContext, requested?: string): string {
   const id = requested || context.siteId;
@@ -38,11 +38,16 @@ async function ownedSite(db: Database, orgId: string, siteId: string) {
   return site;
 }
 
+/** Dictated text kept on the draft header; columns are filled on the record page. */
+export function shellDraftHeader(text: string): FormValues {
+  return { dictated: text };
+}
+
 export function recordTools(context: ToolContext) {
   const run = async <T>(name: string, args: unknown, fn: () => Promise<T>) => {
     const started = performance.now();
     try {
-      const result = JSON.parse(JSON.stringify(await fn())) as T;
+      const result = truncateToolResult(JSON.parse(JSON.stringify(await fn()))) as T;
       await context.onCall?.({ name, args, result, durationMs: Math.round(performance.now() - started) });
       return result;
     } catch (error) {
@@ -81,8 +86,13 @@ export function recordTools(context: ToolContext) {
             .innerJoin(evidenceTypes, eq(evidenceTypes.id, evidence.evidenceTypeId))
             .where(and(eq(evidence.organizationId, orgId), eq(evidence.siteId, site.id)))
             .orderBy(desc(evidence.createdAt))
-            .limit(50);
-          return { site: site.name, evidence: rows };
+            .limit(21);
+          const truncated = rows.length > 20;
+          return {
+            site: site.name,
+            evidence: rows.slice(0, 20),
+            ...(truncated ? { truncated: true } : {}),
+          };
         }),
     }),
     getEvidenceGap: tool({
@@ -110,12 +120,15 @@ export function recordTools(context: ToolContext) {
             siteType: site.siteType,
             versionId: version.id,
           });
+          const missingAll = gap.rows.filter((row) => row.status === "missing");
+          const staleAll = gap.rows.filter((row) => row.status === "stale" || row.status === "expired");
           return {
             site: site.name,
             version: version.code,
             counts: gap.counts,
-            missing: gap.rows.filter((row) => row.status === "missing").slice(0, 20),
-            stale: gap.rows.filter((row) => row.status === "stale" || row.status === "expired").slice(0, 20),
+            missing: missingAll.slice(0, 10),
+            stale: staleAll.slice(0, 10),
+            ...(missingAll.length > 10 || staleAll.length > 10 ? { truncated: true } : {}),
           };
         }),
     }),
@@ -147,8 +160,13 @@ export function recordTools(context: ToolContext) {
               ),
             )
             .orderBy(desc(formRecords.createdAt))
-            .limit(30);
-          return { site: site.name, records: rows };
+            .limit(16);
+          const truncated = rows.length > 15;
+          return {
+            site: site.name,
+            records: rows.slice(0, 15),
+            ...(truncated ? { truncated: true } : {}),
+          };
         }),
     }),
     getOverdueRecords: tool({
@@ -175,13 +193,18 @@ export function recordTools(context: ToolContext) {
                 lt(evidence.expiresAt, new Date()),
               ),
             )
-            .limit(30);
-          return { site: site.name, overdue: rows };
+            .limit(16);
+          const truncated = rows.length > 15;
+          return {
+            site: site.name,
+            overdue: rows.slice(0, 15),
+            ...(truncated ? { truncated: true } : {}),
+          };
         }),
     }),
     draftRecord: tool({
       description:
-        "Create a DRAFT record from a sentence the user dictated. Returns a review link. Never sets any status other than draft and never creates evidence.",
+        "Create a DRAFT record shell from a sentence the user dictated. Stores the text for review; does not extract columns. Returns a review link. Never sets any status other than draft and never creates evidence.",
       inputSchema: z.object({
         templateSlug: z.string(),
         siteId: z.string().optional(),
@@ -196,11 +219,6 @@ export function recordTools(context: ToolContext) {
           if (!template.siteTypes.includes(site.siteType)) {
             throw new Error("That record does not apply to this site.");
           }
-          const extracted = await extractDraft(
-            template.definition as FormDefinition,
-            { text: args.text },
-            openaiCaptureGenerator(),
-          );
           const [record] = await context.db
             .insert(formRecords)
             .values({
@@ -210,24 +228,15 @@ export function recordTools(context: ToolContext) {
               templateVersion: template.version,
               status: "draft",
               origin: "capture",
-              header: extracted.header,
-              headerExtraction: extracted.headerExtraction,
+              header: shellDraftHeader(args.text),
               createdBy: context.userId ?? null,
             })
             .returning();
-          for (const entry of extracted.entries) {
-            await context.db.insert(formRecordEntries).values({
-              recordId: record!.id,
-              data: entry.data,
-              extraction: entry.extraction,
-              enteredBy: context.userId ?? null,
-            });
-          }
           return {
             recordId: record!.id,
             status: "draft",
             reviewPath: `/app/records/${template.id}/${record!.id}`,
-            note: "This is a draft. It does not count until a person confirms it.",
+            note: "This is a draft shell. Open the review link and complete the columns; it does not count until a person confirms it.",
           };
         }),
     }),
@@ -263,8 +272,13 @@ export function recordTools(context: ToolContext) {
             .from(assessmentItems)
             .innerJoin(requirementVersions, eq(requirementVersions.id, assessmentItems.requirementVersionId))
             .where(eq(assessmentItems.assessmentId, assessment.id))
-            .limit(40);
-          return { status: assessment.status, items };
+            .limit(21);
+          const truncated = items.length > 20;
+          return {
+            status: assessment.status,
+            items: items.slice(0, 20),
+            ...(truncated ? { truncated: true } : {}),
+          };
         }),
     }),
     getAuditReadiness: tool({
