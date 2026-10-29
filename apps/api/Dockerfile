@@ -19,6 +19,12 @@ COPY apps ./apps
 COPY infra ./infra
 COPY scripts ./scripts
 
+# DejaVu for record PDF export (Swahili / Unicode). Also shipped under
+# apps/api/assets/fonts; the package covers any other process that needs system fonts.
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends fonts-dejavu-core \
+  && rm -rf /var/lib/apt/lists/*
+
 RUN bun install --frozen-lockfile \
   && chmod +x apps/api/docker-entrypoint.sh scripts/predeploy.sh \
   && mkdir -p /data/storage

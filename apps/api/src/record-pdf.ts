@@ -8,11 +8,25 @@
  */
 
 import { deflateSync } from "node:zlib";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 import type { FormDefinition, FormField, FormValues } from "@complifine/core";
 
-const FONT_REGULAR = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf";
-const FONT_BOLD = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf";
+/** Prefer fonts shipped with the API; fall back to common OS paths. */
+function resolveFont(filename: string): string {
+  const candidates = [
+    join(import.meta.dir, "../assets/fonts", filename),
+    `/usr/share/fonts/truetype/dejavu/${filename}`,
+    `/usr/share/fonts/dejavu/${filename}`,
+  ];
+  for (const path of candidates) {
+    if (existsSync(path)) return path;
+  }
+  throw new Error(`PDF font missing: ${filename} (tried ${candidates.join(", ")})`);
+}
+
+const FONT_REGULAR = resolveFont("DejaVuSans.ttf");
+const FONT_BOLD = resolveFont("DejaVuSans-Bold.ttf");
 
 const PORTRAIT = { w: 595.28, h: 841.89 };
 const LANDSCAPE = { w: 841.89, h: 595.28 };
