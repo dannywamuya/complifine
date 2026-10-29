@@ -4,7 +4,7 @@ Pending records and evidence become in-app notifications. The list is the same t
 
 ## Preferences
 
-Each person has settings for their organisation (`notification_settings`) and one row per event and channel (`notification_preferences`). Until they save, the defaults apply: in-app, daily at 07:00 `Africa/Nairobi`, everything on except drafts, and due reminders only inside 7 days.
+Each person has settings for their organisation (`notification_settings`) and one row per event and channel (`notification_preferences`). Until they save, the defaults apply: in-app, daily at 07:00 `Africa/Nairobi`, everything on except drafts, and due reminders only inside 7 days. **Email is opt-in** (off until Email is enabled in Settings); when on, the same event toggles apply to both channels and mail goes to the account email.
 
 | Event | Meaning |
 | --- | --- |
@@ -26,6 +26,18 @@ One row per person per local day:
 - summary: `digest:{orgId}:{siteId}:{YYYY-MM-DD}`
 
 The unique index is `(user_id, dedupe_key)`. Running the tick twice does not duplicate.
+
+## Email (Resend)
+
+`channelSenders.email` sends through Resend when both are set:
+
+- `RESEND_API_KEY`
+- `RESEND_FROM_EMAIL` — e.g. `CompliFine <notifications@your-verified-domain>`
+- `APP_BASE_URL` — public web origin for absolute links (optional but recommended)
+
+Without the key and from address, email preferences can be saved but nothing is sent. The destination is `notification_channel_endpoints` (upserted on save) or else `users.email`. In-app dedupe keys stay unchanged; email keys are prefixed (`email:…`) so both channels can land the same day.
+
+Email delivers **one summary per site** (`daily_digest`) listing overdue, due, pending and missing items. It does not send a separate message for each row — those stay in-app only.
 
 ## Adding a channel
 

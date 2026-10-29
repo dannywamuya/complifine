@@ -23,11 +23,25 @@ import { judgeRequirement, type AuditGenerator, type RankedItem } from "./judge.
 import { openaiAuditGenerator } from "./openai.ts";
 import { recommendationsFrom } from "./summary.ts";
 
+export interface AuditFinishedNotice {
+  readonly userId: string;
+  readonly organizationId: string;
+  readonly siteId: string;
+  readonly channel: "in_app" | "email";
+  readonly title: string;
+  readonly body: string;
+  readonly href: string;
+  readonly subjectKey: string;
+  readonly dedupeKey: string;
+}
+
 export interface RunAuditOptions {
   readonly generator?: AuditGenerator;
   readonly concurrency?: number;
   readonly readFile?: (storageKey: string) => Promise<Uint8Array>;
   readonly model?: string;
+  /** After an email-channel audit notice is inserted (API wires Resend). */
+  readonly onEmailNotice?: (notice: AuditFinishedNotice) => Promise<void>;
 }
 
 export async function runAudit(db: Database, auditRunId: string, options: RunAuditOptions = {}): Promise<void> {
@@ -139,14 +153,18 @@ export async function runAudit(db: Database, auditRunId: string, options: RunAud
       })
       .where(eq(auditRuns.id, run.id));
     if (run.requestedBy) {
-      await notifyFinished(db, {
-        userId: run.requestedBy,
-        organizationId: run.organizationId,
-        siteId: site.id,
-        siteName: site.name,
-        runId: run.id,
-        summary: summary.summary,
-      });
+      await notifyFinished(
+        db,
+        {
+          userId: run.requestedBy,
+          organizationId: run.organizationId,
+          siteId: site.id,
+          siteName: site.name,
+          runId: run.id,
+          summary: summary.summary,
+        },
+        options.onEmailNotice,
+      );
     }
   } catch (error) {
     await fail(db, run.id, error instanceof Error ? error.message : String(error), started, promptTokens, completionTokens);
@@ -191,8 +209,9 @@ async function notifyFinished(
     runId: string;
     summary: string;
   },
+  onEmailNotice?: (notice: AuditFinishedNotice) => Promise<void>,
 ): Promise<void> {
-  const [preference] = await db
+  const prefs = await db
     .select()
     .from(notificationPreferences)
     .where(
@@ -200,25 +219,54 @@ async function notifyFinished(
         eq(notificationPreferences.userId, input.userId),
         eq(notificationPreferences.organizationId, input.organizationId),
         eq(notificationPreferences.eventType, "audit_complete"),
-        eq(notificationPreferences.channel, "in_app"),
       ),
     );
-  if (preference && (!preference.enabled || preference.digest === "off")) return;
-  await db
-    .insert(notifications)
-    .values({
-      userId: input.userId,
-      organizationId: input.organizationId,
-      siteId: input.siteId,
-      eventType: "audit_complete",
-      channel: "in_app",
-      title: `${input.siteName}: audit finished`,
-      body: input.summary.slice(0, 280),
-      href: "/app/readiness",
-      subjectKey: input.runId,
-      dedupeKey: `audit_complete:${input.runId}`,
-    })
-    .onConflictDoNothing();
+  const title = `${input.siteName}: audit finished`;
+  const body = input.summary.slice(0, 280);
+  const href = "/app/readiness";
+
+  for (const channel of ["in_app", "email"] as const) {
+    const preference = prefs.find((row) => row.channel === channel);
+    // No saved row: in-app defaults on; email defaults off.
+    if (channel === "email") {
+      if (!preference || !preference.enabled || preference.digest === "off") continue;
+    } else if (preference && (!preference.enabled || preference.digest === "off")) {
+      continue;
+    }
+
+    const dedupeKey = channel === "in_app" ? `audit_complete:${input.runId}` : `email:audit_complete:${input.runId}`;
+    const inserted = await db
+      .insert(notifications)
+      .values({
+        userId: input.userId,
+        organizationId: input.organizationId,
+        siteId: input.siteId,
+        eventType: "audit_complete",
+        channel,
+        title,
+        body,
+        href,
+        subjectKey: input.runId,
+        dedupeKey,
+        deliveredAt: new Date(),
+      })
+      .onConflictDoNothing({ target: [notifications.userId, notifications.dedupeKey] })
+      .returning({ id: notifications.id });
+    if (inserted.length === 0) continue;
+    if (channel === "email" && onEmailNotice) {
+      await onEmailNotice({
+        userId: input.userId,
+        organizationId: input.organizationId,
+        siteId: input.siteId,
+        channel,
+        title,
+        body,
+        href,
+        subjectKey: input.runId,
+        dedupeKey,
+      });
+    }
+  }
 }
 
 async function mapPool<T>(items: readonly T[], limit: number, worker: (item: T) => Promise<void>): Promise<void> {

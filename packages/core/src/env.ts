@@ -70,6 +70,9 @@ const BLANKABLE = [
   "DIGEST_ENABLED",
   "AUDIT_CONCURRENCY",
   "NEXT_PUBLIC_CAL_URL",
+  "RESEND_API_KEY",
+  "RESEND_FROM_EMAIL",
+  "APP_BASE_URL",
 ] as const;
 
 function unsetBlanks(): void {
@@ -116,6 +119,12 @@ const baseSchema = z.object({
   DIGEST_ENABLED: z.string().optional(),
   /** How many requirements the AI auditor judges at once. */
   AUDIT_CONCURRENCY: z.coerce.number().int().positive().max(16).default(4),
+  /** Resend API key for notification emails. Unset = email channel does not send. */
+  RESEND_API_KEY: z.string().optional(),
+  /** From header, e.g. `CompliFine <notifications@example.com>`. Required when the key is set. */
+  RESEND_FROM_EMAIL: z.string().optional(),
+  /** Public web origin for links in emails, e.g. `https://complifine.com`. */
+  APP_BASE_URL: z.string().optional(),
 });
 
 const aiSchema = z.object({
@@ -154,6 +163,18 @@ export function digestEnabled(): boolean {
   if (flag === "1" || flag === "true" || flag === "yes") return true;
   if (flag === "0" || flag === "false" || flag === "no") return false;
   return env().NODE_ENV !== "production";
+}
+
+/** True when Resend can send notification mail. */
+export function resendConfigured(): boolean {
+  const key = env().RESEND_API_KEY?.trim();
+  const from = env().RESEND_FROM_EMAIL?.trim();
+  return Boolean(key && from);
+}
+
+/** Strip trailing slash from `APP_BASE_URL`, or empty when unset. */
+export function appBaseUrl(): string {
+  return (env().APP_BASE_URL?.trim() ?? "").replace(/\/$/, "");
 }
 
 export function env(): BaseEnv {

@@ -41,15 +41,23 @@ export async function proxyToApi(request: Request, path: string[]): Promise<Resp
   const search = new URL(request.url).search;
   const target = `${origin}/${path.map(encodeURIComponent).join("/")}${search}`;
 
-  const init: RequestInit & { duplex?: "half" } = {
+  const requestHeaders = copyHeaders(request.headers);
+  const init: RequestInit = {
     method: request.method,
-    headers: copyHeaders(request.headers),
+    headers: requestHeaders,
     redirect: "manual",
     cache: "no-store",
   };
+  // Buffer the body. Streaming `request.body` with duplex:"half" can hang or
+  // reset against Bun (UND_ERR_SOCKET after ~30s) on empty POSTs like run-digest.
   if (request.method !== "GET" && request.method !== "HEAD") {
-    init.body = request.body;
-    init.duplex = "half";
+    const buffer = await request.arrayBuffer();
+    if (buffer.byteLength > 0) {
+      init.body = buffer;
+      requestHeaders.set("content-length", String(buffer.byteLength));
+    } else {
+      requestHeaders.delete("content-length");
+    }
   }
 
   let upstream: Response;
@@ -68,10 +76,10 @@ export async function proxyToApi(request: Request, path: string[]): Promise<Resp
     );
   }
 
-  const headers = copyHeaders(upstream.headers, true);
+  const responseHeaders = copyHeaders(upstream.headers, true);
   return new Response(upstream.body, {
     status: upstream.status,
     statusText: upstream.statusText,
-    headers,
+    headers: responseHeaders,
   });
 }

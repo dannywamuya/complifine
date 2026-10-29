@@ -1,6 +1,8 @@
-import { describe, expect, test } from "bun:test";
+import { afterEach, describe, expect, test } from "bun:test";
 import { createDatabase, eq, evidence, memberships } from "@complifine/db";
+import { resetEnvCache } from "@complifine/core";
 import { withinLeadDays } from "../src/digest.ts";
+import { setResendClient, type ResendClient } from "../src/email/resend.ts";
 import type { PendingItem } from "../src/pending.ts";
 import { createApp } from "../src/app.ts";
 
@@ -79,6 +81,9 @@ describe("notification preferences", () => {
     expect(inApp.find((row) => row.eventType === "audit_complete")?.digest).toBe("immediate");
     expect(inApp.filter((row) => row.eventType !== "audit_complete").every((row) => row.digest === "daily")).toBe(true);
     expect(inApp.every((row) => row.leadDays === 7)).toBe(true);
+    const email = body.preferences.filter((row) => row.channel === "email");
+    expect(email).toHaveLength(inApp.length);
+    expect(email.every((row) => row.enabled === false)).toBe(true);
 
     const hour = await json("/notification-preferences", {
       method: "PUT",
@@ -288,7 +293,7 @@ describe("daily digest", () => {
     const prefs = await json("/notification-preferences", { token: owner.token });
     const state = prefs.body as {
       settings: Record<string, unknown>;
-      preferences: Array<{ eventType: string; enabled: boolean }>;
+      preferences: Array<{ eventType: string; channel: string; enabled: boolean }>;
     };
     const enabled = await json("/notification-preferences", {
       method: "PUT",
@@ -296,7 +301,7 @@ describe("daily digest", () => {
       body: JSON.stringify({
         settings: state.settings,
         preferences: state.preferences.map((row) =>
-          row.eventType === "record_draft" ? { ...row, enabled: true } : row,
+          row.eventType === "record_draft" && row.channel === "in_app" ? { ...row, enabled: true } : row,
         ),
       }),
     });
@@ -328,4 +333,87 @@ describe("daily digest", () => {
     expect(withinLeadDays(soon, 7, new Date())).toBe(true);
     expect(withinLeadDays(overdue, 0, new Date())).toBe(true);
   });
+
+  test("email sends one summary per site, not one message per item", async () => {
+    if (!(await databaseReachable())) return;
+    const suffix = `${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+    const owner = await register(suffix, "emailer");
+    const siteId = await addSite(owner.token);
+    const listed = await json("/form-templates?siteType=farm", { token: owner.token });
+    const templateId = (listed.body as { templates: Array<{ id: string; slug: string }> }).templates.find(
+      (row) => row.slug === "training-record",
+    )?.id;
+    expect(templateId).toBeTruthy();
+    const record = await json("/form-records", {
+      method: "POST",
+      token: owner.token,
+      body: JSON.stringify({
+        siteId,
+        templateId,
+        header: { course: "Hygiene", date: "2026-10-01", trainers: "Mary" },
+      }),
+    });
+    expect(record.status).toBe(200);
+
+    const prefs = await json("/notification-preferences", { token: owner.token });
+    const state = prefs.body as {
+      settings: Record<string, unknown>;
+      preferences: Array<{ eventType: string; channel: string; enabled: boolean; digest: string; leadDays: number }>;
+    };
+    const mirrored = state.preferences.map((row) => {
+      if (row.eventType === "record_draft") return { ...row, enabled: true };
+      if (row.channel === "email") {
+        const inApp = state.preferences.find(
+          (other) => other.channel === "in_app" && other.eventType === row.eventType,
+        );
+        return { ...row, enabled: inApp?.enabled ?? false };
+      }
+      return row;
+    });
+    const saved = await json("/notification-preferences", {
+      method: "PUT",
+      token: owner.token,
+      body: JSON.stringify({ settings: state.settings, preferences: mirrored }),
+    });
+    expect(saved.status).toBe(200);
+
+    process.env.RESEND_API_KEY = "re_test";
+    process.env.RESEND_FROM_EMAIL = "CompliFine <notify@example.com>";
+    process.env.APP_BASE_URL = "https://complifine.com";
+    resetEnvCache();
+    const sent: Array<{ to: string[]; subject: string; text: string }> = [];
+    const fake: ResendClient = {
+      emails: {
+        send: async (payload) => {
+          sent.push({ to: payload.to, subject: payload.subject, text: payload.text });
+          return { data: { id: "msg_1" }, error: null };
+        },
+      },
+    };
+    setResendClient(fake);
+
+    try {
+      const first = await json("/notifications/run-digest", { method: "POST", token: owner.token });
+      expect(first.status).toBe(200);
+      // in-app: item (+ maybe digest); email: one summary only
+      expect((first.body as { inserted: number }).inserted).toBeGreaterThanOrEqual(2);
+      expect(sent).toHaveLength(1);
+      expect(sent[0]?.to).toEqual([owner.email]);
+      expect(sent[0]?.subject).toMatch(/pending|draft|overdue|due|missing/i);
+
+      const again = await json("/notifications/run-digest", { method: "POST", token: owner.token });
+      expect((again.body as { inserted: number }).inserted).toBe(0);
+      expect(sent).toHaveLength(1);
+    } finally {
+      setResendClient(null);
+      delete process.env.RESEND_API_KEY;
+      delete process.env.RESEND_FROM_EMAIL;
+      delete process.env.APP_BASE_URL;
+      resetEnvCache();
+    }
+  });
+});
+
+afterEach(() => {
+  setResendClient(null);
 });

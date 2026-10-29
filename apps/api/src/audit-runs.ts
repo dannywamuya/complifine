@@ -31,6 +31,7 @@ import {
 import { type AssessmentResponse, type EvidenceGapStatus, auditConcurrency } from "@complifine/core";
 import { readAuth, requireOrg, type AuthUser } from "./auth/plugin.ts";
 import { assertPublishedVersion, publishedOnly } from "./knowledge-access.ts";
+import { resolveEmailAddress, sendNotificationEmail } from "./email/resend.ts";
 import { readOrgFile } from "./org-storage.ts";
 
 const VERDICT = t.Union([
@@ -99,6 +100,16 @@ export function auditRunRoutes(db: Database, options: AuditRouteOptions = {}) {
           generator: options.generator,
           concurrency: options.concurrency ?? auditConcurrency(),
           readFile: readOrgFile,
+          onEmailNotice: async (notice) => {
+            const to = await resolveEmailAddress(db, notice.userId);
+            if (!to) return;
+            await sendNotificationEmail({
+              to,
+              subject: notice.title,
+              text: notice.body,
+              href: notice.href,
+            });
+          },
         });
         if (options.awaitAudit) await task;
         else void task;

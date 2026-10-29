@@ -105,6 +105,16 @@ Refresh stored results: `GET /versions/{code}/gates?refresh=true`.
 - Empty tools: the embedder used for the query does not match the index. See
   `embedderForQuery`.
 
+## Notification emails
+
+Producer Settings can turn on the email channel. On the API service set:
+
+- `RESEND_API_KEY` — from the Resend dashboard
+- `RESEND_FROM_EMAIL` — a verified domain sender, e.g. `CompliFine <notifications@…>`
+- `APP_BASE_URL` — public web origin for links in the body (`https://complifine.com`)
+
+Without the key and from address, email preferences save but nothing is sent. See [notifications.md](notifications.md).
+
 ## Chat feels slow
 
 - Set `CHAT_MODEL=gpt-4.1` (or another fast chat model) on the API service.

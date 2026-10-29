@@ -38,6 +38,7 @@ export function notificationRoutes(db: Database) {
         const visible = and(
           eq(notifications.userId, user.id),
           eq(notifications.organizationId, user.orgId),
+          eq(notifications.channel, "in_app"),
           isNull(notifications.dismissedAt),
           or(isNull(notifications.snoozedUntil), lte(notifications.snoozedUntil, new Date())),
         );
@@ -151,7 +152,13 @@ export function notificationRoutes(db: Database) {
       "/notification-preferences",
       async ({ auth, body }) => {
         const user = requireOrg(auth);
-        return saveNotificationState(db, user.id, user.orgId, body);
+        const saved = await saveNotificationState(db, user.id, user.orgId, body);
+        const emailOn = body.preferences.some((row) => row.channel === "email" && row.enabled);
+        if (emailOn) {
+          const { upsertEmailEndpoint } = await import("./email/resend.ts");
+          await upsertEmailEndpoint(db, user.id, user.email);
+        }
+        return saved;
       },
       { body: t.Object({ settings: settingsBody, preferences: t.Array(preferenceBody) }) },
     );

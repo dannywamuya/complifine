@@ -41,10 +41,12 @@ const CHANNELS = new Set<string>(NOTIFICATION_CHANNELS);
 const DIGESTS = new Set<string>(NOTIFICATION_DIGESTS);
 
 export function defaultPreference(eventType: NotificationEventType, channel: NotificationChannel = "in_app"): PreferenceChoice {
+  const inAppOn = eventType !== "record_draft";
   return {
     eventType,
     channel,
-    enabled: eventType !== "record_draft",
+    // Email is opt-in until the person enables it in Settings.
+    enabled: channel === "email" ? false : inAppOn,
     digest: eventType === "audit_complete" ? "immediate" : "daily",
     leadDays: DEFAULT_LEAD_DAYS,
   };
@@ -95,20 +97,25 @@ export async function loadNotificationState(
       }
     : defaultSettings();
 
-  const preferences: PreferenceChoice[] = NOTIFICATION_EVENT_TYPES.map((eventType) => {
-    const saved = storedPreferences.find((row) => row.eventType === eventType && row.channel === "in_app");
-    return saved
-      ? {
-          eventType,
-          channel: "in_app",
-          enabled: saved.enabled,
-          digest: saved.digest,
-          leadDays: saved.leadDays,
-        }
-      : defaultPreference(eventType);
-  });
+  const preferences: PreferenceChoice[] = [];
+  for (const channel of ["in_app", "email"] as const) {
+    for (const eventType of NOTIFICATION_EVENT_TYPES) {
+      const saved = storedPreferences.find((row) => row.eventType === eventType && row.channel === channel);
+      preferences.push(
+        saved
+          ? {
+              eventType,
+              channel,
+              enabled: saved.enabled,
+              digest: saved.digest,
+              leadDays: saved.leadDays,
+            }
+          : defaultPreference(eventType, channel),
+      );
+    }
+  }
   for (const row of storedPreferences) {
-    if (row.channel === "in_app") continue;
+    if (row.channel === "in_app" || row.channel === "email") continue;
     preferences.push({
       eventType: row.eventType,
       channel: row.channel,

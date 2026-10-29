@@ -1,10 +1,9 @@
 /**
  * Daily pending digest.
  *
- * A tick every 15 minutes inserts at most one row per item per local day.
- * The unique `(user, dedupe key)` index makes a second tick a no-op. Only
- * `in_app` has a sender; adding email, SMS or push is a new function in
- * `channelSenders` plus an address in `notification_channel_endpoints`.
+ * A tick every 15 minutes inserts at most one row per item per local day per
+ * channel. The unique `(user, dedupe key)` index makes a second tick a no-op.
+ * `in_app` and `email` have senders; SMS and push stay absent until wired.
  */
 
 import { eq, type Database, type NotificationCounts } from "@complifine/db";
@@ -16,11 +15,13 @@ import {
   type PreferenceChoice,
   type SettingsChoice,
 } from "./notification-prefs.ts";
+import { resolveEmailAddress, sendNotificationEmail } from "./email/resend.ts";
 
 export interface DigestNotice {
   readonly userId: string;
   readonly organizationId: string;
   readonly siteId: string;
+  readonly siteName?: string;
   readonly eventType: NotificationEventType;
   readonly channel: NotificationChannel;
   readonly title: string;
@@ -29,14 +30,29 @@ export interface DigestNotice {
   readonly subjectKey: string;
   readonly dedupeKey: string;
   readonly counts: NotificationCounts | null;
+  readonly itemTitles?: readonly string[];
 }
 
+type ChannelSender = (db: Database, notice: DigestNotice) => Promise<void>;
+
 /**
- * In-app delivery is the inserted row. Other channels stay absent until a
- * provider exists, so a saved email preference does not send anything.
+ * In-app delivery is the inserted row. Email goes through Resend when configured.
  */
-export const channelSenders: Partial<Record<NotificationChannel, (notice: DigestNotice) => Promise<void>>> = {
+export const channelSenders: Partial<Record<NotificationChannel, ChannelSender>> = {
   in_app: async () => {},
+  email: async (db, notice) => {
+    const to = await resolveEmailAddress(db, notice.userId);
+    if (!to) return;
+    await sendNotificationEmail({
+      to,
+      subject: notice.title,
+      text: notice.body,
+      href: notice.href,
+      siteName: notice.siteName,
+      counts: notice.counts,
+      items: notice.itemTitles,
+    });
+  },
 };
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -91,6 +107,11 @@ export function shouldSend(
   if (options.quiet) return false;
   if (preference.digest === "immediate") return true;
   return options.hour === options.deliveryHour;
+}
+
+/** Keep legacy in-app keys; prefix other channels so both can land the same day. */
+export function noticeDedupeKey(channel: NotificationChannel, key: string): string {
+  return channel === "in_app" ? key : `${channel}:${key}`;
 }
 
 export async function runDigestForUser(
@@ -201,38 +222,55 @@ async function insertSiteDigest(
     readonly quiet: boolean;
   },
 ): Promise<number> {
-  const chosen = input.items.filter((item) => {
-    const preference = input.preferences.find(
-      (row) => row.eventType === item.eventType && row.channel in channelSenders,
-    );
-    if (!preference) return false;
-    if (!shouldSend(preference, input)) return false;
-    return withinLeadDays(item, preference.leadDays, input.now);
-  });
-  const counts = countPending(chosen);
+  const sendOptions = {
+    manual: input.manual,
+    hour: input.hour,
+    deliveryHour: input.deliveryHour,
+    quiet: input.quiet,
+  };
+
+  const activeChannels = (["in_app", "email"] as const).filter((channel) => channel in channelSenders);
+
   let inserted = 0;
+  for (const channel of activeChannels) {
+    const chosen = input.items.filter((item) => {
+      const preference = input.preferences.find(
+        (row) => row.eventType === item.eventType && row.channel === channel,
+      );
+      if (!preference) return false;
+      if (!shouldSend(preference, sendOptions)) return false;
+      return withinLeadDays(item, preference.leadDays, input.now);
+    });
+    const counts = countPending(chosen);
 
-  const summary = input.preferences.find((row) => row.eventType === "daily_digest");
-  if (summary && shouldSend(summary, input) && hasPending(counts)) {
-    const notice = digestNotice({ ...input, items: chosen }, counts);
-    if (await insertNotice(db, notice)) inserted += 1;
-  }
+    const summary = input.preferences.find(
+      (row) => row.eventType === "daily_digest" && row.channel === channel,
+    );
+    if (summary && shouldSend(summary, sendOptions) && hasPending(counts)) {
+      const notice = digestNotice({ ...input, items: chosen, channel }, counts);
+      if (await insertNotice(db, notice)) inserted += 1;
+    }
 
-  for (const item of chosen) {
-    const notice: DigestNotice = {
-      userId: input.userId,
-      organizationId: input.orgId,
-      siteId: input.siteId,
-      eventType: item.eventType,
-      channel: "in_app",
-      title: item.title,
-      body: ITEM_BODY[item.eventType as Exclude<NotificationEventType, "daily_digest">],
-      href: item.href,
-      subjectKey: item.subjectKey,
-      dedupeKey: `${item.eventType}:${item.subjectKey}:${input.day}`,
-      counts: null,
-    };
-    if (await insertNotice(db, notice)) inserted += 1;
+    // Email is one summary per site — never a message per overdue row (spam).
+    if (channel === "email") continue;
+
+    for (const item of chosen) {
+      const baseKey = `${item.eventType}:${item.subjectKey}:${input.day}`;
+      const notice: DigestNotice = {
+        userId: input.userId,
+        organizationId: input.orgId,
+        siteId: input.siteId,
+        eventType: item.eventType,
+        channel,
+        title: item.title,
+        body: ITEM_BODY[item.eventType as Exclude<NotificationEventType, "daily_digest">],
+        href: item.href,
+        subjectKey: item.subjectKey,
+        dedupeKey: noticeDedupeKey(channel, baseKey),
+        counts: null,
+      };
+      if (await insertNotice(db, notice)) inserted += 1;
+    }
   }
   return inserted;
 }
@@ -242,7 +280,15 @@ function hasPending(counts: NotificationCounts): boolean {
 }
 
 function digestNotice(
-  input: { readonly userId: string; readonly orgId: string; readonly siteId: string; readonly siteName: string; readonly day: string; readonly items: PendingItem[] },
+  input: {
+    readonly userId: string;
+    readonly orgId: string;
+    readonly siteId: string;
+    readonly siteName: string;
+    readonly day: string;
+    readonly items: PendingItem[];
+    readonly channel: NotificationChannel;
+  },
   counts: NotificationCounts,
 ): DigestNotice {
   const parts: string[] = [];
@@ -250,25 +296,30 @@ function digestNotice(
   if (counts.due) parts.push(`${counts.due} due`);
   if (counts.pending) parts.push(`${counts.pending} pending`);
   if (counts.missing) parts.push(`${counts.missing} missing`);
-  const titles = input.items.slice(0, 8).map((item) => item.title);
-  const extra = input.items.length - titles.length;
-  const body = extra > 0 ? `${titles.join(", ")} and ${extra} more` : titles.join(", ");
+  const itemTitles = input.items.map((item) => item.title);
+  const preview = itemTitles.slice(0, 8);
+  const extra = itemTitles.length - preview.length;
+  const body = extra > 0 ? `${preview.join(", ")} and ${extra} more` : preview.join(", ");
+  const baseKey = `digest:${input.orgId}:${input.siteId}:${input.day}`;
   return {
     userId: input.userId,
     organizationId: input.orgId,
     siteId: input.siteId,
+    siteName: input.siteName,
     eventType: "daily_digest",
-    channel: "in_app",
+    channel: input.channel,
     title: `${input.siteName}: ${parts.join(", ")}`,
     body,
     href: "/app/records",
     subjectKey: input.siteId,
-    dedupeKey: `digest:${input.orgId}:${input.siteId}:${input.day}`,
+    dedupeKey: noticeDedupeKey(input.channel, baseKey),
     counts,
+    itemTitles,
   };
 }
 
-async function insertNotice(db: Database, notice: DigestNotice): Promise<boolean> {
+/** Insert a notice and run its channel sender only when the insert wins. */
+export async function insertNotice(db: Database, notice: DigestNotice): Promise<boolean> {
   const sender = channelSenders[notice.channel];
   if (!sender) return false;
   const now = new Date();
@@ -291,6 +342,6 @@ async function insertNotice(db: Database, notice: DigestNotice): Promise<boolean
     .onConflictDoNothing({ target: [notifications.userId, notifications.dedupeKey] })
     .returning({ id: notifications.id });
   if (inserted.length === 0) return false;
-  await sender(notice);
+  await sender(db, notice);
   return true;
 }
